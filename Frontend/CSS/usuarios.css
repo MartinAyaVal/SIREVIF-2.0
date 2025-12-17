@@ -1,0 +1,429 @@
+body {
+    font-family: Arial, sans-serif;
+    background-image: 
+        linear-gradient(
+            rgba(0, 49, 0, 0.604)
+        ),
+        url(/Frontend/images/bandera.png);
+    background-size: cover;
+    background-position: center;
+    min-height: 100vh;
+    background-attachment: fixed;
+}
+
+.tituloUsuarios {
+    color: white;
+    margin-left: 43%;
+    padding: 30px;
+}
+
+.seccionaes {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    padding: 20px;
+    margin: 0 auto;
+    max-width: 1200px;
+}
+
+.seccionUsuarios {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    margin-left: 19.5%;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-left: 6px solid #62c681;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.seccionUsuarios:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.tituloSec {
+    font-size: 1.4rem;
+    color: #138035;
+    margin: 0 0 15px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e9ecef;
+    font-weight: 600;
+    text-align: left;
+}
+
+.usuarios {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+    padding: 10px;
+}
+
+.usuario-card {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e0e0e0;
+    transition: all 0.2s ease;
+}
+
+.usuario-card:hover {
+    border-color: #138035;
+    box-shadow: 0 4px 8px rgba(19, 128, 53, 0.15);
+}
+
+.añadir {
+    position: absolute;
+    top: 7%;
+    right: 6%;
+    width: 50px;
+    height: 50px;
+    text-align: center;
+    padding: 12px;
+    background-color: #deffe8;
+    border: none;
+    border-radius: 100px;
+    cursor: pointer;
+    font-size: 0;
+    text-decoration: none;
+    color: rgba(0, 0, 0, 0);
+    transition: 
+        width 0.3s ease 0.1s,
+        background-color 0.3s ease,
+        transform 0.3s ease,
+        color 0.3s ease 0.2s,
+        font-size 0.3s ease 0.1s;
+    box-shadow: 0 0 10px rgb(0, 94, 17);
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.añadir img {
+    position: absolute;
+    width: 20px;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
+    transition: right 0.5s ease;
+}
+
+.añadir:hover {
+    background-image: url(/Frontend/images/fondoBoton.PNG);
+    background-size: cover;
+    background-position: center;
+    width: 250px;
+    font-weight: bold;
+    color: black;
+    font-size: 16px;
+    padding-right: 50px; 
+}
+
+.añadir:hover img {
+    right: 20px; 
+}
+
+@keyframes secciones {
+    from {
+        transform: translatey(10%);
+        opacity: 0;
+    }
+    to {
+        transform: translatey(0);
+        opacity: 1;
+    }
+}
+
+@keyframes parteSuperior {
+    from {
+        transform: translatey(10%);
+        opacity: 0;
+    }
+    to {
+        transform: translatey(0);
+        opacity: 1;
+    }
+}
+
+.seccionUsuarios {
+    animation: secciones 0.8s ease-out;
+}
+
+.tituloUsuarios, .añadir {
+    animation: parteSuperior 0.8s ease-out;
+}
+
+
+@keyframes movimiento {
+    from {
+        transform: translatey(10%);
+        opacity: 0;
+    }
+    to {
+        transform: translatey(0);
+        opacity: 1;
+    }
+}
+
+.fondoCerrarSesion{
+    animation: movimiento 0.5s ease-out;
+}
+
+/* ===== MODAL DE CERRAR SESIÓN ===== */
+.fondoCerrarSesion {
+    display: none;
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.cerrarSesion{
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.boton1cerrarSesion {
+    background-color: #138035;
+    color: white;
+    padding: 10px 20px;
+    margin: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.boton1cerrarSesion:hover {
+    background-color: #0d6829;
+    transform: translateY(-2px); 
+}
+
+.boton2cerrarSesion {
+    padding: 10px 20px;
+    margin: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.boton2cerrarSesion:hover {
+    background-color: #c5c5c5;
+    transform: translateY(-2px); 
+}
+
+.imgCerrarSesion{
+    width: 100px;
+    margin-bottom: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+}
+
+/* ===== ESTILOS ADICIONALES PARA LA BARRA SUPERIOR ===== */
+.user-status {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    font-size: 14px;
+    color: #666;
+}
+
+#userRole {
+    font-weight: 500;
+    color: #4CAF50;
+}
+
+#lastUpdate {
+    font-style: italic;
+}
+
+
+
+
+
+
+/* Estilos generales para tablas */
+.tabla-usuario {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-family: Arial, sans-serif;
+}
+
+/* Estilos para la opción 1 (tabla de listado) */
+.tabla-usuarios {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Estilos para los botones */
+.btn-editar, .btn-eliminar {
+    padding: 6px 12px;
+    margin: 0 3px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.btn-editar {
+    background-color: #3498db;
+    color: white;
+}
+
+.btn-editar:hover {
+    background-color: #2980b9;
+}
+
+.btn-eliminar {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.btn-eliminar:hover {
+    background-color: #c0392b;
+}
+
+/* Estilos para la opción 3 */
+.tabla-usuario {
+    border: 1px solid #ddd;
+}
+
+.tabla-usuario td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+}
+
+/* ===== ESTILOS PARA ESTADOS DE USUARIOS ===== */
+.usuario-inactivo {
+    background-color: #ffebee !important;
+    border-left-color: #f44336 !important;
+    opacity: 0.8;
+}
+
+.estado-usuario {
+    font-weight: bold;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.estado-activo {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.estado-inactivo {
+    background-color: #ffebee;
+    color: #d32f2f;
+}
+
+/* ===== ESTILOS PARA BOTONES DE ACCIÓN ===== */
+.columna-acciones {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-editar, .btn-estado, .btn-eliminar {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    min-width: 100px;
+}
+
+.btn-editar {
+    background-color: #2196F3;
+    color: white;
+}
+
+.btn-editar:hover {
+    background-color: #1976D2;
+}
+
+.btn-estado {
+    background-color: #FF9800;
+    color: white;
+}
+
+.btn-estado:hover {
+    background-color: #F57C00;
+}
+
+.btn-eliminar {
+    background-color: #f44336;
+    color: white;
+}
+
+.btn-eliminar:hover {
+    background-color: #d32f2f;
+}
+
+/* Estilos específicos para estado inactivo */
+.usuario-inactivo .btn-editar {
+    background-color: #757575;
+}
+
+.usuario-inactivo .btn-editar:hover {
+    background-color: #616161;
+}
+
+.contenedor-tabla{
+    width: 140%;
+    gap: 15px;
+}
+
+/* ===== ESTILOS PARA LAS TARJETAS DE USUARIO ===== */
+
+.usuarios {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+    gap: 50px; 
+    padding-right: 40px;
+}
+
+.usuario-tarjeta {
+    margin-bottom: 20px; 
+    margin-right: 200px;
+    width: 100%;
+    animation: movimiento 0.5s ease-out;
+}
+
+.contenedor-tabla {
+    width: 100%;    
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 15px; 
+    border-left: 4px solid #62c681;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.tabla-usuario td {
+    font-size: 14px; 
+}
+
+.tabla-usuario td:first-child {
+    font-weight: bold;
+    color: #000000;
+}
+
+.tabla-usuario td:last-child {
+    color: #333;
+}
+

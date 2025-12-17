@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/Frontend/CSS/miCuenta.css">
+    <link rel="stylesheet" href="/Frontend/CSS/barraLateral.css">
+    <link rel="icon" href="/Frontend/images/logoAlcaldia.png">
+    <title>SIREVIF 2.0 - Mi Cuenta</title>
+</head>
+<body>
+    <!-- ===== LOADER ===== -->
+    <div class="loader-overlay" id="loaderOverlay">
+        <div class="loader-spinner"></div>
+        <div class="loader-text" id="loaderText">Cargando información...</div>
+    </div>
+    
+    <header id="barra" class="barra">
+        <img id="menuHamburguesa" class="hamburguesa" src="/Frontend/images/hamburguesa.png" alt="Menú">
+        <img id="logo" class="logo" src="/Frontend/images/logoAlcaldia.png" alt="Logo Alcaldía">
+        <p id="titulo" class="titulo">SIREVIF 2.0</p>
+        <p id="nombreUsuarioHeader" class="texto">Cargando...</p>
+        <p id="comisariaUsuarioHeader" class="texto">Cargando...</p>
+        <nav>
+            <a id="boton" title="Medidas de Protección" href="index.html" class="botonBarra">
+                <img class="imgBarra" src="/Frontend/images/medidas.png" alt="Medidas">
+                Medidas de Protección 
+            </a>
+            <a id="boton" title="Estadísticas" href="estadisticas.html" class="botonBarra">
+                <img class="imgBarra" src="/Frontend/images/estadisticas.png" alt="Estadísticas">
+                Estadísticas
+            </a>
+            <a id="boton" title="Usuarios" href="usuarios.html" class="botonBarra">
+                <img class="imgBarra" src="/Frontend/images/usuarios.png" alt="Usuarios">
+                Usuarios
+            </a>
+            <a id="boton" title="Mi Cuenta" href="miCuenta.html" class="actual">
+                <img class="imgBarra" src="/Frontend/images/usuario.png" alt="Mi cuenta">
+                Mi cuenta
+            </a>
+        </nav>
+        <a id="logoutBtn" class="botonSalir" title="Cerrar Sesión" href="#">
+            <img class="imgBarra" src="/Frontend/images/cerrar-sesion.png" alt="Cerrar sesión">
+            Cerrar Sesión
+        </a>
+    </header>
+
+    <div id="divCerrarSesion" class="fondoCerrarSesion">
+        <div class="cerrarSesion">
+            <img src="/Frontend/images/logoAlcaldia.png" class="imgCerrarSesion">
+            <p>¿Está seguro que desea cerrar sesión?</p>
+            <div class="botonesCerrarSesion">
+                <button id="cerrarSesion" class="boton1cerrarSesion">Sí, cerrar sesión</button>
+                <button id="cancelarCerrarSesion" class="boton2cerrarSesion">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="formulario">
+        <div class="headerF">
+            <h2>Información de mi Cuenta</h2>
+        </div>
+        
+        <!-- Mensajes de estado -->
+        <div id="successMessage" class="success-message"></div>
+        <div id="errorMessage" class="error-message"></div>
+        
+        <form id="formularioUsuarios">
+            <div class="seccionF">
+                <table class="tablaF">
+                    <tr>
+                        <td>Nombre completo:</td>
+                        <td>Número de Documento</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input autocomplete="off" type="text" name="nombreUsuario" id="nombreUsuario" class="read-only" readonly>
+                            <p class="mensajeTexto">Campo requerido</p>
+                        </td>
+                        <td>
+                            <input autocomplete="off" type="text" name="documentoUsuario" id="documentoUsuario" class="read-only" readonly>
+                            <p class="mensajeDateTime">Documento no editable</p>
+                        </td>
+                    </tr>
+                </table>
+                <table class="tablaF">
+                    <tr>
+                        <td>Correo electrónico:</td>
+                        <td>Teléfono:</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input autocomplete="off" type="text" name="correoUsuario" id="correoUsuario" class="read-only" data-field="correo" readonly>
+                            <p class="mensajeTexto">Formato: usuario@dominio.com</p>
+                        </td>
+                        <td>
+                            <input autocomplete="off" type="text" name="telefonoUsuario" id="telefonoUsuario" class="read-only" data-field="telefono" pattern="[0-9]{10}" maxlength="10" readonly>
+                            <p class="mensajeTexto">10 dígitos sin espacios</p>
+                        </td>
+                    </tr>
+                </table>
+                <table class="tablaF">
+                    <tr>
+                        <td>Cargo:</td>
+                        <td>Rol:</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input autocomplete="off" type="text" name="cargoUsuario" id="cargoUsuario" class="read-only" data-field="cargo" readonly>
+                            <p class="mensajeTexto">Ej: Oficial de Registro</p>
+                        </td>
+                        <td>
+                            <input autocomplete="off" type="text" name="comisariaUsuario" id="comisariaUsuario" class="read-only" readonly>
+                            <p class="mensajeTexto">Asignada por administración</p>
+                        </td>
+                    </tr>
+                </table>
+                <table class="tablaF">
+                    <tr>
+                        <td>Contraseña:</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="password-toggle-container">
+                                <input autocomplete="off" type="password" id="contraseñaUsuario" class="read-only" data-field="contraseña" placeholder="Dejar vacío para no cambiar" readonly>
+                                <div class="password-toggle" id="passwordToggle">
+                                    <img src="/Frontend/images/ojo.png" class="ver" id="mostrar" style="display: inline;" alt="Mostrar">
+                                    <img src="/Frontend/images/invisible.png" class="ver" id="ocultar" style="display: none;" alt="Ocultar">
+                                </div>
+                            </div>
+                            <p class="mensajeTexto">Mínimo 6 caracteres</p>
+                        </td>
+                        <td></td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div class="button-container">
+                <button type="button" class="botonEditar" id="editarBtn">Editar Información</button>
+                <button type="button" class="botonCancelar" id="cancelarBtn" style="display: none;">Cancelar</button>
+                <button type="button" class="botonGuardar" id="guardarBtn" style="display: none;">Guardar Cambios</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/Frontend/JS/barraLateral.js"></script>
+    <script src="/Frontend/JS/miCuenta.js"></script>
+    <script src="/Frontend/JS/infoBarra.js"></script>
+</body>
+</html>

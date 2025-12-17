@@ -1,0 +1,572 @@
+.barra {
+    background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding: 5px 10px;
+    width: 16%;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.5s ease;
+    box-shadow: 4px 0 20px rgba(0, 94, 17, 0.15);
+    z-index: 1000;
+}
+
+.hamburguesa {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    top: 1%;
+    left: 84%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 8px;
+    border-radius: 8px;
+    background-color: #f0f9f0;
+    display: none; /* Ocultar en desktop */
+}
+
+.hamburguesa:hover {
+    transform: scale(1.1) rotate(90deg);
+    background-color: #deffe8;
+    box-shadow: 0 2px 8px rgba(0, 94, 17, 0.2);
+}
+
+.logo {
+    display: flex;
+    text-align: center;
+    width: 50px;
+    height: 50px;
+    margin: 10px auto 10px;
+    transition: all 0.5s ease;
+    border-radius: 12px;
+    padding: 5px;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0, 94, 17, 0.1);
+}
+
+.titulo {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: #138035;
+    margin: 10px 0 15px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e8f5e9;
+    letter-spacing: 0.5px;
+}
+
+.texto {
+    text-align: center;
+    font-size: 10px;
+    color: #666;
+    margin: 0 0 5px;
+    font-weight: 500;
+}
+
+nav {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex-grow: 1;
+    margin-top: 20px;
+}
+
+.actual {
+    text-align: left;
+    padding: 15px 15px;
+    background: linear-gradient(135deg, #138035 0%, #4CAF50 100%);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    color: white;
+    box-shadow: 0 4px 12px rgba(19, 128, 53, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.botonBarra {
+    text-align: left;
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    color:  #333;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.botonBarra:hover {
+    background: linear-gradient(135deg, #e8f5e9 0%, #deffe8 100%);
+    border-color: #138035;
+    box-shadow: 0 4px 12px rgba(0, 94, 17, 0.15);
+    color: #138035;
+}
+
+.imgBarra {
+    width: 22px;
+    height: 22px;
+    filter: brightness(0.9);
+}
+
+.botonSalir {
+    text-align: center;
+    padding: 10px 15px;
+    background: linear-gradient(135deg, #ff4444 0%, #ff6b6b 100%);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: auto;
+    margin-bottom: 15px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(255, 68, 68, 0.2);
+}
+
+.botonSalir:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(255, 68, 68, 0.3);
+    background: linear-gradient(135deg, #ff3333 0%, #ff5555 100%);
+}
+
+/*CSS para contraer la barra lateral*/
+.barra.contraer {
+    background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding: 25px 10px;
+    width: 60px;
+    box-shadow: 4px 0 20px rgba(0, 94, 17, 0.15);
+    display: flex;
+    flex-direction: column;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-right: 3px solid #138035;
+    align-items: center;
+}
+
+.logo.contraer {
+    width: 50px;
+    height: 50px;
+    margin: 35px auto 30px;
+    border-radius: 10px;
+}
+
+.hamburguesa.contraer {
+    width: 20px;
+    height: 20px;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px;
+}
+
+.texto.contraer {
+    display: none;
+}
+
+nav.contraer {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex-grow: 1;
+    margin-top: 50px;
+    width: 100%;
+    align-items: center;
+}
+
+.titulo.contraer {
+    display: none;
+}
+
+.botonBarra.contraer {
+    width: 50px;
+    height: 50px;
+    padding: 0;
+    background: #f8f9fa;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0;
+    color: transparent;
+}
+
+.botonBarra.contraer:hover {
+    background: linear-gradient(135deg, #e8f5e9 0%, #deffe8 100%);
+    border-color: #138035;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 94, 17, 0.15);
+}
+
+.actual.contraer {
+    width: 50px;
+    height: 50px;
+    padding: 0;
+    background: linear-gradient(135deg, #138035 0%, #4CAF50 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0;
+    box-shadow: 0 4px 12px rgba(19, 128, 53, 0.3);
+}
+
+.imgBarra.contraer {
+    height: 35px;
+    width: 35px;
+    display: block;
+    margin: 0 auto;
+    padding: 0;
+    filter: brightness(1);
+}
+
+.botonSalir.contraer {
+    width: 50px;
+    height: 50px;
+    padding: 0;
+    background: linear-gradient(135deg, #ff4444 0%, #ff6b6b 100%);
+    border-radius: 12px;
+    font-size: 0;
+    margin-top: auto;
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.botonSalir.contraer:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(255, 68, 68, 0.3);
+}
+
+/* ESTILOS RESPONSIVE */
+/* Tablet */
+@media (max-width: 1024px) {
+    .barra {
+        width: 20%;
+    }
+    
+    .hamburguesa {
+        left: 80%;
+    }
+    
+    .titulo {
+        font-size: 18px;
+    }
+    
+    .botonBarra, .actual {
+        font-size: 14px;
+        padding: 10px 12px;
+    }
+    
+    .imgBarra {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+/* Mobile - Barra lateral se convierte en header */
+@media (max-width: 770px) {
+    .barra {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: auto;
+        min-height: 70px;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 20px;
+        box-shadow: 0 4px 15px rgba(0, 94, 17, 0.15);
+        border-radius: 0;
+        z-index: 2000;
+        transition: all 0.3s ease;
+    }
+    
+    .hamburguesa {
+        display: block;
+        position: static;
+        order: 3;
+        width: 20px;
+        height: 20px;
+        margin-right: 40px;
+        margin-left: auto;
+    }
+    
+    .logo {
+        width: 45px;
+        height: 45px;
+        margin: 0;
+        order: 1;
+    }
+    
+    .titulo {
+        font-size: 16px;
+        margin: 0;
+        padding: 0 0 0 10px;
+        border-bottom: none;
+        order: 2;
+        flex-grow: 1;
+        text-align: left;
+    }
+    
+    .texto {
+        display: none;
+    }
+    
+    nav {
+        position: fixed;
+        top: 70px;
+        left: 0;
+        width: 100%;
+        background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+        flex-direction: column;
+        padding: 20px;
+        margin-top: 0;
+        box-shadow: 0 10px 25px rgba(0, 94, 17, 0.15);
+        transform: translateY(-100%);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        z-index: 1999;
+        border-top: 1px solid #e8f5e9;
+    }
+    
+    nav.mostrar {
+        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .botonBarra, .actual {
+        width: 100%;
+        padding: 15px 20px;
+        font-size: 15px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        justify-content: flex-start;
+    }
+    
+    .botonSalir {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        margin: 0;
+        border-radius: 0;
+        padding: 15px;
+        transform: translateY(100%);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        z-index: 1998;
+    }
+    
+    .botonSalir.mostrar {
+        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    /* Ocultar elementos en mobile cuando barra está cerrada */
+    .barra:not(.menu-abierto) nav,
+    .barra:not(.menu-abierto) .botonSalir {
+        display: none;
+    }
+    
+    .barra.menu-abierto {
+        height: 100vh;
+        width: 10%;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px;
+        overflow-y: auto;
+    }
+    
+    .barra.menu-abierto.hamburguesa {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        order: 999;
+    }
+    
+    .barra.menu-abierto .logo {
+        margin: 10px 0 10px;
+        order: 1;
+        width: 20px;
+        height: 20px;
+    }
+    
+    .barra.menu-abierto .titulo {
+        text-align: center;
+        width: 10%;
+        order: 2;
+        margin-bottom: 10px;
+    }
+    
+    .barra.menu-abierto nav {
+        width: 87%;
+        position: static;
+        display: flex;
+        transform: none;
+        opacity: 1;
+        visibility: visible;
+        box-shadow: none;
+        order: 3;
+        flex-grow: 1;
+        margin-top: 10px;
+    }
+
+    .barra.menu-abierto .actual {
+        width: 100%;
+        position: static;
+        display: flex;
+        transform: none;
+        opacity: 1;
+        visibility: visible;
+        box-shadow: none;
+        order: 3;
+        flex-grow: 1;
+        margin-top: 10px;
+    }
+    
+    .barra.menu-abierto .botonSalir {
+        position: static;
+        display: flex;
+        transform: none;
+        opacity: 1;
+        visibility: visible;
+        width: 87%;
+        margin-top: 20px;
+        order: 4;
+        text-align: center;
+    }
+    
+    .barra.menu-abierto .texto {
+        display: block;
+        order: 5;
+        text-align: center;
+        width: 100%;
+        margin-top: 10px;
+        font-size: 12px;
+    }
+    
+    /* Desactivar estilos de contraer en mobile */
+    .barra.contraer {
+        width: 100%;
+        height: auto;
+        min-height: 70px;
+        padding: 10px 20px;
+        border-right: none;
+    }
+    
+    .logo.contraer,
+    .imgBarra.contraer,
+    .botonBarra.contraer,
+    .actual.contraer,
+    .botonSalir.contraer {
+        width: auto;
+        height: auto;
+        font-size: 15px;
+        color: inherit;
+        padding: 15px 20px;
+        display: flex;
+    }
+}
+
+/* Mobile pequeño */
+@media (max-width: 480px) {
+    .barra {
+        padding: 5px 15px;
+        min-height: 60px;
+        width: 100%;
+    }
+    
+    .logo {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .titulo {
+        font-size: 14px;
+    }
+    
+    .hamburguesa {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .barra.menu-abierto {
+        padding: 15px;
+        width: 90%;
+    }
+
+    .barra.menu-abierto .hamburguesa {
+        position: absolute;
+        top: 20px;
+        right: -40px;
+        width: 25px;
+        height: 25px;
+    }
+    
+    .barra.menu-abierto .logo {
+        margin: 0px 0 10px;
+        order: 1;
+        width: 17px;
+        height: 20px;   
+    }
+
+    .barra.menu-abierto .titulo{
+        margin: 0px 0 10px;
+        order: 1;
+        width: 17px;
+        height: 20px;   
+    }
+    
+    .botonBarra, .actual {
+        font-size: 14px;
+    }
+    
+    .imgBarra {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+@keyframes barra {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.barra {
+    animation: barra 0.8s ease-out;
+}

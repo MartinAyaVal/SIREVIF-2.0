@@ -1,0 +1,310 @@
+.fondoF {
+    display: none;
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background-color: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    transition: all 0.5s ease;
+    animation: aparecer 0.8s ease-out;
+}
+
+.formulario {
+    background-color: #ffffff;
+    width: 35%;
+    max-height: 90vh;
+    overflow-y: scroll;
+    border-radius: 20px;
+    box-shadow: 0 0px 10px rgba(255, 255, 255, 0.549);
+    padding: 20px;
+    transition: all 0.5s ease;
+}
+
+.headerF {
+    text-align: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+}
+
+.headerF h2 {
+    color: rgb(15, 129, 0);
+    margin: 10px 0 0 0;
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.seccionF {
+    box-shadow: 0 0 10px rgba(0, 94, 17, 0.5);
+    border-radius: 20px;
+    padding: 8px;
+    margin-bottom: 30px;
+    background-color: #ffffff;
+}
+
+.seccionF h3 {
+    color: rgb(15, 129, 0);
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.extras {
+    display: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 30px;
+    background-color: #ffffff;
+}
+
+.extras h3 {
+    text-align: center;
+    font-size: 19px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.victimaExtra {
+    display: none;
+    margin-bottom: 0;
+    padding: 10px;
+}
+
+.victimaExtra h3 {
+    text-align: center;
+    font-size: 19px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+
+.tablaNumero,
+.tablaInfoDocumentoVictima,
+.tablaInfoDocumentoVictimario,
+.tablaInfoGeneroVictima,
+.tablaInfoGeneroVictimario,
+.tablaF,
+.tablaF2,
+.tablaExtras,
+.tablaExtras {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+
+.tablaNumero td,
+.tablaInfoDocumentoVictima td,
+.tablaInfoDocumentoVictimario td,
+.tablaInfoGeneroVictima td,
+.tablaInfoGeneroVictimario td,
+.tablaF td,
+.tablaF2 td,
+.tablaExtras td {
+    padding: 14px 20px;
+    font-size: 14px;
+}
+
+
+.tablaNumero input[type="number"],
+.tablaInfoDocumentoVictima input[type="text"],
+.tablaInfoDocumentoVictima input[type="number"],
+.tablaInfoDocumentoVictima select,
+.tablaInfoDocumentoVictimario input[type="text"],
+.tablaInfoDocumentoVictimario input[type="number"],
+.tablaInfoDocumentoVictimario select,
+.tablaInfoDocumentoVictimario input[type="text"],
+.tablaInfoGeneroVictima input[type="text"],
+.tablaInfoGeneroVictimario input[type="text"],
+.tablaInfoGeneroVictima select,
+.tablaInfoGeneroVictimario select,
+.tablaF input[type="text"],
+.tablaF input[type="date"],
+.tablaF input[type="time"],
+.tablaF input[type="number"],
+.tablaF select,
+.tablaF2 input[type="text"],
+.tablaF2 input[type="date"],
+.tablaF2 input[type="time"],
+.tablaF2 input[type="number"],
+.tablaF2 select,
+.tablaExtras input[type="text"],
+.tablaExtras input[type="date"],
+.tablaExtras input[type="time"],
+.tablaExtras input[type="number"],
+.tablaExtras select {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #aaa;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 14px;
+    background-color: #ffffff;
+}
+
+.tablaNumero input:focus,
+.tablaInfoDocumentoVictima input:focus,
+.tablaInfoDocumentoVictima select:focus,
+.tablaInfoDocumentoVictimario input:focus,
+.tablaInfoDocumentoVictimario select:focus,
+.tablaInfoGeneroVictima select:focus,
+.tablaInfoGeneroVictimario select:focus,
+.tablaF input:focus,
+.tablaF select:focus,
+.tablaF2 input:focus,
+.tablaF2 select:focus,
+.tablaExtras input:focus,
+.tablaExtras select:focus {
+    outline: none;
+    border-color: #00a13e;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+.tablaNumero td {
+    width: 33.33%;
+}
+
+.tdNumero {
+    padding-top: 15px;
+    padding-bottom: 10px;
+}
+
+.tablaNumero input[type="number"] {
+    width: 20%;
+    background-color: #e3ffeb;
+    text-align: center;
+}
+
+
+.tablaInfoDocumentoVictima td {
+    width: 25%;
+}
+
+.tablaInfoDocumentoVictimario td {
+    width: 25%;
+}
+
+.tablaInfoGeneroVictima td {
+    width: 25%;
+}
+
+.tablaInfoGeneroVictimario td {
+    width: 25%;
+}
+
+.tablaF td {
+    width: 33.33%;
+}
+
+.tablaF2 td {
+    width: 25%;
+}
+
+.tablaExtras td {
+    width: 25%;
+}
+
+.tablaF tr:nth-child(odd),
+.tablaF2 tr:nth-child(odd),
+.tablaExtras tr:nth-child(odd),
+.tablaInfoDocumentoVictima tr:nth-child(odd),
+.tablaInfoDocumentoVictimario tr:nth-child(odd),
+.tablaInfoGeneroVictima tr:nth-child(odd),
+.tablaInfoGeneroVictimario tr:nth-child(odd) {
+    background-color: #e3ffeb;
+}
+
+.cantidad {
+    display: none;
+}
+
+.otroDocumentoV,
+.otroDocumentoVR,
+.perteneceVictima,
+.perteneceVictimario,
+.cualGeneroVictima,
+.cualGeneroVictimario,
+.perteneceVE1,
+.perteneceVE2,
+.perteneceVE3,
+.perteneceVE4,
+.perteneceVE5,
+.otroGeneroVE1,
+.otroGeneroVE2,
+.otroGeneroVE3,
+.otroGeneroVE4,
+.otroGeneroVE5,
+.perteneceVE6 {
+    display: none;
+}
+
+.mensaje {
+    display: none;
+    font-size: 12px;
+    color: rgb(255, 0, 0);
+    padding: 0;
+    margin-top: 5px;
+    margin-bottom: 0;
+}
+
+.botonesF {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.botonGuardar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #d1ffde;
+    color: rgb(0, 0, 0);
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    margin: 0 auto;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.botonGuardar:hover {
+    box-shadow: 0 0 10px rgba(0, 255, 21, 0.897);
+    transform: scale(1.2);
+}
+
+.botonCancelar {
+    position: absolute;
+    background-color: transparent;
+    width: 15px;
+    right: 32.5%;
+    top: 27%;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    z-index: 9999;
+    transition: all 0.3s ease;
+}
+
+.botonCancelar:hover {
+    transform: scale(1.2);
+    z-index: 10000;
+}
+
+@keyframes aparecer {
+    from {
+        transform: translatey(10%);
+        opacity: 0;
+    }
+    to {
+        transform: translatey(0);
+        opacity: 1;
+    }
+}

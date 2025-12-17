@@ -1,0 +1,191 @@
+.fondoF {
+    display: none;
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background-color: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.formulario {
+    background-color: #ffffff;
+    width: 30%;
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 20px;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.549);
+    padding: 20px;
+}
+
+.headerF {
+    text-align: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    position: relative;
+}
+
+.headerF h2 {
+    color: rgb(15, 129, 0);
+    margin: 10px 0 0 0;
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.seccionF {
+    box-shadow: 0 0 10px rgba(0, 94, 17, 0.239); 
+    border-radius: 20px;
+    padding: 8px;
+    margin-bottom: 30px;
+    background-color: #ffffff;
+}
+
+.tablaF {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tablaF td {
+    padding: 14px 20px;
+    font-size: 14px;
+    width: 33.33%;
+}
+
+.tablaF tr:nth-child(odd) {
+    background-color: #e3ffeb;
+}
+
+.tablaF input[type="text"],
+.tablaF input[type="number"],
+.tablaF input[type="password"],
+.tablaF select {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #aaa;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 14px;
+    background-color: #ffffff;
+}
+
+.ver{
+    width: 15px;
+}
+
+.tablaF input:focus,
+.tablaF select:focus {
+    outline: none;
+    border-color: #00a13e;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+.tablaInfoDocumentoVictima {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tablaInfoDocumentoVictima td {
+    padding: 14px 20px;
+    font-size: 14px;
+    width: 25%;
+}
+
+.tablaInfoDocumentoVictima tr:nth-child(odd) {
+    background-color: #e3ffeb;
+}
+
+.tablaInfoDocumentoVictima input[type="text"],
+.tablaInfoDocumentoVictima select {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #aaa;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 14px;
+    background-color: #ffffff;
+}
+
+.tablaInfoDocumentoVictima input:focus,
+.tablaInfoDocumentoVictima select:focus {
+    outline: none;
+    border-color: #00a13e;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+.botonGuardar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #d1ffde;
+    color: rgb(0, 0, 0);
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    margin: 0 auto; 
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.botonGuardar:hover {
+    box-shadow: 0 0 10px rgba(0, 255, 21, 0.897);
+    transform: scale(1.1);
+}
+
+.botonCancelar {
+    position: absolute;
+    background-color: transparent; 
+    width: 15px;
+    right: 0;
+    top: 0;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.botonCancelar:hover {
+    transform: scale(1.2);
+}
+
+.mensaje {
+    display: none;
+    font-size: 12px;
+    color: rgb(255, 0, 0);
+    padding: 0;
+    margin-top: 5px;
+    margin-bottom: 0;
+}
+
+@keyframes aparecer {
+    from {
+        transform: translatey(10%);
+        opacity: 0;
+    }
+    to {
+        transform: translatey(0);
+        opacity: 1;
+    }
+}
+
+.fondoF {
+    animation: aparecer 0.5s ease-out;
+}
+
+/* Para Chrome, Safari, Edge, Opera */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Para Firefox */
+input[type=number] {
+    -moz-appearance: textfield;
+}

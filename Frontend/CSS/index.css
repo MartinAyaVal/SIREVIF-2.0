@@ -1,0 +1,490 @@
+body {
+    font-family: Arial, sans-serif;
+    background-image: 
+        linear-gradient(
+            rgba(0, 49, 0, 0.604)
+        ),
+        url(/Frontend/images/bandera.png);
+    background-size: cover;
+    background-position: center;
+    min-height: 100vh;
+    background-attachment: fixed;
+}
+
+.botonFiltrar{
+    position: absolute;
+    top: 10%;
+    left: 33%;
+    width: 15%;
+    text-align: center;
+    padding: 1%;
+    background-color: #deffe8;
+    border: none;
+    border-radius: 100px;
+    cursor: pointer;
+    font-size: 100%;
+    text-decoration: none;
+    color: black;
+    transition: All 0.5s ease;
+    box-shadow: 0 0 10px rgb(61, 61, 61); 
+}
+
+.botonFiltrar:hover {
+    transform: scale(1.05);
+    background-image: url(/Frontend/images/fondoBoton.PNG);
+    background-size: cover;
+    background-position: center;
+}
+
+.botonFiltrar img{
+    position: absolute;
+    width: 20px;
+    top: 25%;
+    right: 5px;
+    margin-right: 10px;
+}  
+
+.botonesFiltrar{
+    display: none;
+    position: absolute; 
+    top: 17%; 
+    left: 35%;
+    right: 7%;
+    transition: all 0.5s ease;
+    text-align: center;
+}
+
+.filtrarCedula{
+    width: 375px;
+    transition: All 0.5s ease;
+}
+
+.filtrarNombre{
+    width: 375px;
+    transition: All 0.5s ease;
+}
+
+.botonesFiltrar input{
+    margin-right: 60px;
+    text-align: center;
+    height: 35px;
+    background-color: #deffe8;
+    border: none;
+    border-radius: 100px;
+    font-size: 100%;
+    text-decoration: none;
+    color: black;
+    box-shadow: 0 0 10px rgb(0, 94, 17); 
+    transition: All 0.5s ease;
+}
+
+.input {
+    position: absolute;
+    top: 10%;
+    left: 35%;
+    width: 15%;
+    text-align: center;
+    padding: 1%;
+    background-color: #deffe8;
+    border: none;
+    border-radius: 100px;
+    cursor: pointer;
+    font-size: 100%;
+    text-decoration: none;
+    color: black;
+    box-shadow: 0 0 10px rgb(0, 94, 17); 
+    transition: All 0.5s ease;
+}
+
+.botonRegistrar{
+    position: absolute;
+    top: 10%;
+    left: 60%;
+    width: 30%;
+    text-align: center;
+    padding: 1%;
+    background-color: #deffe8;
+    border: none;
+    border-radius: 100px;
+    cursor: pointer;
+    font-size: 100%;
+    text-decoration: none;
+    color: black;
+    transition: All 0.5s ease;
+    box-shadow: 0 0 10px rgb(0, 94, 17); 
+}
+
+.botonRegistrar:hover {
+    transform: scale(1.05);
+    background-image: url(/Frontend/images/fondoBoton.PNG);
+    background-size: cover;
+    background-position: center;
+}
+
+.botonRegistrar img{
+    position: absolute;
+    width: 20px;
+    top: 25%;
+    right: 5px;
+    margin-right: 10px;
+} 
+
+.tituloMedidas {
+    position: absolute;
+    left: 40%;
+    font-size: 160%;
+}
+
+.botonTodos{
+    border: none;
+    height: 40px;
+    width: 100%;
+    cursor: pointer;
+    font-size: 17px;
+    background-color: #eefff3;
+    transition: all 0.3s ease;
+}
+
+.botonC1, .botonC2, .botonC3, .botonC4, .botonC5, .botonC6{
+    border: none;
+    height: 40px;
+    width: 100%;
+    cursor: pointer;
+    font-size: 17px;
+    color: white;
+    background-color: #138035;
+    transition: all 0.3s ease;   
+}
+
+.botonC1:hover, .botonC2:hover, .botonC3:hover, .botonC4:hover, .botonC5:hover, .botonC6:hover{
+    background-color: #deffe8;
+    color: black;
+}
+
+.botonComisarias:hover{
+    background-color: #ffffff;
+    box-shadow: 2px 0 10px rgb(0, 94, 17); 
+}
+
+.seccionBotonesComisarias{
+    display: flex;
+    position: absolute;
+    top: 30%;
+    left: 19%;
+    width: 80%;
+    height: 100%;
+    z-index: 1;
+    transition: All 0.5s ease;
+}
+
+.medidas{
+    display: flex;
+    justify-content: center;
+    background-color: #eefff3;
+    position: absolute;
+    top: 35%;
+    left: 19%;
+    width: 80%;
+    height: 100%;
+    transition: All 0.5s ease;
+    margin-bottom: 200px;
+    box-shadow: 0 0 10px rgb(0, 94, 17); 
+    overflow-y: scroll;
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/*Contraer contenido*/
+
+.botonFiltrar.contraer{
+    position: absolute;
+    top: 10%;
+    left: 25%;
+    width: 15%;
+    text-align: center;
+    padding: 1%;
+    background-color: #deffe8;
+    border: none;
+    border-radius: 100px;
+    cursor: pointer;
+    font-size: 100%;
+    text-decoration: none;
+    color: black;
+    box-shadow: 0 0 10px rgb(0, 94, 17); 
+    transition: All 0.5s ease;
+}
+
+.botonesFiltrar.contraer {
+    display: flex;
+    position: relative; 
+    top: 17%; 
+    left: 35%;
+    right: 7%;
+    transition: All 0.5s ease;
+}
+
+.botonRegistrar.contraer{
+    position: absolute;
+    top: 10%;
+    left: 52%;
+    width: 30%;
+    text-align: center;
+    padding: 1%;
+    background-color: #deffe8;
+    border: none;
+    border-radius: 100px;
+    cursor: pointer;
+    font-size: 100%;
+    text-decoration: none;
+    color: black;
+    box-shadow: 0 0 10px rgb(0, 94, 17); 
+    transition: All 0.5s ease;
+}
+
+.medidas.contraer{
+    display: flex;
+    justify-content: center;
+    background-color: #eefff3;
+    box-shadow: 0 0 10px rgb(0, 94, 17); 
+    position: absolute;
+    top: 35%;
+    left: 7%;
+    width: 92%;
+    height: 100%;
+    transition: All 0.5s ease;
+}
+
+/*Mostrar inputs para buscar*/
+
+.botonFiltrar.mostrar1{
+    position: absolute;
+    top: 6%;
+    left: 33%;
+    width: 15%;
+    text-align: center;
+    padding: 1%;
+    background-color: #deffe8;
+    border: none;
+    border-radius: 100px;
+    cursor: pointer;
+    font-size: 100%;
+    text-decoration: none;
+    color: black;
+    box-shadow: 0 0 10px rgb(0, 94, 17); 
+    transition: All 0.5s ease;
+}
+
+.botonRegistrar.mostrar1{
+    position: absolute;
+    top:6%;
+    left: 60%;
+    width: 30%;
+    text-align: center;
+    padding: 1%;
+    background-color: #deffe8;
+    border: none;
+    border-radius: 100px;
+    cursor: pointer;
+    font-size: 100%;
+    text-decoration: none;
+    color: black;
+    box-shadow: 0 0 10px rgb(0, 94, 17); 
+    transition: All 0.5s ease;
+}
+
+@keyframes medidas {
+    from {
+        transform: translatey(10%);
+        opacity: 0;
+    }
+    to {
+        transform: translatey(0);
+        opacity: 1;
+    }
+}
+
+@keyframes botones {
+    from {
+        transform: translatey(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translatey(0);
+        opacity: 1;
+    }
+}
+
+.medidas {
+    animation: medidas 0.8s ease-out;
+}
+
+.seccionBotonesComisarias{
+    animation: medidas 0.8s ease-out;
+}
+
+.botonFiltrar{
+    animation: botones 0.8s ease-out;
+}
+.botonRegistrar{
+    animation: botones 0.8s ease-out;
+}
+
+/* Agrega estos estilos a tu CSS */
+.contenedor-tabla {
+    margin-top: 60px;
+    overflow-x: auto;
+    border-radius: 10px;
+}
+
+.tabla-medidas {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.tabla-medidas th {
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 3px solid #0d6829;
+}
+
+.tabla-medidas td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.tabla-medidas tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.tabla-medidas tbody tr:hover {
+    background-color: #f0f9f3;
+}
+
+.tabla-medidas tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.tabla-medidas tbody tr:nth-child(even):hover {
+    background-color: #e9f7ec;
+}
+
+/* Estados de las medidas */
+.estado-activo {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.estado-vencido {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.estado-proximo {
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .tabla-medidas {
+        font-size: 12px;
+    }
+    
+    .tabla-medidas th,
+    .tabla-medidas td {
+        padding: 8px 10px;
+    }
+}
+
+@keyframes movimiento {
+    from {
+        transform: translatey(10%);
+        opacity: 0;
+    }
+    to {
+        transform: translatey(0);
+        opacity: 1;
+    }
+}
+
+.fondoCerrarSesion{
+    animation: movimiento 0.5s ease-out;
+}
+
+.fondoCerrarSesion {
+    display: none;
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.cerrarSesion{
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.boton1cerrarSesion {
+    background-color: #138035;
+    color: white;
+    padding: 10px 20px;
+    margin: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.boton1cerrarSesion:hover {
+    background-color: #0d6829;
+    transform: translateY(-2px); 
+}
+
+.boton2cerrarSesion {
+    padding: 10px 20px;
+    margin: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.boton2cerrarSesion:hover {
+    background-color: #c5c5c5;
+    transform: translateY(-2px); 
+}
+
+.imgCerrarSesion{
+    width: 100px;
+    margin-bottom: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+}

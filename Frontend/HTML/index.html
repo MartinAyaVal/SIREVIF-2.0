@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/Frontend/CSS/index.css">
+    <link rel="stylesheet" href="/Frontend/CSS/formularioMedidas.css">
+    <link rel="stylesheet" href="/Frontend/CSS/barraLateral.css">
+    <link rel="icon" href="/Frontend/images/logoAlcaldia.png">
+    <title>SIREVIF 2.0</title>
+</head>
+<body>
+    <header id="barra" class="barra">
+        <img id="menuHamburguesa" class="hamburguesa" src="/Frontend/images/hamburguesa.png" alt="">
+        <img id="logo" class="logo" src="/Frontend/images/logoAlcaldia.png" alt="">
+        <p id="titulo" class="titulo">SIREVIF 2.0</p>
+        <p id="nombreUsuarioHeader" class="texto">Cargando...</p>
+        <p id="comisariaUsuarioHeader" class="texto">Cargando...</p>
+        <nav>
+            <a id="boton" title="Medidas de Protección" class="actual">
+                <img class="imgBarra" src="/Frontend/images/medidas.png">
+                Medidas de Protección 
+            </a>
+            <a id="boton" title="Estadísticas" href="estadisticas.html" class="botonBarra">
+                <img class="imgBarra" src="/Frontend/images/estadisticas.png">
+                Estadísticas
+            </a>
+            <a id="boton" title="Usuarios" href="usuarios.html" class="botonBarra">
+                <img class="imgBarra" src="/Frontend/images/usuarios.png">
+                Usuarios
+            </a>
+            <a id="boton" title="Mi Cuenta" href="miCuenta.html" class="botonBarra">
+                <img class="imgBarra" src="/Frontend/images/usuario.png">
+                Mi cuenta
+            </a>
+        </nav>
+        <a id="logoutBtn" class="botonSalir" title="Cerrar Sesión" href="#">
+            <img class="imgBarra" src="/Frontend/images/cerrar-sesion.png" alt="Cerrar sesión">
+            Cerrar Sesión
+        </a>
+    </header>
+
+    <div id="divCerrarSesion" class="fondoCerrarSesion">
+        <div class="cerrarSesion">
+            <img src="/Frontend/images/logoAlcaldia.png" class="imgCerrarSesion">
+            <p>¿Está seguro que desea cerrar sesión?</p>
+            <div class="botonesCerrarSesion">
+                <button id="cerrarSesion" class="boton1cerrarSesion">Sí, cerrar sesión</button>
+                <button id="cancelarCerrarSesion" class="boton2cerrarSesion">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
+    <button id="filtrar" class="botonFiltrar">Buscar<img src="/Frontend/images/buscar.png" alt=""></button>
+    <button class="botonRegistrar" id="abrirFormulario">Registrar nueva medida de protección <img src="/Frontend/images/añadir.png" alt=""></button>
+    <div id="botonesFiltrar" class="botonesFiltrar">
+        <input autocomplete="off" class="filtrarCedula" type="number" placeholder="Buscar por Número de Documento">
+        <input autocomplete="off" class="filtrarNombre" type="text" placeholder="Buscar por Nombre Completo">
+    </div>
+
+    <section class="seccionBotonesComisarias">
+        <button class="botonTodos">Todos</button>
+        <button class="botonC1">Comisaría 1</button>
+        <button class="botonC2">Comisaría 2</button>
+        <button class="botonC3">Comisaría 3</button>
+        <button class="botonC4">Comisaría 4</button>
+        <button class="botonC5">Comisaría 5</button>
+        <button class="botonC6">Comisaría 6</button>
+    </section>
+
+    <section class="medidas">
+        
+        <p class="tituloMedidas">Medidas de protección</p>
+        
+        <div class="contenedor-tabla">
+            <table id="tablaMedidas" class="tabla-medidas">
+                <thead>
+                    <tr>
+                        <th>Número de medida</th>
+                        <th>Lugar de los hechos</th>
+                        <th>Tipo de Violencia</th>
+                        <th>Fecha últimos hechos</th>
+                        <th>Hora últimos hechos</th>
+                        <th>Fecha Inicio</th>
+                        <th>Fecha Fin</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="cuerpoTabla">
+                </tbody>
+            </table>
+        </div>
+    </section>
+    
+    <!-- Formulario de medidas de protección -->
+    <div id="formularioOverlay" class="fondoF">
+        <div class="formulario">
+            
+            <div class="headerF">
+                <h2>Registro de Medidas de Protección</h2>
+                <table class="tablaNumero">
+                        <tr>
+                            <td class="tdNumero" strong>Número de medida:</td>
+                        </tr>
+                        <tr>
+                            <td><input autocomplete="off" type="number" id="numeroMedida" name="numeroMedida"><p class="mensaje">- El <strong>número de la medida</strong> es requerido.</p></td>
+                        </tr>
+                    </table>
+            </div>
+            
+            <form id="formularioMedidas">
+                <img title="Cancelar Registro" class="botonCancelar" src="/Frontend/images/salir.png">
+                <!-- Formulario de registro medidas de protección -->
+                <div class="seccionF">
+                    <h3>Información de la Víctima</h3>
+                    <!-- Sección Víctimas -->
+                    <table class="tablaF">
+                        <tr>
+                            <td>Nombre completo:</td>
+                            <td>Fecha de Nacimiento:</td>
+                            <td>Edad:</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input autocomplete="off" type="text" name="nombreV" id="nombreV">
+                                <p class="mensaje">- El <strong>nombre de la víctima</strong> es requerido.</p>
+                            </td>
+                            <td>
+                                <input autocomplete="off" type="date" name="fechaNacimientoV" id="fechaNacimientoV">
+                                <p class="mensaje">- La <strong>fecha de nacimiento de la víctima</strong> es requerida.</p>
+                            </td>
+                            <td>
+                                <input autocomplete="off" type="text" name="edadV" id="edadV" readonly style="background-color:rgb(239, 239, 239);">
+                            </td>
+                        </tr>
+                    </table>
+                    <table class="tablaInfoDocumentoVictima">
+                        <tr>
+                            <td>Tipo de documento:</td>
+                            <td class="otroDocumentoV">Ingrese el <strong>otro</strong> tipo de documento</td>
+                            <td>Número de documento:</td>
+                            <td>Expedida en:</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <select id="tipoDocumentoV" name="tipoDocumentoVictima">
+                                    <option value="">- - Seleccione - -</option>
+                                    <option value="cedula">Cédula</option>
+                                    <option value="tarjeta_identidad">Tarjeta de Identidad</option>
+                                    <option value="NIUT">NIUT</option>
+                                    <option value="cedula_extranjeria">Cédula de Extranjería</option>
+                                    <option value="otro">Otro</option>
+                                </select>
+                                <p class="mensaje">- El <strong>tipo de documento de la víctima</strong> es requerido.</p>
+                            </td>
+                            <td class="otroDocumentoV">
+                                <input autocomplete="off" type="text" name="otroDocumento" id="otroTipoV">
+                                <p class="mensaje">- Ingrese el <strong>otro tipo de documento de la víctima</strong>.</p>
+                            </td>
+                            <td>
+                                <input autocomplete="off" type="number" name="documentoV" id="documentoV" >
+                                <p class="mensaje">- El <strong>número de documento de la víctima</strong> es requerido.</p>
+                                <p class="mensaje">- El mínimo de caracteres es de 7</p>
+                            </td>
+                            <td>
+                                <input autocomplete="off" type="text" name="documentoExpedicoVictima" id="expedicionV">
+                                <p class="mensaje">- El <strong>lugar de expedición del documento de la víctima</strong> es requerido.</p>
+                            </td>
+                        </tr>
+                    </table>
+                    <table class="tablaInfoGeneroVictima">
+                        <tr>
+                            <td>Sexo:</td>
+                            <td>¿Se identifica como LGBTI?</td>
+                            <td class="perteneceVictima">¿Cuál?</td>
+                            <td class="cualGeneroVictima" id="cualGeneroVictima">¿Cómo se identifica?</td>
+                        </tr>   
+                        <tr>
+                            <td>
+                                <select id="sexoV" name="sexoVictima">
+                                    <option value="">- - Seleccione - -</option>
+                                    <option value="femenino">Femenino</option>
+                                    <option value="masculino">Masculino</option>
+                                    <option value="noBinario">No Binario</option>
+                                    <option value="trans">Trans</option>
+                                </select>
+                                <p class="mensaje">- El <strong>sexo de la víctima</strong> es requerido.</p>
+                            </td>
+                            <td>
+                                <select name="perteneceVictima" id="perteneceVictima">
+                                    <option value="">- - Seleccione - -</option>
+                                    <option value="si">Sí</option>
+                                    <option value="no">No</option>
+                                </select>
+                                <p class="mensaje">- Confirme si <strong>la víctima pertenece a la comunidad LGBTI</strong>.</p>
+                            </td>
+                            <td  class="perteneceVictima">
+                                <select id="generoVictima" name="generoVictima">
+                                    <option value="">- - Seleccione - -</option>
+                                    <option value="bisexual">Bisexual</option>
+                                    <option value="gay">Gay</option>
+                                    <option value="intersexual">Intersexual</option>
+                                    <option value="lesbiana">Lesbiana</option>
+                                    <option value="mujerTrans">Mujer Transgénero</option>
+                                    <option value="hombreTrans">Hombre Transgénero</option>
+                                    <option value="noBinario">No Binario</option>
+                                    <option value="otro">Otro</option>
+                                </select>
+                                <p class="mensaje">- Seleccione la <strong>identificación de la víctima en la comunidad LGBTI</strong>.</p>
+                            </td>
+                            <td class="cualGeneroVictima" id="cualGeneroVictima">
+                                <input autocomplete="off" type="text" name="otroGeneroVictima" id="otroGeneroVictima">
+                                <p class="mensaje">- Ingrese la <strong>identificación específica de la víctima en la comunidad LGBTI</strong>.</p>
+                            </td>
+                        </tr>
+                    </table>
+                    <table class="tablaF2">
+                        <tr>
+                            <td>Estado Civil:</td>
+                            <td>Barrio:</td>
+                            <td>Dirección de residencia:</td>
+                            <td>Ocupación:</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <select id="estadoCivilV" name="estadoCivilVictima">
+                                    <option value="">- - Seleccione - -</option>
+                                    <option value="soltero">Soltero(a)</option>
+                                    <option value="casado">Casado(a)</option>
+                                    <option value="union_libre">Unión Libre</option>
+                                    <option value="divorciado">Divorciado(a)</option>
+                                    <option value="viudo">Viudo(a)</option>
+                                </select>
+                                <p class="mensaje">- El <strong>estado civil de la víctima</strong> es requerido.</p>
+                            </td>
+                            <td>
+                                <input autocomplete="off" type="text" name="barrioVictima" id="barrioV">
+                                <p class="mensaje">- El <strong>barrio de residencia de la víctima</strong> es requerido.</p>
+                            </td>
+                            <td>
+                                <input autocomplete="off" class="direccion" type="text" name="direccionVictima" id="direccionV">
+                                <p class="mensaje">- La <strong>dirección de residencia de la víctima</strong> es requerida.</p>
+                            </td>
+                            <td>
+                                <input autocomplete="off" type="text" name="ocupacionVictima" id="ocupacionV">
+                                <p class="mensaje">- La <strong>ocupación de la víctima</strong> es requerida.</p>
+                            </td>
+                        </tr>
+                    </table>
+                    <table class="tablaF">
+                        <tr>
+                            <td>Nivel de estudios:</td>
+                            <td>Parentesco con el agresor(a):</td>
+                            <td><strong>¿Ingresar más víctimas?</strong></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <select id="estudiosV" name="estudiosVictima">
+                                    <option value="">- - Seleccione - -</option>
+                                    <option value="primaria">Primaria</option>
+                                    <option value="secundaria">Secundaria</option>
+                                    <option value="tecnico">Técnico</option>
+                                    <option value="universitario">Universitario</option>
+                                    <option value="posgrado">Posgrado</option>
+                                </select>
+                                <p class="mensaje">- El <strong>nivel de estudios de la víctima</strong> es requerido.</p>
+                            </td>
+                            <td>
+                                <input autocomplete="off" type="text" name="parentescoConAgresor" id="parentesco">
+                                <p class="mensaje">- El <strong>parentesco de la víctima con el agresor</strong> es requerido.</p>
+                            </td>
+                            <td>
+                                <select id="mostrar" name="añadirExtras">
+                                    <option value="">- - Seleccione - -</option>
+                                    <option value="si">Sí</option> 
+                                    <option value="no">No</option> 
+                                </select>
+                                <p class="mensaje">- Confirme si desea <strong>ingresar más víctimas</strong>.</p>
+                            </td>
+                            </tr>
+                            <tr class="cantidad">  
+                                <td></td>
+                                <td>¿Cuántas víctimas más desea ingresar?</td>
+                                <td><strong></strong></td>
+                            </tr>
+                            <tr class="cantidad">  
+                                <td></td>
+                                <td>
+                                    <select id="cantidad" name="cantidadExtras">  
+                                        <option value="">- - Seleccione - -</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                    </select>
+                                    <p class="mensaje">- Confirme <strong>el número de víctimas adicionales</strong> que desea ingresar.</p>
+                                </td>
+                                <td></td>
+                            </tr>
+                    </table>
+                    
+                </div>
+
+                <!-- Sección Víctimas Extras -->
+                <div id="extras" class="extras"> 
+
+                    <div class="victimaExtra" id="victimaExtra1">
+                        <h3>Información Segunda Víctima</h3>
+                        <table class="tablaExtras">
+                            <tr>
+                                <td>Nombre Completo</td>
+                                <td>Número de documento:</td>
+                                <td>Fecha de Nacimiento</td>
+                                <td>Edad</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input autocomplete="off" type="text" name="nombreExtra1" id="nombreVE1">
+                                    <p class="mensaje">- El <strong>nombre de la segunda víctima</strong> es requerido.</p>
+                                </td>
+                                <td>
+                                    <input autocomplete="off" type="number" name="documentoExtra1" id="documentoVE1">
+                                    <p class="mensaje">- El <strong>número de documento de la segunda víctima</strong> es requerido</p>
+                                    <p class="mensaje">- El mínimo de caracteres es de 7</p>
+                                </td>
+                                <td>
+                                    <input autocomplete="off" type="date" name="nacimientoVictima" id="fechaNacimientoVE1">
+                                    <p class="mensaje">- La <strong>fecha de nacimiento de la segunda víctima</strong> es requerida</p>
+                                </td>
+                                <td>
+                                    <input autocomplete="off" type="text" name="edadVE1" id="edadVE1" readonly style="background-color:rgb(239, 239, 239);">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Sexo</td>
+                                <td>¿Se identifica como LGBTI?</td>
+                                <td class="perteneceVE1">¿Cuál?</td>
+                                <td class="otroGeneroVE1">¿Cómo se identifica?</td>
+                            </tr>
+                            <tr>    
+                                <td>
+                                    <select name="sexoVE1" id="sexoVE1">
+                                        <option value="">- - Seleccione - -</option>
+                                        <option value="femenino">Femenino</option>
+                                        <option value="masculino">Masculino</option>
+                                        <option value="noBinario">No Binario</option>
+                                        <option value="trans">Trans</option>
+                                    </select>
+                                    <p class="mensaje">- El <strong>sexo de la segunda víctima</strong> es requerido.</p>
+                                </td>
+                                <td>
+                                    <select name="perteneceVE1" id="perteneceVE1">
+                                        <option value="">- - Seleccione - -</option>
+                                        <option value="si">Sí</option>
+                                        <option value="no">No</option>
+                                    </select>
+                                    <p class="mensaje">- Confirme si <strong>la segunda víctima pertenece a la comunidad LGBTI</strong>.</p>
+                                </td>
+                                <td  class="perteneceVE1">
+                                    <select name="generoVictima" class="perteneceVE1" id="cualVE1">
+                                        <option value="">- - Seleccione - -</option>
+                                        <option value="bisexual">Bisexual</option>
+                                        <option value="gay">Gay</option>
+                                        <option value="intersexual">Intersexual</option>
+                                        <option value="lesbiana">Lesbiana</option>
+                                        <option value="mujerTrans">Mujer Transgénero</option>
+                                        <option value="hombreTrans">Hombre Transgénero</option>
+                                        <option value="noBinario">No Binario</option>
+                                        <option value="otro">Otro</option>
+                                    </select>
+                                    <p class="mensaje">- Seleccione la <strong>identificación de la segunda víctima en la comunidad LGBTI</strong>.</p>
+                                </td>
+                                <td class="otroGeneroVE1">
+                                    <input autocomplete="off" type="text" name="otroGeneroVictima1" id="otroGeneroVE1">
+                                    <p class="mensaje">- Ingrese la <strong>identificación específica de la segunda víctima en la comunidad LGBTI</strong>.</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="victimaExtra" id="victimaExtra2">
+                        <h3>Información Tercera Víctima</h3>
+                        <table class="tablaExtras">
+                            <tr>
+                                <td>Nombre Completo</td>
+                                <td>Número de documento:</td>
+                                <td>Fecha de Nacimiento</td>
+                                <td>Edad</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input autocomplete="off" type="text" name="nombreExtra2" id="nombreVE2">
+                                    <p class="mensaje">- El <strong>nombre de la tercera víctima</strong> es requerido.</p>
+                                </td>
+                                <td>
+                                    <input autocomplete="off" type="number" name="documentoExtra1" id="documentoVE2">
+                                    <p class="mensaje">- El <strong>número de documento de la tercera víctima</strong> es requerido</p>
+                                    <p class="mensaje">- El mínimo de caracteres es de 7</p>
+                                </td>
+                                <td>
+                                    <input autocomplete="off" type="date" name="nacimientoVictima" id="fechaNacimientoVE2">
+                                    <p class="mensaje">- La <strong>fecha de nacimiento de la tercera víctima</strong> es requerida</p>
+                                </td>
+                                <td>
+                                    <input autocomplete="off" type="text" name="edadVE2" id="edadVE2" readonly style="background-color:rgb(239, 239, 239);">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Sexo</td>
+                                <td>¿Se identifica como LGBTI?</td>
+                                <td class="perteneceVE2">¿Cuál?</td>
+                                <td class="otroGeneroVE2">¿Cómo se identifica?</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <select name="sexoVE2" id="sexoVE1">
+                                        <option value="">- - Seleccione - -</option>
+                                        <option value="femenino">Femenino</option>
+                                        <option value="masculino">Masculino</option>
+                                        <option value="noBinario">No Binario</option>
+                                        <option value="trans">Trans</option>
+                                    </select>
+                                    <p class="mensaje">- El <strong>sexo de la tercera víctima</strong> es requerido.</p>
+                                </td>
+                                <td>
+                                    <select name="perteneceVE2" id="perteneceVE2">
+                                        <option value="">- - Seleccione - -</option>
+                                        <option value="si">Sí</option>
+                                        <option value="no">No</option>
+                                    </select>
+                                    <p class="mensaje">- Confirme si <strong>la tercera víctima pertenece a la comunidad LGBTI</strong>.</p>
+                                </td>
+                                <td class="perteneceVE2">
+                                    <select name="generoVictima" class="perteneceVE2" id="cualVE2">
+                                        <option value="">- - Seleccione - -</option>
+                                        <option value="bisexual">Bisexual</option>
+                                        <option value="gay">Gay</option>
+                                        <option value="intersexual">Intersexual</option>
+                                        <option value="lesbiana">Lesbiana</option>
+                                        <option value="mujerTrans">Mujer Transgénero</option>
+                                        <option value="hombreTrans">Hombre Transgénero</option>
+                                        <option value="noBinario">No Binario</option>
+                                        <option value="otro">Otro</option>
+                                    </select>
+                                    <p class="mensaje">- Seleccione la <strong>identificación de la tercera víctima en la comunidad LGBTI</strong>.</p>
+                                </td>
+                                <td class="otroGeneroVE2">
+                                    <input autocomplete="off" type="text" name="otroGeneroVictima2" id="otroGeneroVE2">
+                                    <p class="mensaje">- Ingrese la <strong>identificación específica de la tercera víctima en la comunidad LGBTI</strong>.</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="victimaExtra" id="victimaExtra3">
+                        <h3>Información Cuarta Víctima</h3>
+                        <table class="tablaExtras">
+                            <tr>
+                                <td>Nombre Completo</td>
+                                <td>Número de documento:</td>
+                                <td>Fecha de Nacimiento</td>
+                                <td>Edad</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input autocomplete="off" type="text" name="nombreExtra3" id="nombreVE3">
+                                    <p class="mensaje">- El <strong>nombre de la cuarta víctima</strong> es requerido.</p>
+                                </td>
+                                <td>
+                                    <input autocomplete="off" type="number" name="documentoExtra3" id="documentoVE3">
+                                    <p class="mensaje">- El <strong>número de documento de la cuarta víctima</strong> es requerido</p>
+                                    <p class="mensaje">- El mínimo de caracteres es de 7</p>
+                                </td>
+                                <td>
+                                    <input autocomplete="off" type="date" name="nacimientoVictima" id="fechaNacimientoVE3">
+                                    <p class="mensaje">- La <strong>fecha de nacimiento de la cuarta víctima</strong> es requerida</p>
+                                </td>
+                                <td>
+                                    <input autocomplete="off" type="text" name="edadVE3" id="edadVE3" readonly style="background-color:rgb(239, 239, 239);">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Sexo</td>
+                                <td>¿Se identifica como LGBTI?</td>
+                                <td class="perteneceVE3">¿Cuál?</td>
+                                <td class="otroGeneroVE3">¿Cómo se identifica?</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <select name="sexoVE3" id="sexoVE3">
+                                        <option value="">- - Seleccione - -</option>
+                                        <option value="femenino">Femenino</option>
+                                        <option value="masculino">Masculino</option>
+                                        <option value="noBinario">No Binario</option>
+                                        <option value="trans">Trans</option>
+                                    </select>
+                                    <p class="mensaje">- El <strong>sexo de la cuarta víctima</strong> es requerido.</p>
+                                </td>
+                                <td>
+                                    <select name="perteneceVE3" id="perteneceVE3">
+                                        <option value="">- - Seleccione - -</option>
+                                        <option value="si">Sí</option>
+                                        <option value="no">No</option>
+                                    </select>
+                                    <p class="mensaje">- Confirme si <strong>la cuarta víctima pertenece a la comunidad LGBTI</strong>.</p>
+                                </td>
+                                <td class="perteneceVE3">
+                                    <select name="generoVictima" class="perteneceVE3" id="cualVE3">
+                                        <option value="">- - Seleccione - -</option>
+                                        <option value="bisexual">Bisexual</option>
+                                        <option value="gay">Gay</option>
+                                        <option value="intersexual">Intersexual</option>
+                                        <option value="lesbiana">Lesbiana</option>
+                                        <option value="mujerTrans">Mujer Transgénero</option>
+                                        <option value="hombreTrans">Hombre Transgénero</option>
+                                        <option value="noBinario">No Binario</option>
+                                        <option value="otro">Otro</option>
+                                    </select>
+                                    <p class="mensaje">- Seleccione la <strong>identificación de la cuarta víctima en la comunidad LGBTI</strong>.</p>
+                                </td>
+                                <td class="otroGeneroVE3">
+                                    <input autocomplete="off" type="text" name="otroGeneroVictima3" id="otroGeneroVE3">
+                                    <p class="mensaje">- Ingrese la <strong>identificación específica de la cuarta víctima en la comunidad LGBTI</strong>.</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="victimaExtra" id="victimaExtra4">
+                        <h3>Información Quinta Víctima</h3>
+                        <table class="tablaExtras">
+                            <tr>
+                                <td>Nombre Completo</td>
+                                <td>Número de documento:</td>
+                                <td>Fecha de Nacimiento</td>
+                                <td>Edad</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input autocomplete="off" type="text" name="nombreExtra4" id="nombreVE4">
+                                    <p class="mensaje">- El <strong>nombre de la quinta víctima</strong> es requerido.</p>
+                                </td>
+                                <td>
+                                    <input autocomplete="off" type="number" name="documentoExtra4" id="documentoVE4">
+                                    <p class="mensaje">- El <strong>número de documento de la quinta víctima</strong> es requerido</p>
+                                    <p class="mensaje">- El mínimo de caracteres es de 7</p>
+                                </td>
+                                <td>
+                                    <input autocomplete="off" type="date" name="nacimientoVictima" id="fechaNacimientoVE4">
+                                    <p class="mensaje">- La <strong>fecha de nacimiento de la quinta víctima</strong> es requerida</p>
+                                </td>
+                                <td>
+                                    <input autocomplete="off" type="text" name="edadVE4" id="edadVE4" readonly style="background-color:rgb(239, 239, 239);">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Sexo</td>
+                                <td>¿Se identifica como LGBTI?</td>
+                                <td class="perteneceVE4">¿Cuál?</td>
+                                <td class="otroGeneroVE4">¿Cómo se identifica?</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <select name="sexoVE4">
+                                        <option value="">- - Seleccione - -</option>
+                                        <option value="femenino">Femenino</option>
+                                        <option value="masculino">Masculino</option>
+                                        <option value="noBinario">No Binario</option>
+                                        <option value="trans">Trans</option>
+                                    </select>
+                                    <p class="mensaje">- El <strong>sexo de la quinta víctima</strong> es requerido.</p>
+                                </td>
+                                <td>
+                                    <select name="perteneceVE4" id="perteneceVE4">
+                                        <option value="">- - Seleccione - -</option>
+                                        <option value="si">Sí</option>
+                                        <option value="no">No</option>
+                                    </select>
+                                    <p class="mensaje">- Confirme si <strong>la quinta víctima pertenece a la comunidad LGBTI</strong>.</p>
+                                </td>
+                                <td class="perteneceVE4">
+                                    <select name="generoVictima" class="perteneceVE4" id="cualVE4">
+                                        <option value="">- - Seleccione - -</option>
+                                        <option value="bisexual">Bisexual</option>
+                                        <option value="gay">Gay</option>
+                                        <option value="intersexual">Intersexual</option>
+                                        <option value="lesbiana">Lesbiana</option>
+                                        <option value="mujerTrans">Mujer Transgénero</option>
+                                        <option value="hombreTrans">Hombre Transgénero</option>
+                                        <option value="noBinario">No Binario</option>
+                                        <option value="otro">Otro</option>
+                                    </select>
+                                    <p class="mensaje">- Seleccione la <strong>identificación de la quinta víctima en la comunidad LGBTI</strong>.</p>
+                                </td>
+                                <td class="otroGeneroVE4">
+                                    <input autocomplete="off" type="text" name="otroGeneroVictima4" id="otroGeneroVE4">
+                                    <p class="mensaje">- Ingrese la <strong>identificación específica de la quinta víctima en la comunidad LGBTI</strong>.</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="victimaExtra" id="victimaExtra5">
+                        <h3>Información Sexta Víctima</h3>
+                        <table class="tablaExtras">
+                            <tr>
+                                <td>Nombre Completo</td>
+                                <td>Número de documento:</td>
+                                <td>Fecha de Nacimiento</td>
+                                <td>Edad</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input autocomplete="off" type="text" name="nombreExtra5" id="nombreVE5">
+                                    <p class="mensaje">- El <strong>nombre de la sexta víctima</strong> es requerido.</p>
+                                </td>
+                                <td>
+                                    <input autocomplete="off" type="number" name="documentoExtra5" id="documentoVE5">
+                                    <p class="mensaje">- El <strong>número de documento de la sexta víctima</strong> es requerido</p>
+                                    <p class="mensaje">- El mínimo de caracteres es de 7</p>
+                                </td>
+                                <td>
+                                    <input autocomplete="off" type="date" name="nacimientoVictima" id="fechaNacimientoVE5">
+                                    <p class="mensaje">- La <strong>fecha de nacimiento de la sexta víctima</strong> es requerida</p>
+                                </td>
+                                <td>
+                                    <input autocomplete="off" type="text" name="edadVE5" id="edadVE5" readonly style="background-color:rgb(239, 239, 239);"></td>
+                            </tr>
+                            <tr>
+                                <td>Sexo</td>
+                                <td>¿Se identifica como LGBTI?</td>
+                                <td class="perteneceVE5">¿Cuál?</td>
+                                <td class="otroGeneroVE5">¿Cómo se identifica?</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <select name="sexoVE5" id="sexoVE5">
+                                        <option value="">- - Seleccione - -</option>
+                                        <option value="femenino">Femenino</option>
+                                        <option value="masculino">Masculino</option>
+                                        <option value="noBinario">No Binario</option>
+                                        <option value="trans">Trans</option>
+                                    </select>
+                                    <p class="mensaje">- El <strong>sexo de la sexta víctima</strong> es requerido.</p>
+                                </td>
+                                <td>
+                                    <select name="perteneceVE5" id="perteneceVE5">
+                                        <option value="">- - Seleccione - -</option>
+                                        <option value="si">Sí</option>
+                                        <option value="no">No</option>
+                                    </select>
+                                    <p class="mensaje">- Confirme si <strong>la sexta víctima pertenece a la comunidad LGBTI</strong>.</p>
+                                </td>
+                                <td class="perteneceVE5">
+                                    <select name="generoVictima" class="perteneceVE5" id="cualVE5">
+                                        <option value="">- - Seleccione - -</option>
+                                        <option value="bisexual">Bisexual</option>
+                                        <option value="gay">Gay</option>
+                                        <option value="intersexual">Intersexual</option>
+                                        <option value="lesbiana">Lesbiana</option>
+                                        <option value="mujerTrans">Mujer Transgénero</option>
+                                        <option value="hombreTrans">Hombre Transgénero</option>
+                                        <option value="noBinario">No Binario</option>
+                                        <option value="otro">Otro</option>
+                                    </select>
+                                    <p class="mensaje">- Seleccione la <strong>identificación de la sexta víctima en la comunidad LGBTI</strong>.</p>
+                                </td>
+                                <td class="otroGeneroVE5">
+                                    <input autocomplete="off" type="text" name="otroGeneroVictima5" id="otroGeneroVE5">
+                                    <p class="mensaje">- Ingrese la <strong>identificación específica de la sexta víctima en la comunidad LGBTI</strong>.</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Sección Victimario -->
+                <div class="seccionF">
+                    <h3>Información del Victimario</h3>
+                    <table class="tablaF">
+                        <tr>
+                            <td>Nombre completo:</td>
+                            <td>Fecha de Nacimiento:</td>
+                            <td>Edad:</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input autocomplete="off" type="text" name="nombreVictimario" id="nombreVr">
+                                <p class="mensaje">- El <strong>nombre del victimario</strong> es requerido</p>
+                            </td>
+                            <td>
+                                <input autocomplete="off" type="date" name="nacimientoVictimario" id="fechaNacimientoVr">
+                                <p class="mensaje">- La <strong>fecha de nacimiento del victimario</strong> es requerida</p>
+                            </td>
+                            <td>
+                                <input autocomplete="off" type="text" name="edadVictimario" id="edadVr" readonly style="background-color:rgb(239, 239, 239);">
+                            </td>
+                        </tr>
+                    </table>
+                    <table class="tablaInfoDocumentoVictimario">
+                        <tr>
+                            <td>Tipo de documento:</td>
+                            <td class="otroDocumentoVR">Ingrese el <strong>otro</strong> tipo de documento</td>
+                            <td>Número de documento:</td>
+                            <td>Expedida en:</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <select id="tipoDocumentoVR" name="tipoDocumentoVictimario">
+                                    <option value="">- - Seleccione - -</option>
+                                    <option value="cedula">Cédula</option>
+                                    <option value="tarjeta_identidad">Tarjeta de Identidad</option>
+                                    <option value="NIUT">NIUT</option>
+                                    <option value="cedula_extranjeria">Cédula de Extranjería</option>
+                                    <option value="otro">Otro</option>
+                                </select>
+                                <p class="mensaje">- El <strong>tipo de documento del victimario</strong> es requerido</p>
+                            </td>
+                            <td class="otroDocumentoVR">
+                                <input autocomplete="off" type="text" name="otroDocumento" id="otroTipoVr">
+                                <p class="mensaje">- Ingrese el <strong>otro tipo de documento del victimario</strong>.</p>
+                            </td>
+                            <td>
+                                <input autocomplete="off" id="documentoVictimario" type="number" name="documentoVictima">
+                                <p class="mensaje">- El <strong>número de documento del victimario</strong> es requerido.</p>
+                                <p class="mensaje">- El mínimo de caracteres es de 7</p>
+                            </td>
+                            <td>
+                                <input autocomplete="off" type="text" name="documentoExpedicoVictima" id="expedicionVr">
+                                <p class="mensaje">- El <strong>lugar de expedición del documento del victimario</strong> es requerido.</p>
+                            </td>
+                        </tr>
+                    </table>
+                    <table class="tablaInfoGeneroVictimario">
+                        <tr>
+                            <td>Sexo:</td>
+                            <td>¿Se identifica como LGBTI?</td>
+                            <td class="perteneceVictimario">¿Cuál?</td>
+                            <td class="cualGeneroVictimario" id="cualGeneroVictimario">¿Cómo se identifica?</td>
+                        </tr>   
+                        <tr>
+                            <td>
+                                <select id="sexoVr" name="sexoVictimario">
+                                    <option value="">- - Seleccione - -</option>
+                                    <option value="femenino">Femenino</option>
+                                    <option value="masculino">Masculino</option>
+                                    <option value="noBinario">No Binario</option>
+                                    <option value="trans">Trans</option>
+                                </select>
+                                <p class="mensaje">- El <strong>sexo del victimario</strong> es requerido.</p>
+                            </td>
+                            <td>
+                                <select name="perteneceVictimario" id="perteneceVictimario">
+                                    <option value="">- - Seleccione - -</option>
+                                    <option value="si">Sí</option>
+                                    <option value="no">No</option>
+                                </select>
+                                <p class="mensaje">- Confirme si <strong>el victimario pertenece a la comunidad LGBTI</strong>.</p>
+                            </td>
+                            <td  class="perteneceVictimario">
+                                <select id="generoVictimario" name="generoVictimario">
+                                    <option value="">- - Seleccione - -</option>
+                                    <option value="bisexual">Bisexual</option>
+                                    <option value="gay">Gay</option>
+                                    <option value="intersexual">Intersexual</option>
+                                    <option value="lesbiana">Lesbiana</option>
+                                    <option value="mujerTrans">Mujer Transgénero</option>
+                                    <option value="hombreTrans">Hombre Transgénero</option>
+                                    <option value="noBinario">No Binario</option>
+                                    <option value="otro">Otro</option>
+                                </select>
+                                <p class="mensaje">- Seleccione la <strong>identificación del victimario en la comunidad LGBTI</strong>.</p>
+                            </td>
+                            <td class="cualGeneroVictimario" id="cualGeneroVictimario">
+                                <input autocomplete="off" type="text" name="parentescoConAgresor" id="otroGeneroVictimario">
+                                <p class="mensaje">- Ingrese la <strong>identificación específica del victimario en la comunidad LGBTI</strong>.</p>
+                            </td>
+                        </tr>
+                    </table>
+                    <table class="tablaF2">
+                        <tr>
+                            <td>Estado Civil:</td>
+                            <td>Barrio:</td>
+                            <td>Dirección de residencia:</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <select id="estadoCivilVr" name="estadoCivilVictimario">
+                                    <option value="">- - Seleccione - -</option>
+                                    <option value="soltero">Soltero(a)</option>
+                                    <option value="casado">Casado(a)</option>
+                                    <option value="union_libre">Unión Libre</option>
+                                    <option value="divorciado">Divorciado(a)</option>
+                                    <option value="viudo">Viudo(a)</option>
+                                </select>
+                                <p class="mensaje">- El <strong>estado civil del victimario</strong> es requerido.</p>
+                            </td>
+                            <td>
+                                <input autocomplete="off" type="text" name="barrioVictimario" id="barrioVr">
+                                <p class="mensaje">- El <strong>barrio de residencia del victimario</strong> es requerido.</p>
+                            </td>
+                            <td>
+                                <input autocomplete="off" class="direccion" type="text" name="direccionVictimario" id="direccionVr">
+                                <p class="mensaje">- La <strong>dirección de residencia del victimario</strong> es requerida.</p>
+                            </td>
+                        </tr>
+                    </table>
+                    <table class="tablaF2">
+                        <tr>
+                            <td>Ocupación:</td>
+                            <td>Nivel de estudios:</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input autocomplete="off" type="text" name="ocupacionVictimario" id="ocupacionVr">
+                                <p class="mensaje">- La <strong>ocupación del victimario</strong> es requerida.</p>
+                            </td>
+                            <td>
+                                <select id="estudiosVr" name="estudiosVictimario">
+                                    <option value="">- - Seleccione - -</option>
+                                    <option value="primaria">Primaria</option>
+                                    <option value="secundaria">Secundaria</option>
+                                    <option value="tecnico">Técnico</option>
+                                    <option value="universitario">Universitario</option>
+                                    <option value="posgrado">Posgrado</option>
+                                </select>
+                                <p class="mensaje">- El <strong>nivel de estudios del victimario</strong> es requerido.</p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Sección Información de los hechos-->
+                <div class="seccionF">
+                    <h3>Información de los hechos</h3>
+                    <table class="tablaF">
+                        <tr>
+                            <td>Lugar de ocurrencia de los hechos:</td>
+                            <td>Tipo de violencia:</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input autocomplete="off" type="text" name="lugarHechos" id="lugarHechos">
+                                <p class="mensaje">- El <strong>lugar de ocurrencia de los hechos</strong> es requerido.</p>
+                            <td>
+                                <select name="tipoViolenciaHechos" id="tipoViolenciaHechos">
+                                    <option value="">- - Seleccione - -</option>
+                                    <option value="fisica">Física</option>                                    
+                                    <option value="verbal">Verbal</option>
+                                    <option value="psicologica">Psicológica</option>
+                                    <option value="economica">Económica</option>
+                                    <option value="sexual">Sexual</option>
+                                    <option value="patrimonial">Patrimonial</option>
+                                    <option value="vicaria">Vicaria</option>
+                                </select>
+                                <p class="mensaje">- El <strong>tipo de violencia</strong> es requerido.</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Fecha de últimos hechos de agresión:</td>
+                            <td>Hora de últimos hechos de agresión:</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input autocomplete="off" type="date" name="fechaUltimosHechos" id="fechaUltimosHechos">
+                                <p class="mensaje">- La <strong>fecha de los últimos hechos de agresión</strong> es requerida.</p>
+                            </td>
+                            <td>
+                                <input autocomplete="off" type="time" name="horaUltimosHechos" id="horaUltimosHechos">
+                                <p class="mensaje">- La <strong>hora de los últimos hechos de agresión</strong> es requerida.</p>
+                            </td>
+                        </tr>
+                        
+                    </table>
+                </div>
+                
+                <div class="">
+                    <button type="button" class="botonGuardar" id="guardarMedida">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="/Frontend/JS/index.js"></script>
+    <script src="/Frontend/JS/formularioMedidas.js"></script>
+    <script src="/Frontend/JS/barraLateral.js"></script>
+    <script src="/Frontend/JS/infoBarra.js"></script>
+</body>
+</html>

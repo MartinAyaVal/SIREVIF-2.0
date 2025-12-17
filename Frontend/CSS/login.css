@@ -1,0 +1,439 @@
+/* Estilos generales */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-image: url(/Frontend/images/bandera.png);
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed; /* Agregado para mejor efecto en móviles */
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px; /* Padding para móviles */
+}
+
+.login {
+    display: flex;
+    width: 65%;
+    min-width: 300px; /* Ancho mínimo */
+    max-width: 1000px; /* Ancho máximo */
+    height: 500px;
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+    animation: animacion-entrada 0.6s ease-out;
+}
+
+.panel1 {
+    flex: 1;
+    background: linear-gradient(135deg, #138035 0%, #4CAF50 100%);
+    padding: 60px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}
+
+.logo {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 30px;
+    border-radius: 20px;
+    background: white;
+    padding: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    object-fit: contain; /* Para que la imagen se ajuste correctamente */
+}
+
+.titulo {
+    font-size: 36px;
+    font-weight: 700;
+    margin-bottom: 15px;
+    text-align: center;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    line-height: 1.2;
+}
+
+.subtitulo {
+    font-size: 18px;
+    opacity: 0.9;
+    text-align: center;
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+.texto {
+    font-size: 14px;
+    opacity: 0.8;
+    text-align: center;
+    margin-top: 20px;
+    line-height: 1.4;
+}
+
+/* Panel derecho */
+.panel2 {
+    flex: 1;
+    padding: 60px 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Formulario */
+.formulario {
+    width: 100%;
+}
+
+.tituloFormulario {
+    font-size: 28px;
+    font-weight: 700;
+    color: #138035;
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+/* Grupos de input */
+.datos {
+    margin-bottom: 15px;
+}
+
+.datos label {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.datos input {
+    width: 100%;
+    padding: 15px 20px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background-color: #f8f9fa;
+}
+
+.datos input:focus {
+    outline: none;
+    border-color: #138035;
+    background-color: white;
+    box-shadow: 0 0 0 4px rgba(19, 128, 53, 0.1);
+}
+
+.datos input:hover {
+    border-color: #4CAF50;
+}
+
+/* Botón de login */
+.boton {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #138035 0%, #4CAF50 100%);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+    box-shadow: 0 4px 15px rgba(19, 128, 53, 0.3);
+    text-decoration: none;
+    display: block;
+    text-align: center;
+}
+
+.boton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(19, 128, 53, 0.4);
+    background: linear-gradient(135deg, #0d5d27 0%, #138035 100%);
+    color: white;
+}
+
+.boton:active {
+    transform: translateY(0);
+}
+
+/* Enlace olvidó contraseña */
+.recuperar {
+    text-align: center;
+    margin-top: 25px;
+}
+
+.recuperar a {
+    color: #138035;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.recuperar a:hover {
+    color: #0d5d27;
+    text-decoration: underline;
+}
+
+/* Pie de página del login */
+.pie {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.texto-advertencia {
+    margin-top: 5px;
+    font-size: 11px;
+    color: #999;
+}
+
+/* RESPONSIVE - MEJORAS AGREGADAS */
+/* Tablets grandes */
+@media (max-width: 1024px) {
+    .login {
+        width: 85%;
+    }
+    
+    .panel1, .panel2 {
+        padding: 50px 30px;
+    }
+    
+    .titulo {
+        font-size: 32px;
+    }
+    
+    .tituloFormulario {
+        font-size: 26px;
+        margin-bottom: 30px;
+    }
+}
+
+/* Tablets y móviles en horizontal */
+@media (max-width: 900px) {
+    body {
+        padding: 15px;
+        background-attachment: scroll;
+    }
+    
+    .login {
+        width: 95%;
+        height: auto;
+        min-height: 500px;
+    }
+    
+    .panel1 {
+        padding: 40px 25px;
+    }
+    
+    .panel2 {
+        padding: 40px 25px;
+    }
+    
+    .logo {
+        width: 100px;
+        height: 100px;
+        margin-bottom: 20px;
+    }
+    
+    .titulo {
+        font-size: 28px;
+        margin-bottom: 10px;
+    }
+    
+    .subtitulo {
+        font-size: 16px;
+    }
+}
+
+/* Móviles y tablets pequeñas */
+@media (max-width: 770px) {
+    .login {
+        flex-direction: column;
+        width: 100%;
+        max-width: 450px;
+        height: auto;
+        margin: 20px 0;
+    }
+    
+    .panel1 {
+        padding: 20px 20px;
+    }
+    
+    .panel2 {
+        padding: 40px 30px;
+    }
+    
+    .logo {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 15px;
+    }
+    
+    .titulo {
+        font-size: 24px;
+        margin-bottom: 8px;
+    }
+    
+    .subtitulo {
+        font-size: 14px;
+        margin-bottom: 5px;
+    }
+    
+    .texto {
+        font-size: 12px;
+        margin-top: 15px;
+    }
+    
+    .tituloFormulario {
+        font-size: 22px;
+        margin-bottom: 25px;
+    }
+    
+    .datos input {
+        padding: 12px 16px;
+        font-size: 15px;
+    }
+    
+    .boton {
+        padding: 14px;
+        font-size: 15px;
+    }
+    
+    .pie {
+        font-size: 11px;
+        padding-top: 15px;
+    }
+    
+    .texto-advertencia {
+        font-size: 10px;
+    }
+}
+
+/* Móviles pequeños */
+@media (max-width: 480px) {
+    body {
+        padding: 25px;
+    }
+    
+    .login {
+        max-width: 800%;
+        border-radius: 15px;
+        margin: 20px 0;
+    }
+    
+    .panel1 {
+        padding: 20px 20px;
+    }
+    
+    .panel2 {
+        padding: 30px 20px;
+    }
+    
+    .logo {
+        width: 70px;
+        height: 70px;
+        padding: 10px;
+    }
+    
+    .titulo {
+        font-size: 22px;
+    }
+    
+    .subtitulo {
+        font-size: 13px;
+    }
+    
+    .tituloFormulario {
+        font-size: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .datos {
+        margin-bottom: 12px;
+    }
+    
+    .datos label {
+        font-size: 14px;
+    }
+    
+    .datos input {
+        padding: 10px 14px;
+        font-size: 14px;
+    }
+    
+    .boton {
+        padding: 12px;
+        font-size: 14px;
+    }
+}
+
+/* Pantallas muy pequeñas (altura limitada) */
+@media (max-height: 600px) and (orientation: landscape) {
+    body {
+        padding: 10px;
+        align-items: flex-start;
+    }
+    
+    .login {
+        text-align: center;
+        height: auto;
+        min-height: auto;
+        margin: 20px 10%;
+    }
+    
+    .panel1, .panel2 {
+        padding: 20px;
+    }
+    
+    .logo {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 10px;
+    }
+    
+    .titulo {
+        font-size: 20px;
+        margin-bottom: 5px;
+    }
+    
+    .subtitulo {
+        font-size: 12px;
+    }
+    
+    .tituloFormulario {
+        margin-bottom: 15px;
+        font-size: 18px;
+    }
+    
+    .datos {
+        margin-bottom: 8px;
+    }
+    
+    .datos input {
+        padding: 8px 12px;
+    }
+}
+
+/* Animación de entrada */
+@keyframes animacion-entrada {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

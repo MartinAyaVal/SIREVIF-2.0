@@ -1,0 +1,24 @@
+# Obtener todas las comisarías
+GET http://localhost:3004/roles
+
+# Obtener una comisaría por ID
+GET http://localhost:3004/roles/
+
+# Crear una comisaría nueva
+POST http://localhost:3004/roles
+Content-Type: application/json
+
+{
+  "rol": ""
+}
+
+# Actualizar una comisaría existente
+PUT http://localhost:3004/roles/
+Content-Type: application/json
+
+{
+  "rol": ""
+}
+
+# Eliminar una comisaría por ID
+DELETE http://localhost:3004/roles/   

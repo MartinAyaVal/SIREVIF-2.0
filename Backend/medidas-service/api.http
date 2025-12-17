@@ -1,0 +1,32 @@
+# Obtener todas las comisarías
+GET http://localhost:3002/medidas
+
+# Obtener una comisaría por ID
+GET http://localhost:3002/medidas/2
+
+# Crear una comisaría nueva
+POST http://localhost:3002/medidas
+Content-Type: application/json
+
+{
+  "numeroMedida": ,
+  "lugarHechos": "",
+  "tipoViolencia": "",
+  "fechaUltimosHechos": "",
+  "horaUltimosHechos": "",
+}
+
+# Actualizar una comisaría existente
+PUT http://localhost:3002/medidas/
+Content-Type: application/json
+
+{
+  "numeroMedida": ,
+  "lugarHechos": "",
+  "tipoViolencia": "",
+  "fechaUltimosHechos": "",
+  "horaUltimosHechos": "",
+}
+
+# Eliminar una comisaría por ID
+DELETE http://localhost:3002/medidas/   
