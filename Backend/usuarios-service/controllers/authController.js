@@ -75,7 +75,8 @@ const loginUsuario = async (req, res) => {
             console.log("❌ Usuario inactivo:", usuario.documento);
             return res.status(403).json({ 
                 error: "Usuario inactivo",
-                message: "Tu cuenta ha sido deshabilitada. Contacta al administrador."
+                message:`Tu cuenta está deshabilitada en este momento.
+                        Contacta al administrador.`
             });
         }
 

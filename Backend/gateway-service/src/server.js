@@ -8,8 +8,6 @@ dotenv.config();
 const app = express();
 
 // Configuración de CORS más permisiva para debug
-// Reemplaza la configuración CORS actual con esta:
-
 // Configuración CORS más específica y segura
 const allowedOrigins = [
     'http://localhost:5500',
@@ -21,7 +19,8 @@ const allowedOrigins = [
     // Agrega otros puertos que uses
 ];
 
-app.use(cors({
+// CORRECCIÓN 1: Configuración simplificada de CORS
+const corsOptions = {
     origin: function (origin, callback) {
         // Permitir requests sin origen (como mobile apps o curl)
         if (!origin) return callback(null, true);
@@ -36,12 +35,13 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
     exposedHeaders: ['Authorization', 'Content-Disposition'],
-    credentials: true,  // Permite cookies
-    maxAge: 86400, // 24 horas de cache para preflight
-}));
+    credentials: true,  
+    maxAge: 86400, 
+    optionsSuccessStatus: 200 
+};
 
-// Manejar preflight requests
-app.options('*', cors()); // Habilitar preflight para todas las rutas
+// Usa la configuración CORS directamente
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(morgan("dev"));
@@ -67,14 +67,57 @@ app.get("/", (req, res) => {
   });
 });
 
+// Manejo de errores para CORS
+app.use((err, req, res, next) => {
+  if (err.message === 'Not allowed by CORS') {
+    return res.status(403).json({
+      error: "CORS Error",
+      message: "Origen no permitido",
+      allowedOrigins: allowedOrigins
+    });
+  }
+  next(err);
+});
+
 app.use("/", router);
+
+// Middleware para rutas no encontradas
+app.use((req, res) => {
+  res.status(404).json({
+    error: "Ruta no encontrada",
+    message: `La ruta ${req.method} ${req.originalUrl} no existe en el gateway`,
+    availableEndpoints: [
+      "/comisarias",
+      "/medidas", 
+      "/roles",
+      "/tipo_victima",
+      "/usuarios",
+      "/victimarios",
+      "/victimas"
+    ]
+  });
+});
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`🚪 API Gateway corriendo en puerto ${PORT}`);
   console.log(`🔗 Endpoint de prueba: http://localhost:${PORT}/`);
-  console.log(`📡 Servicios configurados:`);
-  console.log(`   - Comisarias: ${process.env.COMISARIAS_SERVICE}`);
-  console.log(`   - Usuarios: ${process.env.USUARIOS_SERVICE}`);
-  console.log(`   - ... etc`);
+  console.log(`📡 Orígenes permitidos:`);
+  allowedOrigins.forEach(origin => console.log(`   ✅ ${origin}`));
+  console.log(`\n📋 Servicios configurados:`);
+  console.log(`  |-------------------------------------------|`);
+  console.log(`  |- Comisarias:      | ${process.env.COMISARIAS_SERVICE || 'No configurado'} |`);
+  console.log(`  |-------------------------------------------|`);
+  console.log(`  |- Medidas:         | ${process.env.MEDIDAS_SERVICE || 'No configurado'} |`);
+  console.log(`  |-------------------------------------------|`);
+  console.log(`  |- Roles:           | ${process.env.ROLES_SERVICE || 'No configurado'} |`);
+  console.log(`  |-------------------------------------------|`);
+  console.log(`  |- Tipo de Victima: | ${process.env.TIPO_VICTIMA_SERVICE || 'No configurado'} |`);
+  console.log(`  |-------------------------------------------|`);
+  console.log(`  |- Usuarios:        | ${process.env.USUARIOS_SERVICE || 'No configurado'} |`);
+  console.log(`  |-------------------------------------------|`);
+  console.log(`  |- Victimarios:     | ${process.env.VICTIMARIOS_SERVICE || 'No configurado'} |`);
+  console.log(`  |-------------------------------------------|`);
+  console.log(`  |- Victimas:        | ${process.env.VICTIMAS_SERVICE || 'No configurado'} |`);
+  console.log(`  |-------------------------------------------|`);
 });

@@ -2,50 +2,34 @@ const express = require('express');
 const cors = require('cors');
 const sequelize = require('./db/config.js');
 const usuariosRoutes = require('./routes/usuariosRoutes.js');
-const authRoutes = require('./routes/authRouthes.js');
+const authRoutes = require('./routes/authRouthes.js'); // Asegúrate que el nombre es correcto
 require('dotenv').config();
 
 const app = express();
 
 // ===== MIDDLEWARE CRÍTICO =====
-// 1. CORS primero
-// Añade esta configuración CORS específica:
-
 const allowedOrigins = [
-    'http://localhost:8080', // Gateway
-    'http://localhost:5500', // Frontend Live Server
+    'http://localhost:8080',
+    'http://localhost:5500',
     'http://127.0.0.1:5500',
     'http://localhost:3000',
 ];
 
+// SOLUCIÓN: Configuración MUY simple - elimina todo lo complejo
 app.use(cors({
-    origin: function (origin, callback) {
-        // Permitir requests sin origen
-        if (!origin) return callback(null, true);
-        
-        if (allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            console.log(`🚫 Servicio Usuarios - Origen bloqueado: ${origin}`);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Manejar preflight
-app.options('*', cors());
+// NO uses app.options() - el middleware cors ya lo maneja
 
-// 2. Parsear JSON - ¡ESTA LÍNEA ES CLAVE!
+// Parsear JSON y URL-encoded
 app.use(express.json());
-
-// 3. Parsear URL-encoded (por si acaso)
 app.use(express.urlencoded({ extended: true }));
 
 // ===== RUTAS =====
-// Importante: El orden de las rutas SÍ importa
 app.use('/usuarios', usuariosRoutes);
 app.use('/usuarios/auth', authRoutes);
 
@@ -70,7 +54,6 @@ app.get('/health', (req, res) => {
 });
 
 // ===== MANEJO DE ERRORES =====
-// Middleware para manejar errores de JSON mal formado
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
     console.error('❌ Error de JSON:', err.message);
@@ -87,7 +70,6 @@ sequelize.authenticate()
   .then(() => {
     console.log('✅ Conectado a la base de datos MySQL');
     
-    // Sincronizar modelos
     return sequelize.sync({ alter: true });
   })
   .then(() => {

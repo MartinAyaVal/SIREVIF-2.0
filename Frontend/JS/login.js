@@ -1,60 +1,51 @@
+const formulario = document.getElementById('formulario');
+const boton = document.getElementById('boton');
+const textoBoton = document.getElementById('textoBoton');
+const loader = document.getElementById('loader');
+const textoLoader = document.querySelector('.textoLoader');
+const mensajeError = document.getElementById('mensajeError');
+const mensajeExito = document.getElementById('mensajeExito');
+        
+const textosLoader = [
+    "Autenticando usuario",
+    "Verificando credenciales",
+    "Conectando con el servidor",
+    "Generando token de acceso"
+];
+        
+let loaderStateIndex = 0;
+let loaderInterval;
 
-        // Elementos del DOM
-        const loginForm = document.getElementById('loginForm');
-        const loginBtn = document.getElementById('loginBtn');
-        const btnText = document.getElementById('btnText');
-        const loaderOverlay = document.getElementById('loaderOverlay');
-        const loaderText = document.querySelector('.loader-text');
-        const errorMsg = document.getElementById('errorMessage');
-        const successMsg = document.getElementById('successMessage');
-        
-        // Estados del loader
-        const loaderStates = [
-            "Autenticando usuario",
-            "Verificando credenciales",
-            "Conectando con el servidor",
-            "Generando token de acceso"
-        ];
-        
-        let loaderStateIndex = 0;
-        let loaderInterval;
-        
-        // Función para mostrar el loader
-        function showLoader() {
-            loaderOverlay.style.display = 'flex';
-            document.body.classList.add('loading-active');
-            loginBtn.classList.add('loading');
-            loginBtn.disabled = true;
-            
-            // Cambiar texto del loader cada 2 segundos
-            loaderInterval = setInterval(() => {
-                loaderStateIndex = (loaderStateIndex + 1) % loaderStates.length;
-                loaderText.textContent = loaderStates[loaderStateIndex];
-            }, 2000);
-        }
-        
-        // Función para ocultar el loader
-        function hideLoader() {
-            loaderOverlay.style.display = 'none';
-            document.body.classList.remove('loading-active');
-            loginBtn.classList.remove('loading');
-            loginBtn.disabled = false;
-            clearInterval(loaderInterval);
-            loaderStateIndex = 0;
-            loaderText.textContent = loaderStates[0];
-        }
-        
-        // Función para mostrar errores
-        function showError(message) {
-            errorMsg.textContent = message;
-            errorMsg.style.display = 'block';
-            successMsg.style.display = 'none';
-        }
-        
-        // Evento de submit del formulario
-// ... código anterior igual ...
+function mostrarLoader() {
+    loader.style.display = 'flex';
+    document.body.classList.add('loading-active');
+    boton.classList.add('loading');
+    boton.disabled = true;
 
-loginForm.addEventListener('submit', async function(e) {
+loaderInterval = setInterval(() => {
+        loaderStateIndex = (loaderStateIndex + 1) % textosLoader.length;
+        textoLoader.textContent = textosLoader[loaderStateIndex];
+    }, 2000);
+}
+        
+function ocultarLoader() {
+    loader.style.display = 'none';
+    document.body.classList.remove('loading-active');
+    boton.classList.remove('loading');
+    boton.disabled = false;
+    clearInterval(loaderInterval);
+    loaderStateIndex = 0;
+    textoLoader.textContent = textosLoader[0];
+}
+        
+function error(message) {
+    mensajeError.textContent = message;
+    mensajeError.style.display = 'block';
+    mensajeExito.style.display = 'none';
+}
+        
+
+formulario.addEventListener('submit', async function(e) {
     e.preventDefault();
     
     // Obtener valores del formulario
@@ -63,24 +54,23 @@ loginForm.addEventListener('submit', async function(e) {
     
     // Validar campos
     if (!documento || !contrasena) {
-        showError('Por favor ingresa documento y contraseña');
+        error('Por favor ingresa documento y contraseña');
         return;
     }
     
     // Validar que documento sea numérico
     if (isNaN(documento) || documento.length < 5) {
-        showError('Documento inválido. Debe ser un número de cédula válido');
+        error('Documento inválido. Debe ser un número de cédula válido');
         return;
     }
     
     // Mostrar loader
-    showLoader();
+    mostrarLoader();
     
     try {
-        // CORRECCIÓN: Asegurar que enviamos "contrasena" (sin ñ)
         const payload = {
             documento: parseInt(documento),
-            contrasena: contrasena  // ← SIN Ñ, igual que el campo HTML
+            contrasena: contrasena
         };
         
         console.log('📤 Enviando al servidor:', payload);
@@ -112,47 +102,37 @@ loginForm.addEventListener('submit', async function(e) {
         await new Promise(resolve => setTimeout(resolve, 500));
         
         if (response.ok && data.success) {
-            // ✅ LOGIN EXITOSO
-            
-            // 1. Guardar token y datos de usuario
+            // Guardar token y datos de usuario
             localStorage.setItem('sirevif_token', data.token);
             console.log('🔍 Datos del usuario que se guardarán:', data.usuario);
             localStorage.setItem('sirevif_usuario', JSON.stringify(data.usuario));
+
+            // Ingreso exitoso
+            textoLoader.textContent = "¡Autenticación exitosa!";
+            textoLoader.style.color = "#4CAF50";
             
-            // 2. Cambiar mensaje del loader a éxito
-            loaderText.textContent = "✅ ¡Autenticación exitosa!";
-            loaderText.style.color = "#4CAF50";
-            
-            // 3. Mostrar nombre del usuario brevemente
-            successMsg.textContent = `Bienvenido/a, ${data.usuario.nombre}`;
-            successMsg.style.display = 'block';
-            successMsg.style.backgroundColor = '#e8f5e9';
-            
-            // 4. Redirigir después de 1.5 segundos
+            // 4. Redirigir a index
             setTimeout(() => {
-                hideLoader();
+                ocultarLoader();
                 window.location.href = '/Frontend/HTML/index.html';
             }, 1500);
             
         } else {
-            // ❌ ERROR EN LOGIN
-            hideLoader();
-            showError(data.message || `Error ${response.status}: ${data.error || 'Error desconocido'}`);
+            ocultarLoader();
+            error(data.message || `Error ${response.status}: ${data.error || 'Error desconocido'}`);
         }
         
     } catch (error) {
         console.error('❌ Error de conexión:', error);
-        hideLoader();
+        ocultarLoader();
         
         if (error.message.includes('Failed to fetch')) {
-            showError('Error de conexión con el servidor. Verifica que el Gateway esté corriendo en puerto 8080.');
+            error('Error de conexión con el servidor. Verifica que el Gateway esté corriendo en puerto 8080.');
         } else {
-            showError(`Error: ${error.message}`);
+            error(`Error: ${error.message}`);
         }
     }
 });
-
-        
         // Verificar si ya hay una sesión activa
         window.addEventListener('DOMContentLoaded', () => {
             const token = localStorage.getItem('sirevif_token');
@@ -162,8 +142,6 @@ loginForm.addEventListener('submit', async function(e) {
                 try {
                     const userData = JSON.parse(usuario);
                     console.log('Sesión activa encontrada para:', userData.nombre);
-                    // Opcional: Redirigir automáticamente si ya está logueado
-                    // window.location.href = '/Frontend/dashboard.html';
                 } catch (e) {
                     localStorage.removeItem('sirevif_token');
                     localStorage.removeItem('sirevif_usuario');
@@ -176,18 +154,18 @@ loginForm.addEventListener('submit', async function(e) {
         
         // Limpiar mensajes cuando el usuario empiece a escribir
         document.getElementById('documento').addEventListener('input', () => {
-            errorMsg.style.display = 'none';
-            successMsg.style.display = 'none';
+            mensajeError.style.display = 'none';
+            mensajeExito.style.display = 'none';
         });
         
         document.getElementById('contrasena').addEventListener('input', () => {
-            errorMsg.style.display = 'none';
-            successMsg.style.display = 'none';
+            mensajeError.style.display = 'none';
+            mensajeExito.style.display = 'none';
         });
         
         // Permitir login con Enter en la contraseña
         document.getElementById('contrasena').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                loginForm.dispatchEvent(new Event('submit'));
+                formulario.dispatchEvent(new Event('submit'));
             }
         });

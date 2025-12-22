@@ -89,7 +89,8 @@ exports.updateusuario = async (req, res) => {
             correo, 
             telefono, 
             contraseña, 
-            comisaria_rol, 
+            comisaria_rol,
+            rolId  // <-- IMPORTANTE: Agregar rolId aquí
         } = req.body;
 
         const usuario = await usuarios.findByPk(id);
@@ -103,6 +104,7 @@ exports.updateusuario = async (req, res) => {
             correo: correo,
             telefono: telefono,
             comisaria_rol: comisaria_rol,
+            rolId: rolId  // <-- IMPORTANTE: Agregar rolId aquí
         };
 
         if (contraseña) {

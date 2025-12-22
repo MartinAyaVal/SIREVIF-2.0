@@ -1,19 +1,20 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require("../../tipoVictima-service/db/config");
 
-const tipoVictimas = sequelize.define("tipos", {
+module.exports = (sequelize) => {
+  const TipoVictima = sequelize.define("TipoVictima", {
     id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
     },
     tipo: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-}, {
-    tableName: "tipoVictimas",
+      type: DataTypes.STRING(45),
+      allowNull: false
+    }
+  }, {
+    tableName: "tipos_victima",
     timestamps: false
-});
+  });
 
-module.exports = tipoVictimas;
+  return TipoVictima;
+};

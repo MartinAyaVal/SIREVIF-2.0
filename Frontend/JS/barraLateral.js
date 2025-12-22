@@ -172,3 +172,23 @@ if (document.readyState === 'loading') {
 } else {
     inicializarBarraLateral();
 }
+
+// Función para cerrar sesión
+function cerrarSesion() {
+    // Limpiar localStorage
+    localStorage.removeItem('sirevif_token');
+    localStorage.removeItem('sirevif_usuario');
+    
+    // Redirigir a login
+    window.location.href = '/Frontend/HTML/login.html';
+}
+
+// En el evento DOMContentLoaded de barraLateral.js, modifica el logoutBtn:
+document.getElementById('logoutBtn').addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    // Mostrar confirmación
+    if (confirm('¿Está seguro de que desea cerrar sesión?')) {
+        cerrarSesion();
+    }
+});

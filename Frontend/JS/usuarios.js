@@ -1,9 +1,120 @@
-// ===== VARIABLES GLOBALES =====
 let usuariosRegistrados = [];
 let modoEdicionUsuario = false;
 let usuarioEditandoId = null;
 
-// ===== FUNCIÓN PARA CERRAR FORMULARIO (GLOBAL) =====
+// Ventana de notificacion de exito
+async function mostrarExito(mensaje, titulo = '¡Éxito!') {
+    return Swal.fire({
+        title: titulo,
+        text: mensaje,
+        icon: 'success',
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: '#4CAF50',
+        timer: 3000,
+        timerProgressBar: true,
+        showConfirmButton: true
+    });
+}
+
+// Ventana de notificacion de error
+async function mostrarError(mensaje, titulo = 'Error') {
+    return Swal.fire({
+        title: titulo,
+        text: mensaje,
+        icon: 'error',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#f44336',
+        showConfirmButton: true
+    });
+}
+
+// Ventana de notificacion informativa
+async function mostrarInfo(mensaje, titulo = 'Información') {
+    return Swal.fire({
+        title: titulo,
+        text: mensaje,
+        icon: 'info',
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: '#4CAF50',
+        timer: 3000,
+        timerProgressBar: true,
+        showConfirmButton: true
+    });
+}
+
+// Ventana de notificacion de advertencia
+async function mostrarAdvertencia(mensaje, titulo = 'Advertencia') {
+    return Swal.fire({
+        title: titulo,
+        text: mensaje,
+        icon: 'warning',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#ff9800',
+        showConfirmButton: true
+    });
+}
+
+// Ventana de notificacion para confirmación
+async function mostrarConfirmacion(pregunta, titulo = 'Confirmación', textoConfirmar = 'Sí', textoCancelar = 'No') {
+    const result = await Swal.fire({
+        title: titulo,
+        text: pregunta,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: textoConfirmar,
+        cancelButtonText: textoCancelar,
+        cancelButtonColor: '#d33',
+        confirmButtonColor: '#009a1dff',
+        reverseButtons: true,
+        focusCancel: true
+    });
+    return result.isConfirmed;
+}
+
+// Ventana de notificacion para confirmación critica
+async function mostrarConfirmacionCritica(pregunta, titulo = '¡Atención!', textoConfirmar = 'Sí, continuar', textoCancelar = 'Cancelar') {
+    const result = await Swal.fire({
+        title: titulo,
+        html: `<div style="text-align: center; padding: 10px 0;">${pregunta}</div>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: textoConfirmar,
+        cancelButtonText: textoCancelar,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        reverseButtons: true,
+        focusCancel: true,
+        customClass: {
+            popup: 'swal-wide'
+        }
+    });
+    return result.isConfirmed;
+}
+
+// Cerrar sesión
+function cerrarSesion() {
+    // Limpiar localStorage
+    localStorage.removeItem('sirevif_token');
+    localStorage.removeItem('sirevif_usuario');
+    
+    // Redirigir a login
+    window.location.href = '/Frontend/HTML/login.html';
+}
+
+// Verificar si es el usuario actual.
+function esUsuarioActual(id) {
+    const usuarioStorage = localStorage.getItem('sirevif_usuario');
+    if (!usuarioStorage) return false;
+    
+    try {
+        const usuarioData = JSON.parse(usuarioStorage);
+        return usuarioData.id === id;
+    } catch (error) {
+        return false;
+    }
+}
+
+// Cerrar formulario
 function cerrarFormulario() {
     const formularioOverlay = document.getElementById('formularioOverlay');
     if (formularioOverlay) {
@@ -12,43 +123,337 @@ function cerrarFormulario() {
     }
 }
 
-// ===== FUNCIÓN PARA RESETEAR FORMULARIO =====
-function resetFormulario() {
-    const formulario = document.getElementById('formularioUsuarios');
-    if (formulario) {
-        formulario.reset();
-        
-        // Resetear campos específicos
-        const contraseñaInput = document.getElementById('contraseñaUsuario');
-        if (contraseñaInput) {
-            contraseñaInput.value = '';
-            contraseñaInput.style.backgroundColor = 'rgb(229, 229, 229)';
-            contraseñaInput.placeholder = '';
+// ===== FUNCIONES DE VALIDACIÓN VISUAL =====
+function limpiarValidaciones() {
+    // Limpiar todos los estilos de validación
+    const inputs = document.querySelectorAll('#formularioUsuarios input, #formularioUsuarios select');
+    inputs.forEach(input => {
+        input.style.border = '';
+        input.style.boxShadow = '';
+    });
+    
+    // Ocultar todos los mensajes de error
+    const mensajes = document.querySelectorAll('#formularioUsuarios .mensaje');
+    mensajes.forEach(mensaje => {
+        mensaje.style.display = 'none';
+    });
+}
+
+function validarCampoObligatorio(input) {
+    const valor = input.value.trim();
+    const mensaje = input.nextElementSibling;
+    
+    if (!valor) {
+        input.style.border = '2px solid #ff0000';
+        input.style.boxShadow = '0 0 10px rgba(255, 0, 0, 0.27)';
+        if (mensaje && mensaje.classList.contains('mensaje')) {
+            mensaje.style.display = 'block';
         }
-        
-        // Cambiar título según modo
-        const titulo = document.querySelector('.headerF h2');
-        if (titulo) {
-            titulo.textContent = 'Registrar nuevo Usuario';
+        return false;
+    } else {
+        input.style.border = '';
+        input.style.boxShadow = '';
+        if (mensaje && mensaje.classList.contains('mensaje')) {
+            mensaje.style.display = 'none';
         }
-        
-        // Cambiar texto del botón
-        const botonCrear = document.getElementById('crearUsuario');
-        if (botonCrear) {
-            botonCrear.textContent = 'Crear';
-            botonCrear.id = 'crearUsuario';
-        }
-        
-        // Resetear modo edición
-        modoEdicionUsuario = false;
-        usuarioEditandoId = null;
-        
-        // Restaurar generación automática de contraseña
-        setupGeneracionContraseña();
+        return true;
     }
 }
 
-// ===== FUNCIÓN PARA MAPEAR ROL A rolId =====
+function validarDocumento(input) {
+    const valor = input.value.trim();
+    const mensaje1 = input.nextElementSibling;
+    const mensaje2 = mensaje1 ? mensaje1.nextElementSibling : null;
+    
+    if (!valor) {
+        input.style.border = '2px solid #ff0000';
+        input.style.boxShadow = '0 0 10px rgba(255, 0, 0, 0.27)';
+        if (mensaje1 && mensaje1.classList.contains('mensaje')) {
+            mensaje1.style.display = 'block';
+        }
+        return false;
+    } else if (valor.length < 7) {
+        input.style.border = '2px solid #ff0000';
+        input.style.boxShadow = '0 0 10px rgba(255, 0, 0, 0.27)';
+        if (mensaje2 && mensaje2.classList.contains('mensaje')) {
+            mensaje2.style.display = 'block';
+        }
+        if (mensaje1 && mensaje1.classList.contains('mensaje')) {
+            mensaje1.style.display = 'none';
+        }
+        return false;
+    } else {
+        input.style.border = '';
+        input.style.boxShadow = '';
+        if (mensaje1 && mensaje1.classList.contains('mensaje')) {
+            mensaje1.style.display = 'none';
+        }
+        if (mensaje2 && mensaje2.classList.contains('mensaje')) {
+            mensaje2.style.display = 'none';
+        }
+        return true;
+    }
+}
+
+function validarTelefono(input) {
+    const valor = input.value.trim();
+    const mensaje1 = input.nextElementSibling;
+    const mensaje2 = mensaje1 ? mensaje1.nextElementSibling : null;
+    
+    if (!valor) {
+        input.style.border = '2px solid #ff0000';
+        input.style.boxShadow = '0 0 10px rgba(255, 0, 0, 0.27)';
+        if (mensaje1 && mensaje1.classList.contains('mensaje')) {
+            mensaje1.style.display = 'block';
+        }
+        return false;
+    } else if (valor.length < 10) {
+        input.style.border = '2px solid #ff0000';
+        input.style.boxShadow = '0 0 10px rgba(255, 0, 0, 0.27)';
+        if (mensaje2 && mensaje2.classList.contains('mensaje')) {
+            mensaje2.style.display = 'block';
+        }
+        if (mensaje1 && mensaje1.classList.contains('mensaje')) {
+            mensaje1.style.display = 'none';
+        }
+        return false;
+    } else {
+        input.style.border = '';
+        input.style.boxShadow = '';
+        if (mensaje1 && mensaje1.classList.contains('mensaje')) {
+            mensaje1.style.display = 'none';
+        }
+        if (mensaje2 && mensaje2.classList.contains('mensaje')) {
+            mensaje2.style.display = 'none';
+        }
+        return true;
+    }
+}
+
+function validarCorreo(input) {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const valor = input.value.trim();
+    const mensaje1 = input.nextElementSibling;
+    const mensaje2 = mensaje1 ? mensaje1.nextElementSibling : null;
+    
+    if (!valor) {
+        input.style.border = '2px solid #ff0000';
+        input.style.boxShadow = '0 0 10px rgba(255, 0, 0, 0.27)';
+        if (mensaje1 && mensaje1.classList.contains('mensaje')) {
+            mensaje1.style.display = 'block';
+        }
+        return false;
+    } else if (!regex.test(valor)) {
+        input.style.border = '2px solid #ff0000';
+        input.style.boxShadow = '0 0 10px rgba(255, 0, 0, 0.27)';
+        if (mensaje2 && mensaje2.classList.contains('mensaje')) {
+            mensaje2.style.display = 'block';
+        }
+        if (mensaje1 && mensaje1.classList.contains('mensaje')) {
+            mensaje1.style.display = 'none';
+        }
+        return false;
+    } else {
+        input.style.border = '';
+        input.style.boxShadow = '';
+        if (mensaje1 && mensaje1.classList.contains('mensaje')) {
+            mensaje1.style.display = 'none';
+        }
+        if (mensaje2 && mensaje2.classList.contains('mensaje')) {
+            mensaje2.style.display = 'none';
+        }
+        return true;
+    }
+}
+
+function validarSelect(select) {
+    const valor = select.value;
+    const mensaje = select.nextElementSibling;
+    
+    if (!valor) {
+        select.style.border = '2px solid #ff0000';
+        select.style.boxShadow = '0 0 10px rgba(255, 0, 0, 0.27)';
+        if (mensaje && mensaje.classList.contains('mensaje')) {
+            mensaje.style.display = 'block';
+        }
+        return false;
+    } else {
+        select.style.border = '';
+        select.style.boxShadow = '';
+        if (mensaje && mensaje.classList.contains('mensaje')) {
+            mensaje.style.display = 'none';
+        }
+        return true;
+    }
+}
+
+function validarContraseña(input) {
+    const valor = input.value.trim();
+    const mensaje = input.nextElementSibling;
+    
+    // Solo validar contraseña en modo creación (no en edición)
+    if (modoEdicionUsuario) {
+        if (mensaje && mensaje.classList.contains('mensaje')) {
+            mensaje.style.display = 'none';
+        }
+        input.style.border = '';
+        input.style.boxShadow = '';
+        return true;
+    }
+    
+    if (!valor) {
+        input.style.border = '2px solid #ff0000';
+        input.style.boxShadow = '0 0 10px rgba(255, 0, 0, 0.27)';
+        if (mensaje && mensaje.classList.contains('mensaje')) {
+            mensaje.style.display = 'block';
+        }
+        return false;
+    } else {
+        input.style.border = '';
+        input.style.boxShadow = '';
+        if (mensaje && mensaje.classList.contains('mensaje')) {
+            mensaje.style.display = 'none';
+        }
+        return true;
+    }
+}
+
+// ===== FUNCIÓN PARA MOSTRAR ERRORES DE VALIDACIÓN EN FORMULARIO =====
+function mostrarErroresValidacion(camposInvalidos) {
+    // Resaltar todos los campos inválidos
+    camposInvalidos.forEach(campo => {
+        if (campo.input) {
+            campo.input.style.border = '2px solid #ff0000';
+            campo.input.style.boxShadow = '0 0 10px rgba(255, 0, 0, 0.27)';
+            
+            // Mostrar mensajes de error específicos
+            if (campo.mensajes) {
+                campo.mensajes.forEach((mensaje, index) => {
+                    if (mensaje) {
+                        if (index === 0 && campo.esRequerido) {
+                            mensaje.style.display = 'block';
+                        } else if (index === 1 && campo.tieneLongitudMinima) {
+                            mensaje.style.display = 'block';
+                        } else if (index === 1 && campo.esCorreoInvalido) {
+                            mensaje.style.display = 'block';
+                        }
+                    }
+                });
+            }
+        }
+    });
+    
+    // Hacer scroll al primer campo con error
+    if (camposInvalidos.length > 0 && camposInvalidos[0].input) {
+        camposInvalidos[0].input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        camposInvalidos[0].input.focus();
+    }
+}
+
+// ===== VALIDACIÓN COMPLETA DEL FORMULARIO =====
+function validarFormularioCompleto() {
+    // Obtener referencias a los elementos del formulario
+    const nombreInput = document.getElementById('nombreUsuario');
+    const documentoInput = document.getElementById('documentoUsuario');
+    const cargoInput = document.getElementById('cargoUsuario');
+    const correoInput = document.getElementById('correoUsuario');
+    const telefonoInput = document.getElementById('telefonoUsuario');
+    const comisariaSelect = document.getElementById('comisariaUsuario');
+    const contraseñaInput = document.getElementById('contraseñaUsuario');
+    
+    // Limpiar validaciones anteriores
+    limpiarValidaciones();
+    
+    // Array para almacenar campos inválidos
+    const camposInvalidos = [];
+    
+    // Validar cada campo
+    if (!validarCampoObligatorio(nombreInput)) {
+        const mensajes = Array.from(nombreInput.parentNode.querySelectorAll('.mensaje'));
+        camposInvalidos.push({
+            input: nombreInput,
+            mensajes: mensajes,
+            esRequerido: true
+        });
+    }
+    
+    if (!validarDocumento(documentoInput)) {
+        const mensajes = Array.from(documentoInput.parentNode.querySelectorAll('.mensaje'));
+        const tieneValor = documentoInput.value.trim() !== '';
+        const tieneLongitudMinima = documentoInput.value.trim().length >= 7;
+        
+        camposInvalidos.push({
+            input: documentoInput,
+            mensajes: mensajes,
+            esRequerido: !tieneValor,
+            tieneLongitudMinima: tieneValor && !tieneLongitudMinima
+        });
+    }
+    
+    if (!validarCampoObligatorio(cargoInput)) {
+        const mensajes = Array.from(cargoInput.parentNode.querySelectorAll('.mensaje'));
+        camposInvalidos.push({
+            input: cargoInput,
+            mensajes: mensajes,
+            esRequerido: true
+        });
+    }
+    
+    if (!validarCorreo(correoInput)) {
+        const mensajes = Array.from(correoInput.parentNode.querySelectorAll('.mensaje'));
+        const tieneValor = correoInput.value.trim() !== '';
+        const esCorreoValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoInput.value.trim());
+        
+        camposInvalidos.push({
+            input: correoInput,
+            mensajes: mensajes,
+            esRequerido: !tieneValor,
+            esCorreoInvalido: tieneValor && !esCorreoValido
+        });
+    }
+    
+    if (!validarTelefono(telefonoInput)) {
+        const mensajes = Array.from(telefonoInput.parentNode.querySelectorAll('.mensaje'));
+        const tieneValor = telefonoInput.value.trim() !== '';
+        const tieneLongitudMinima = telefonoInput.value.trim().length >= 10;
+        
+        camposInvalidos.push({
+            input: telefonoInput,
+            mensajes: mensajes,
+            esRequerido: !tieneValor,
+            tieneLongitudMinima: tieneValor && !tieneLongitudMinima
+        });
+    }
+    
+    if (!validarSelect(comisariaSelect)) {
+        const mensajes = Array.from(comisariaSelect.parentNode.querySelectorAll('.mensaje'));
+        camposInvalidos.push({
+            input: comisariaSelect,
+            mensajes: mensajes,
+            esRequerido: true
+        });
+    }
+    
+    // Validar contraseña solo en modo creación
+    if (!modoEdicionUsuario && !validarContraseña(contraseñaInput)) {
+        const mensajes = Array.from(contraseñaInput.parentNode.querySelectorAll('.mensaje'));
+        camposInvalidos.push({
+            input: contraseñaInput,
+            mensajes: mensajes,
+            esRequerido: true
+        });
+    }
+    
+    // Si hay errores, mostrarlos y retornar false
+    if (camposInvalidos.length > 0) {
+        mostrarErroresValidacion(camposInvalidos);
+        return false;
+    }
+    
+    return true;
+}
+
+// Modificacion de rolId dependiendo de Comisaria_rol
 function obtenerRolIdPorComisaria(comisaria) {
     const mapeoRoles = {
         'Administrador': 1,
@@ -60,10 +465,11 @@ function obtenerRolIdPorComisaria(comisaria) {
         'Comisaría Sexta': 7
     };
     
-    return mapeoRoles[comisaria] || 1; // Default a Administrador si no se encuentra
+    console.log(`🔍 Obteniendo rolId para comisaría: "${comisaria}" -> ${mapeoRoles[comisaria] || 1}`);
+    return mapeoRoles[comisaria] || 1;
 }
 
-// ===== FUNCIÓN PARA CREAR USUARIO =====
+// Crear nuevo usuario
 async function crearUsuario(usuarioData) {
     try {
         const token = localStorage.getItem('sirevif_token');
@@ -100,7 +506,7 @@ async function crearUsuario(usuarioData) {
     }
 }
 
-// ===== FUNCIÓN PARA ACTUALIZAR USUARIO =====
+// Actualizar usuario
 async function actualizarUsuario(id, usuarioData) {
     try {
         const token = localStorage.getItem('sirevif_token');
@@ -137,7 +543,7 @@ async function actualizarUsuario(id, usuarioData) {
     }
 }
 
-// ===== FUNCIÓN PARA CAMBIAR ESTADO DEL USUARIO =====
+// Modificar estado de usuario 
 async function cambiarEstadoUsuario(id, nuevoEstado) {
     try {
         const token = localStorage.getItem('sirevif_token');
@@ -174,48 +580,38 @@ async function cambiarEstadoUsuario(id, nuevoEstado) {
     }
 }
 
-// ===== FUNCIÓN PARA MANEJAR EL ENVÍO DEL FORMULARIO =====
-function manejarEnvioFormulario(event) {
+// Envío de formulario
+async function manejarEnvioFormulario(event) {
     event.preventDefault();
     
-    // Obtener valores del formulario
-    const nombre = document.getElementById('nombreUsuario').value.trim();
-    const documento = document.getElementById('documentoUsuario').value.trim();
-    const cargo = document.getElementById('cargoUsuario').value.trim();
-    const correo = document.getElementById('correoUsuario').value.trim();
-    const telefono = document.getElementById('telefonoUsuario').value.trim();
-    const comisaria = document.getElementById('comisariaUsuario').value;
-    const contraseña = document.getElementById('contraseñaUsuario').value.trim();
-    
-    // Validaciones básicas
-    if (!nombre || !documento || !cargo || !correo || !telefono || !comisaria) {
-        alert('Todos los campos son obligatorios');
+    // Validar formulario completo
+    if (!validarFormularioCompleto()) {
+        // No mostrar alerta de SweetAlert2, solo las validaciones visuales
         return;
     }
     
-    if (documento.length < 7) {
-        alert('El documento debe tener al menos 7 dígitos');
-        return;
-    }
+    // Obtener referencias a los elementos del formulario
+    const nombreInput = document.getElementById('nombreUsuario');
+    const documentoInput = document.getElementById('documentoUsuario');
+    const cargoInput = document.getElementById('cargoUsuario');
+    const correoInput = document.getElementById('correoUsuario');
+    const telefonoInput = document.getElementById('telefonoUsuario');
+    const comisariaSelect = document.getElementById('comisariaUsuario');
+    const contraseñaInput = document.getElementById('contraseñaUsuario');
     
-    if (telefono.length < 10) {
-        alert('El teléfono debe tener al menos 10 dígitos');
-        return;
-    }
-    
-    if (!correo.includes('@')) {
-        alert('Ingrese un correo válido');
-        return;
-    }
-    
-    // En modo edición, la contraseña es opcional
-    if (!modoEdicionUsuario && !contraseña) {
-        alert('La contraseña es obligatoria para nuevo usuario');
-        return;
-    }
+    // Obtener valores
+    const nombre = nombreInput.value.trim();
+    const documento = documentoInput.value.trim();
+    const cargo = cargoInput.value.trim();
+    const correo = correoInput.value.trim();
+    const telefono = telefonoInput.value.trim();
+    const comisaria = comisariaSelect.value;
+    const contraseña = contraseñaInput.value.trim();
     
     // Obtener rolId según la comisaría seleccionada
     const rolId = obtenerRolIdPorComisaria(comisaria);
+    console.log(`🎯 Comisaría seleccionada: ${comisaria}, rolId calculado: ${rolId}`);
+    console.log(`📝 Modo edición: ${modoEdicionUsuario}, ID editando: ${usuarioEditandoId}`);
     
     // Preparar datos del usuario
     const usuarioData = {
@@ -225,50 +621,66 @@ function manejarEnvioFormulario(event) {
         correo,
         telefono,
         comisaria_rol: comisaria,
-        rolId
+        rolId 
     };
     
-    // Solo incluir contraseña si se proporcionó una (en edición puede estar vacía)
     if (contraseña) {
         usuarioData.contraseña = contraseña;
     }
     
     console.log('📝 Datos del usuario a guardar:', usuarioData);
     
-    // Mostrar loader
     showLoaderUsuario(modoEdicionUsuario ? 'Actualizando usuario...' : 'Creando usuario...');
     
     // Determinar si es creación o actualización
     if (modoEdicionUsuario && usuarioEditandoId) {
+        // Verificar si se está editando el usuario actual Y si se cambió la contraseña
+        const esMiUsuario = esUsuarioActual(usuarioEditandoId);
+        const contraseñaCambiada = contraseña && contraseña.length > 0;
+        
         // Actualizar usuario existente
         actualizarUsuario(usuarioEditandoId, usuarioData)
-            .then(usuarioActualizado => {
+            .then(async (usuarioActualizado) => {
                 hideLoaderUsuario();
-                alert('✅ Usuario actualizado exitosamente');
+                console.log('✅ Usuario actualizado:', usuarioActualizado);
+                console.log('📋 Comisaría actualizada:', usuarioActualizado.comisaria_rol);
+                console.log('📋 rolId actualizado:', usuarioActualizado.rolId);
+                
+                // Si el usuario actual cambió su contraseña, cerrar sesión
+                if (esMiUsuario && contraseñaCambiada) {
+                    await mostrarExito('Usuario actualizado exitosamente. Su contraseña ha sido cambiada, por favor inicie sesión nuevamente.', 'Contraseña actualizada');
+                    setTimeout(() => {
+                        cerrarSesion();
+                    }, 1500);
+                    return;
+                }
+                
+                await mostrarExito('Usuario actualizado exitosamente');
                 cerrarFormulario();
                 cargarUsuarios(); // Recargar lista de usuarios
             })
-            .catch(error => {
+            .catch(async (error) => {
                 hideLoaderUsuario();
-                alert('❌ Error al actualizar usuario: ' + error.message);
+                console.error('❌ Error completo al actualizar:', error);
+                await mostrarError('Error al actualizar usuario: ' + error.message);
             });
     } else {
         // Crear nuevo usuario
         crearUsuario(usuarioData)
-            .then(usuarioCreado => {
+            .then(async (usuarioCreado) => {
                 hideLoaderUsuario();
-                alert('✅ Usuario creado exitosamente');
+                await mostrarExito('Usuario creado exitosamente');
                 cerrarFormulario();
                 cargarUsuarios(); // Recargar lista de usuarios
             })
-            .catch(error => {
+            .catch(async (error) => {
                 hideLoaderUsuario();
-                alert('❌ Error al crear usuario: ' + error.message);
+                await mostrarError('Error al crear usuario: ' + error.message);
             });
     }
 }
 
-// ===== FUNCIONES DEL LOADER =====
+// Loader
 function showLoaderUsuario(text = 'Procesando...') {
     const loader = document.getElementById('loaderUsuario');
     const loaderText = document.getElementById('loaderUsuarioText');
@@ -285,7 +697,7 @@ function hideLoaderUsuario() {
     }
 }
 
-// ===== FUNCIÓN PARA CARGAR USUARIOS =====
+// Cargar usuarios
 async function cargarUsuarios() {
     try {
         const token = localStorage.getItem('sirevif_token');
@@ -308,12 +720,17 @@ async function cargarUsuarios() {
         usuariosRegistrados = await response.json();
         console.log('✅ Usuarios cargados:', usuariosRegistrados);
         
+        // Verificar que los usuarios tengan comisaria_rol y rolId
+        usuariosRegistrados.forEach(usuario => {
+            console.log(`👤 ${usuario.nombre}: comisaria_rol=${usuario.comisaria_rol}, rolId=${usuario.rolId}`);
+        });
+        
         // Renderizar usuarios en las secciones correspondientes
         renderizarUsuarios();
         
     } catch (error) {
         console.error('❌ Error al cargar usuarios:', error);
-        alert('Error al cargar usuarios: ' + error.message);
+        mostrarError('Error al cargar usuarios: ' + error.message);
     }
 }
 
@@ -367,7 +784,7 @@ function renderizarUsuarios() {
     }
 }
 
-// ===== FUNCIÓN PARA CREAR TARJETA DE USUARIO =====
+// Crear tarjeta de usuario
 function crearTarjetaUsuario(usuario) {
     const div = document.createElement('div');
     div.className = 'usuario-tarjeta';
@@ -375,15 +792,13 @@ function crearTarjetaUsuario(usuario) {
     
     // Determinar clase CSS según estado
     const estadoClase = usuario.estado === 'inactivo' ? 'usuario-inactivo' : '';
-    const estadoTexto = usuario.estado === 'inactivo' ? '(Inactivo)' : '(Activo)';
-    const estadoIcono = usuario.estado === 'inactivo' ? '🔴' : '';
     
     div.innerHTML = `
         <div class="contenedor-tabla ${estadoClase} usuario-card">
             <table class="tabla-usuario">
                 <tr>
                     <td><strong>Nombre:</strong></td>
-                    <td>${usuario.nombre} ${estadoIcono}</td>
+                    <td>${usuario.nombre}</td>
                 </tr>
                 <tr>
                     <td><strong>Documento:</strong></td>
@@ -402,10 +817,6 @@ function crearTarjetaUsuario(usuario) {
                     <td>${usuario.telefono}</td>
                 </tr>
                 <tr>
-                    <td><strong>Comisaría:</strong></td>
-                    <td>${usuario.comisaria_rol}</td>
-                </tr>
-                <tr>
                     <td><strong>Estado:</strong></td>
                     <td class="estado-usuario ${usuario.estado === 'inactivo' ? 'estado-inactivo' : 'estado-activo'}">
                         ${usuario.estado === 'inactivo' ? 'Inactivo' : 'Activo'}
@@ -413,11 +824,11 @@ function crearTarjetaUsuario(usuario) {
                 </tr>
             </table>
             <div class="columna-acciones">
-                <button class="btn-editar" data-id="${usuario.id}">✏️ Editar</button>
+                <button title="Editar usuario" class="btn-editar" data-id="${usuario.id}"> <img class="accionUsuario" src="/Frontend/images/editar.png"></button>
                 <button class="btn-estado" data-id="${usuario.id}" data-estado="${usuario.estado}">
-                    ${usuario.estado === 'inactivo' ? '✅ Activar' : '⛔ Inhabilitar'}
+                    ${usuario.estado === 'inactivo' ? '<img title="Habilitar usuario" class="accionUsuario" src="/Frontend/images/habilitar.png">' : '<img title="Inhabilitar usuario" class="accionUsuario" src="/Frontend/images/inhabilitar.png">'}
                 </button>
-                <button class="btn-eliminar" data-id="${usuario.id}">🗑️ Eliminar</button>
+                <button title="Eliminar usuario" class="btn-eliminar" data-id="${usuario.id}"><img class="accionUsuario" src="/Frontend/images/borrar.png"></button>
             </div>
         </div>
     `;
@@ -425,7 +836,7 @@ function crearTarjetaUsuario(usuario) {
     // Agregar event listeners a los botones
     const btnEditar = div.querySelector('.btn-editar');
     const btnEstado = div.querySelector('.btn-estado');
-    const btnEliminar = div.querySelector('.btn-eliminar');
+    const btnEliminar = div.querySelector('.btn-liminar'); 
     
     if (btnEditar) {
         btnEditar.addEventListener('click', () => editarUsuario(usuario.id));
@@ -436,19 +847,44 @@ function crearTarjetaUsuario(usuario) {
     }
     
     if (btnEliminar) {
-        btnEliminar.addEventListener('click', () => eliminarUsuario(usuario.id));
+        btnEliminar.addEventListener('click', () => eliminarUsuarioHandler(usuario.id));
     }
     
     return div;
 }
 
-// ===== FUNCIÓN PARA MANEJAR EL CAMBIO DE ESTADO =====
+// Modificar estado de usuario
 async function cambiarEstadoUsuarioHandler(id, estadoActual) {
     const nuevoEstado = estadoActual === 'activo' ? 'inactivo' : 'activo';
     const accion = nuevoEstado === 'inactivo' ? 'inhabilitar' : 'activar';
     
-    if (!confirm(`¿Está seguro de que desea ${accion} este usuario?`)) {
-        return;
+    // Verificar si es el usuario actual
+    const esMiUsuario = esUsuarioActual(id);
+    
+    if (esMiUsuario && nuevoEstado === 'inactivo') {
+        // Confirmación para inhabilitar si propio usuario
+        const confirmado = await mostrarConfirmacionCritica(
+            'Está a punto de inhabilitar SU PROPIA cuenta.<br><br><strong>¿Está seguro?</strong><br><br>Esto cerrará su sesión inmediatamente.',
+            '⚠️ ATENCIÓN CRÍTICA',
+            'Sí, inhabilitar mi cuenta',
+            'Cancelar'
+        );
+        
+        if (!confirmado) {
+            return;
+        }
+    } else {
+        // Confirmación general
+        const confirmado = await mostrarConfirmacion(
+            `¿Está seguro de que desea ${accion} este usuario?`,
+            'Confirmar acción',
+            `Sí, ${accion}`,
+            'Cancelar'
+        );
+        
+        if (!confirmado) {
+            return;
+        }
     }
     
     try {
@@ -457,98 +893,67 @@ async function cambiarEstadoUsuarioHandler(id, estadoActual) {
         const usuarioActualizado = await cambiarEstadoUsuario(id, nuevoEstado);
         
         hideLoaderUsuario();
-        alert(`✅ Usuario ${accion === 'inhabilitar' ? 'inhabilitado' : 'activado'} exitosamente`);
+        
+        // Cerrar sesion si la cuenta ingresada es inhabilitada
+        if (esMiUsuario && nuevoEstado === 'inactivo') {
+            await mostrarExito('Usuario inhabilitado exitosamente. Su sesión se cerrará automáticamente.', 'Cuenta inhabilitada');
+            setTimeout(() => {
+                cerrarSesion();
+            }, 1500);
+            return;
+        } else {
+            await mostrarExito(`Usuario ${accion === 'inhabilitar' ? 'inhabilitado' : 'activado'} exitosamente`);
+        }
         
         // Recargar la lista de usuarios
         cargarUsuarios();
         
     } catch (error) {
         hideLoaderUsuario();
-        alert(`❌ Error al ${accion} usuario: ${error.message}`);
+        await mostrarError(`Error al ${accion} usuario: ${error.message}`);
     }
 }
 
-// ===== FUNCIÓN PARA EDITAR USUARIO =====
-function editarUsuario(id) {
+// Eliminar usuario
+async function eliminarUsuarioHandler(id) {
     const usuario = usuariosRegistrados.find(u => u.id === id);
     
     if (!usuario) {
-        alert('Usuario no encontrado');
+        await mostrarError('Usuario no encontrado');
         return;
     }
     
-    // Verificar si el usuario está activo para permitir edición
-    if (usuario.estado === 'inactivo') {
-        if (!confirm('Este usuario está inactivo. ¿Desea editarlo de todos modos?')) {
-            return;
-        }
+    // Verificar si es el usuario actual
+    const esMiUsuario = esUsuarioActual(id);
+    
+    // Mensaje de confirmación según el caso
+    let pregunta, titulo, textoConfirmar;
+    
+    if (esMiUsuario) {
+        // Confirmación al eliminar su propio usuario
+        titulo = '⚠️ ADVERTENCIA CRÍTICA';
+        pregunta = 'Está a punto de eliminar SU PROPIA cuenta.<br><br><strong>¿Está absolutamente seguro?</strong><br><br>Esta acción es:<br>• <strong>IRREVERSIBLE</strong><br>• Cerrará su sesión inmediatamente<br>• Perderá acceso permanentemente';
+        textoConfirmar = 'Sí, eliminar mi cuenta';
+    } else if (usuario.estado === 'activo') {
+        // Confirmación al eliminar un usuario que se encuentra activo
+        titulo = 'Confirmar eliminación';
+        pregunta = 'Este usuario está <strong>ACTIVO</strong>.<br><br>¿Está seguro de eliminarlo?<br><br><em>Sugerencia: Considere inhabilitarlo en lugar de eliminarlo.</em>';
+        textoConfirmar = 'Sí, eliminar';
+    } else {
+        // Confirmación general
+        titulo = 'Confirmar eliminación';
+        pregunta = '¿Está seguro de eliminar este usuario?';
+        textoConfirmar = 'Sí, eliminar';
     }
     
-    // Activar modo edición
-    modoEdicionUsuario = true;
-    usuarioEditandoId = id;
+    const confirmado = await mostrarConfirmacionCritica(
+        pregunta,
+        titulo,
+        textoConfirmar,
+        'Cancelar'
+    );
     
-    // Llenar formulario con datos del usuario
-    document.getElementById('nombreUsuario').value = usuario.nombre || '';
-    document.getElementById('documentoUsuario').value = usuario.documento || '';
-    document.getElementById('cargoUsuario').value = usuario.cargo || '';
-    document.getElementById('correoUsuario').value = usuario.correo || '';
-    document.getElementById('telefonoUsuario').value = usuario.telefono || '';
-    document.getElementById('comisariaUsuario').value = usuario.comisaria_rol || '';
-    
-    // Configurar campo de contraseña para edición
-    const contraseñaInput = document.getElementById('contraseñaUsuario');
-    if (contraseñaInput) {
-        contraseñaInput.value = '';
-        contraseñaInput.placeholder = 'Nueva contraseña (dejar vacío para no cambiar)';
-        contraseñaInput.style.backgroundColor = '#ffffff';
-    }
-    
-    // Cambiar título
-    const titulo = document.querySelector('.headerF h2');
-    if (titulo) {
-        titulo.textContent = 'Editar Usuario';
-    }
-    
-    // Cambiar botón
-    const boton = document.getElementById('crearUsuario');
-    if (boton) {
-        boton.textContent = 'Actualizar Usuario';
-        boton.id = 'crearUsuario'; // Mantener mismo ID para simplificar
-    }
-    
-    // Abrir formulario
-    document.getElementById('formularioOverlay').style.display = 'flex';
-    
-    // Deshabilitar generación automática de contraseña en modo edición
-    const nombreInput = document.getElementById('nombreUsuario');
-    const documentoInput = document.getElementById('documentoUsuario');
-    const comisariaSelect = document.getElementById('comisariaUsuario');
-    
-    if (nombreInput && documentoInput && comisariaSelect) {
-        // Remover event listeners de generación automática
-        nombreInput.removeEventListener('input', generarContraseñaAutomatica);
-        documentoInput.removeEventListener('input', generarContraseñaAutomatica);
-        comisariaSelect.removeEventListener('change', generarContraseñaAutomatica);
-    }
-}
-
-// ===== FUNCIÓN PARA ELIMINAR USUARIO =====
-async function eliminarUsuario(id) {
-    const usuario = usuariosRegistrados.find(u => u.id === id);
-    
-    if (!usuario) {
-        alert('Usuario no encontrado');
-        return;
-    }
-    
-    // Mensaje de confirmación especial para usuarios activos
-    let mensajeConfirmacion = '¿Está seguro de eliminar este usuario?';
-    if (usuario.estado === 'activo') {
-        mensajeConfirmacion = 'Este usuario está activo. ¿Está seguro de eliminarlo? Considere inhabilitarlo en lugar de eliminarlo.';
-    }
-    
-    if (!confirm(mensajeConfirmacion)) {
+    if (!confirmado) {
         return;
     }
     
@@ -573,17 +978,104 @@ async function eliminarUsuario(id) {
         }
         
         hideLoaderUsuario();
-        alert('✅ Usuario eliminado exitosamente');
-        cargarUsuarios(); // Recargar lista
+        
+        // Cerrar sesion si se eliminó el usuario actual
+        if (esMiUsuario) {
+            await mostrarExito('Usuario eliminado exitosamente. Su sesión se cerrará automáticamente.', 'Cuenta eliminada');
+            setTimeout(() => {
+                cerrarSesion();
+            }, 1500);
+            return;
+        } else {
+            await mostrarExito('Usuario eliminado exitosamente');
+        }
+        
+        cargarUsuarios(); 
         
     } catch (error) {
         hideLoaderUsuario();
         console.error('❌ Error al eliminar usuario:', error);
-        alert('Error al eliminar usuario: ' + error.message);
+        await mostrarError('Error al eliminar usuario: ' + error.message);
     }
 }
 
-// ===== FUNCIONALIDAD DE GENERACIÓN AUTOMÁTICA DE CONTRASEÑA =====
+// Editar usuario
+async function editarUsuario(id) {
+    const usuario = usuariosRegistrados.find(u => u.id === id);
+    
+    if (!usuario) {
+        await mostrarError('Usuario no encontrado');
+        return;
+    }
+    
+    // Confirmar edicion en caso de que el usuario este inactivo
+    if (usuario.estado === 'inactivo') {
+        const confirmado = await mostrarConfirmacion(
+            'Este usuario está INACTIVO. ¿Desea editarlo de todos modos?',
+            'Usuario inactivo',
+            'Sí, editar',
+            'Cancelar'
+        );
+        
+        if (!confirmado) {
+            return;
+        }
+    }
+    
+    // Activar modo edición
+    modoEdicionUsuario = true;
+    usuarioEditandoId = id;
+    
+    console.log(`📝 Editando usuario ID: ${id}`);
+    console.log(`📋 Datos actuales: comisaria_rol=${usuario.comisaria_rol}, rolId=${usuario.rolId}`);
+    
+    // Llenar formulario con datos del usuario
+    document.getElementById('nombreUsuario').value = usuario.nombre || '';
+    document.getElementById('documentoUsuario').value = usuario.documento || '';
+    document.getElementById('cargoUsuario').value = usuario.cargo || '';
+    document.getElementById('correoUsuario').value = usuario.correo || '';
+    document.getElementById('telefonoUsuario').value = usuario.telefono || '';
+    document.getElementById('comisariaUsuario').value = usuario.comisaria_rol || '';
+    
+    // Configurar campo de contraseña para edición
+    const contraseñaInput = document.getElementById('contraseñaUsuario');
+    if (contraseñaInput) {
+        contraseñaInput.value = '';
+        contraseñaInput.placeholder = 'Nueva contraseña (dejar vacío para no cambiar)';
+        contraseñaInput.style.backgroundColor = '#ffffff';
+        contraseñaInput.readOnly = false;
+    }
+    
+    // Cambiar título
+    const titulo = document.querySelector('.headerF h2');
+    if (titulo) {
+        titulo.textContent = 'Editar Usuario';
+    }
+    
+    // Cambiar botón
+    const boton = document.getElementById('crearUsuario');
+    if (boton) {
+        boton.textContent = 'Actualizar Usuario';
+        boton.id = 'crearUsuario';
+    }
+    
+    // Abrir formulario
+    document.getElementById('formularioOverlay').style.display = 'flex';
+    
+    // Deshabilitar generación automática de contraseña en modo edición
+    const nombreInput = document.getElementById('nombreUsuario');
+    const documentoInput = document.getElementById('documentoUsuario');
+    const comisariaSelect = document.getElementById('comisariaUsuario');
+    
+    if (nombreInput && documentoInput && comisariaSelect) {
+        // Remover event listeners de generación automática
+        nombreInput.removeEventListener('input', generarContraseñaAutomatica);
+        documentoInput.removeEventListener('input', generarContraseñaAutomatica);
+        comisariaSelect.removeEventListener('change', generarContraseñaAutomatica);
+    }
+}
+
+// Generar contraseña automaticamente
 let generarContraseñaAutomatica = function() {};
 
 function setupGeneracionContraseña() {
@@ -600,7 +1092,7 @@ function setupGeneracionContraseña() {
     nombreInput.removeEventListener('input', generarContraseñaAutomatica);
     documentoInput.removeEventListener('input', generarContraseñaAutomatica);
     comisariaSelect.removeEventListener('change', generarContraseñaAutomatica);
-    
+
     // Redefinir la función
     generarContraseñaAutomatica = function() {
         // Solo generar en modo creación (no en edición)
@@ -608,7 +1100,25 @@ function setupGeneracionContraseña() {
         
         const nombre = nombreInput.value.trim();
         const documento = documentoInput.value.trim();
-        const comisaria = comisariaSelect.value;
+        const valor = comisariaSelect.value;
+        comisaria = 0;
+
+        if (valor === 'Administrador'){
+            comisaria = 'admin';
+        } else if (valor === 'Comisaría Primera'){
+            comisaria = 1;
+        } else if (valor === 'Comisaría Segunda'){
+            comisaria = 2;
+        } else if (valor === 'Comisaría Tercera'){
+            comisaria = 3;
+        } else if (valor === 'Comisaría Cuarta'){
+            comisaria = 4;
+        } else if (valor === 'Comisaría Quinta'){
+            comisaria = 5;
+        } else  if (valor === 'Comisaría Sexta'){
+            comisaria = 6;
+        }
+        console.log(comisaria)
         
         if (nombre && documento && comisaria) {
             const primero = nombre.split(' ')[0];
@@ -622,16 +1132,14 @@ function setupGeneracionContraseña() {
         }
     };
     
-    // Escuchar cambios en todos los campos relevantes
     nombreInput.addEventListener('input', generarContraseñaAutomatica);
     documentoInput.addEventListener('input', generarContraseñaAutomatica);
     comisariaSelect.addEventListener('change', generarContraseñaAutomatica);
     
-    // Generar contraseña inicial si hay datos
     generarContraseñaAutomatica();
 }
 
-// ===== FUNCIONALIDAD TOGGLE VISIBILIDAD CONTRASEÑA =====
+// Mostrar u ocultar contraseña por medio de ícono
 function setupToggleContraseña() {
     const mostrar = document.getElementById('mostrar');
     const ocultar = document.getElementById('ocultar');
@@ -659,12 +1167,16 @@ function setupToggleContraseña() {
     ocultar.addEventListener('click', ocultarContraseña);
 }
 
-// ===== VALIDACIONES DE CAMPOS =====
+// Validación de campos
 function setupValidaciones() {
     // Validación de campos de texto (solo letras y espacios)
     document.querySelectorAll('input[type="text"]:not(.correo)').forEach(element => {
         element.addEventListener('input', function() {
             this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+            // Validar en tiempo real
+            if (this.id === 'nombreUsuario' || this.id === 'cargoUsuario') {
+                validarCampoObligatorio(this);
+            }
         });
     });
     
@@ -675,84 +1187,41 @@ function setupValidaciones() {
             if (this.value.length > 10) {
                 this.value = this.value.slice(0, 10);
             }
+            // Validar en tiempo real
+            if (this.id === 'documentoUsuario') {
+                validarDocumento(this);
+            } else if (this.id === 'telefonoUsuario') {
+                validarTelefono(this);
+            }
         });
     });
-}
-
-// Funciones de validación existentes (mantener)
-function resaltarVacío(input) {
-    if (input.value.trim() === '') {
-        input.style.border = '2px solid #ff0000';
-        input.style.boxShadow = '0 0 10px rgba(255, 0, 0, 0.27)';
-        const mensaje = input.nextElementSibling;
-        if (mensaje && mensaje.classList.contains('mensaje')) {
-            mensaje.style.display = 'block';
-        }
-    } else {
-        input.style.border = '';
-        input.style.boxShadow = '';
-        const mensaje = input.nextElementSibling;
-        if (mensaje && mensaje.classList.contains('mensaje')) {
-            mensaje.style.display = 'none';
-        }
-    }
-}
-
-function validarCorreo(input) {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const verificacion = regex.test(input.value);
-    const mensaje = input.nextElementSibling.nextElementSibling;
     
-    if (!verificacion) {
-        input.style.border = '2px solid #ff0000';
-        input.style.boxShadow = '0 0 10px rgba(255, 0, 0, 0.27)';
-        if (mensaje && mensaje.classList.contains('mensaje')) {
-            mensaje.style.display = 'block';
-        }
-    } else {
-        input.style.border = '';
-        input.style.boxShadow = '';
-        if (mensaje && mensaje.classList.contains('mensaje')) {
-            mensaje.style.display = 'none';
-        }
+    // Validación de correo en tiempo real
+    const correoInput = document.getElementById('correoUsuario');
+    if (correoInput) {
+        correoInput.addEventListener('input', function() {
+            validarCorreo(this);
+        });
+    }
+    
+    // Validación de select en tiempo real
+    const comisariaSelect = document.getElementById('comisariaUsuario');
+    if (comisariaSelect) {
+        comisariaSelect.addEventListener('change', function() {
+            validarSelect(this);
+        });
+    }
+    
+    // Validación de contraseña en tiempo real (solo en modo creación)
+    const contraseñaInput = document.getElementById('contraseñaUsuario');
+    if (contraseñaInput) {
+        contraseñaInput.addEventListener('input', function() {
+            validarContraseña(this);
+        });
     }
 }
 
-function verificarMinDocumento(input) {
-    const mensaje = input.nextElementSibling.nextElementSibling;
-    if (input.value.length < 7) {
-        input.style.border = '2px solid #ff0000';
-        input.style.boxShadow = '0 0 10px rgba(255, 0, 0, 0.27)';
-        if (mensaje && mensaje.classList.contains('mensaje')) {
-            mensaje.style.display = 'block';
-        }
-    } else {
-        input.style.border = '';
-        input.style.boxShadow = '';
-        if (mensaje && mensaje.classList.contains('mensaje')) {
-            mensaje.style.display = 'none';
-        }
-    }
-}
-
-function verificarMinTelefono(input) {
-    const mensaje = input.nextElementSibling.nextElementSibling;
-    if (input.value.length < 10) {
-        input.style.border = '2px solid #ff0000';
-        input.style.boxShadow = '0 0 10px rgba(255, 0, 0, 0.27)';
-        if (mensaje && mensaje.classList.contains('mensaje')) {
-            mensaje.style.display = 'block';
-        }
-    } else {
-        input.style.border = '';
-        input.style.boxShadow = '';
-        if (mensaje && mensaje.classList.contains('mensaje')) {
-            mensaje.style.display = 'none';
-        }
-    }
-}
-
-// ===== INICIALIZACIÓN =====
+// Inicializacion
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 usuarios.js inicializado');
     
@@ -764,17 +1233,22 @@ document.addEventListener('DOMContentLoaded', function() {
             const rolId = usuarioData.rolId;
             
             if (rolId !== 1) {
-                alert('⛔ No tienes permisos para acceder a esta sección.');
-                window.location.href = '/Frontend/HTML/index.html';
+                mostrarError('No tienes permisos para acceder a esta sección.', 'Acceso denegado').then(() => {
+                    window.location.href = '/Frontend/HTML/index.html';
+                });
                 return;
             }
         } catch (error) {
             console.error('Error al verificar permisos:', error);
-            window.location.href = '/Frontend/HTML/login.html';
+            mostrarError('Error al verificar permisos de usuario', 'Error de sesión').then(() => {
+                window.location.href = '/Frontend/HTML/login.html';
+            });
             return;
         }
     } else {
-        window.location.href = '/Frontend/HTML/login.html';
+        mostrarInfo('No hay sesión activa', 'Sesión requerida').then(() => {
+            window.location.href = '/Frontend/HTML/login.html';
+        });
         return;
     }
     
@@ -791,12 +1265,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Cierra el formulario al hacer clic en el botón cancelar (X)
+    // Cierra el formulario al hacer clic en el icono de X
     if (cancelarBtn) {
         cancelarBtn.addEventListener('click', cerrarFormulario);
     }
     
-    // Cierra el formulario al hacer clic fuera del mismo
+    // Cierra el formulario al hacer clic en el fondo
     if (fondo) {
         fondo.addEventListener('click', function(e) {
             if (e.target === fondo) {

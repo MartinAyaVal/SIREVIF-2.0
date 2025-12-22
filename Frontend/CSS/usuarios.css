@@ -152,7 +152,6 @@ body {
     animation: parteSuperior 0.8s ease-out;
 }
 
-
 @keyframes movimiento {
     from {
         transform: translatey(10%);
@@ -247,11 +246,6 @@ body {
     font-style: italic;
 }
 
-
-
-
-
-
 /* Estilos generales para tablas */
 .tabla-usuario {
     width: 100%;
@@ -306,8 +300,8 @@ body {
 
 /* ===== ESTILOS PARA ESTADOS DE USUARIOS ===== */
 .usuario-inactivo {
-    background-color: #ffebee !important;
-    border-left-color: #f44336 !important;
+    background-color: #ffebee;
+    border-left-color: #f44336;
     opacity: 0.8;
 }
 
@@ -338,19 +332,21 @@ body {
 }
 
 .btn-editar, .btn-estado, .btn-eliminar {
-    padding: 6px 12px;
+    padding: 7px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 12px;
     font-weight: 500;
     transition: all 0.3s ease;
-    min-width: 100px;
+    height: 40px;
+    width: 40px;
+    color: transparent;
+    text-align: center;
 }
 
 .btn-editar {
     background-color: #2196F3;
-    color: white;
 }
 
 .btn-editar:hover {
@@ -359,7 +355,6 @@ body {
 
 .btn-estado {
     background-color: #FF9800;
-    color: white;
 }
 
 .btn-estado:hover {
@@ -368,7 +363,6 @@ body {
 
 .btn-eliminar {
     background-color: #f44336;
-    color: white;
 }
 
 .btn-eliminar:hover {
@@ -376,12 +370,12 @@ body {
 }
 
 /* Estilos específicos para estado inactivo */
-.usuario-inactivo .btn-editar {
+.usuario-inactivo .btn-editar, .usuario-inactivo .btn-estado, .usuario-inactivo .btn-eliminar {
     background-color: #757575;
 }
 
-.usuario-inactivo .btn-editar:hover {
-    background-color: #616161;
+.usuario-inactivo .btn-editar:hover, .usuario-inactivo .btn-estado:hover, .usuario-inactivo .btn-eliminar:hover {
+    background-color: #434343;
 }
 
 .contenedor-tabla{
@@ -427,3 +421,242 @@ body {
     color: #333;
 }
 
+/* ===== SISTEMA DE NOTIFICACIONES ===== */
+.notificacion-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 400px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.notificacion {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    border-left: 5px solid #4CAF50;
+    display: flex;
+    align-items: center;
+    animation: slideInRight 0.3s ease-out, fadeOut 0.3s ease-out 4.7s forwards;
+    transform: translateX(120%);
+    animation-fill-mode: forwards;
+    position: relative;
+    overflow: hidden;
+}
+
+.notificacion::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: #4CAF50;
+    animation: progressBar 5s linear forwards;
+}
+
+.notificacion.exito {
+    border-left-color: #000000;
+    background: linear-gradient(135deg, #f8fff8 0%, #e8f5e8 100%);
+}
+
+.notificacion.error {
+    border-left-color: #f44336;
+    background: linear-gradient(135deg, #fff8f8 0%, #ffe8e8 100%);
+}
+
+.notificacion.advertencia {
+    border-left-color: #ff9800;
+    background: linear-gradient(135deg, #fffbf0 0%, #fff3e0 100%);
+}
+
+.notificacion.info {
+    border-left-color: #2196F3;
+    background: linear-gradient(135deg, #f0f8ff 0%, #e3f2fd 100%);
+}
+
+.notificacion-icono {
+    font-size: 24px;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.notificacion-contenido {
+    flex: 1;
+}
+
+.notificacion-titulo {
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.notificacion-mensaje {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.4;
+}
+
+.notificacion-cerrar {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #999;
+    margin-left: 10px;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.notificacion-cerrar:hover {
+    background: rgba(0,0,0,0.1);
+    color: #333;
+}
+
+/* Animaciones */
+@keyframes slideInRight {
+    from {
+        transform: translateX(120%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(120%);
+    }
+}
+
+@keyframes progressBar {
+    from {
+        width: 100%;
+    }
+    to {
+        width: 0%;
+    }
+}
+
+/* Notificación persistente (sin auto-ocultar) */
+.notificacion.persistente {
+    animation: slideInRight 0.3s ease-out;
+}
+
+.notificacion.persistente::before {
+    display: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .notificacion-container {
+        top: 80px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+    
+    .notificacion {
+        padding: 15px;
+    }
+}
+
+/* ===== RESPONSIVE PARA PÁGINA DE USUARIOS ===== */
+
+@media (max-width: 1024px) {
+    .seccionUsuarios {
+        margin-left: 15%;
+        padding: 15px;
+    }
+    
+    .usuarios {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    
+    .tituloUsuarios {
+        margin-left: 35%;
+    }
+}
+
+@media (max-width: 768px) {
+    .seccionUsuarios {
+        margin-left: 5%;
+        margin-right: 5%;
+        width: 90%;
+    }
+    
+    .usuarios {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+        padding-right: 0;
+    }
+    
+    .usuario-tarjeta {
+        margin-right: 0;
+    }
+    
+    .tituloUsuarios {
+        margin-left: 30%;
+        text-align: center;
+        padding: 20px;
+        font-size: 1.5rem;
+    }
+    
+    .añadir {
+        top: 5%;
+        right: 5%;
+    }
+}
+
+@media (max-width: 480px) {
+    .seccionUsuarios {
+        margin-left: 2%;
+        margin-right: 2%;
+        width: 96%;
+        padding: 10px;
+    }
+    
+    .usuarios {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .tituloUsuarios {
+        margin-left: 0;
+        text-align: center;
+        font-size: 1.3rem;
+        padding: 15px;
+    }
+    
+    .contenedor-tabla {
+        width: 100%;
+    }
+    
+    .añadir {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .añadir:hover {
+        width: 200px;
+        font-size: 14px;
+    }
+}

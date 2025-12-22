@@ -22,7 +22,7 @@ sequelize.sync({ alter: true })
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
-    service: 'comisarias-service', 
+    service: 'comisaria-service', 
     timestamp: new Date().toISOString()
   });
 });
