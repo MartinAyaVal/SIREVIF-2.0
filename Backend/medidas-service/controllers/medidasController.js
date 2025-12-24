@@ -1,10 +1,151 @@
-// controllers/medidasController.js - VERSIÓN COMPLETA CON RELACIONES
-const { Medidas, Comisaria, Usuario, Victimas, Victimarios, TipoVictima, Rol } = require('../shared/models');
+// medidas-service/controllers/medidasController.js - VERSIÓN COMPLETA CON TODAS LAS FUNCIONES
+const { sequelize, Medidas, Comisaria, Usuario, Victimas, Victimarios, TipoVictima } = require('../../shared-models');
+const { Op } = require('sequelize');
 
-// 1. Obtener todas las medidas con información básica
-exports.getMedidas = async (req, res) => {
+// ===== 1. CREAR MEDIDA COMPLETA (FUNCIÓN PRINCIPAL) =====
+exports.createMedidaCompleta = async (req, res) => {
+  console.log('🔨 [CREATE] Iniciando creación de medida completa');
+  
+  const transaction = await sequelize.transaction();
+  
   try {
-    const medidas = await Medidas.findAll({
+    const { 
+      medida,      // datos de la medida de protección
+      victimario,  // datos del victimario (opcional)
+      victimas     // array de víctimas (mínimo 1)
+    } = req.body;
+    
+    console.log('📦 Datos recibidos:', {
+      medida: medida ? '✅ SÍ' : '❌ NO',
+      victimario: victimario ? '✅ SÍ' : '❌ NO',
+      victimas: victimas ? `✅ ${victimas.length} víctima(s)` : '❌ NO'
+    });
+    
+    // ===== VALIDACIONES =====
+    
+    // 1. Validar que vengan datos de medida
+    if (!medida) {
+      throw new Error('Se requieren datos de la medida de protección');
+    }
+    
+    // 2. Validar campos obligatorios de la medida (SOLO campos del formulario)
+    const camposRequeridosMedida = [
+      'numeroMedida', 'lugarHechos', 'tipoViolencia', 
+      'fechaUltimosHechos', 'horaUltimosHechos', 
+      'comisariaId', 'usuarioId'
+    ];
+    
+    for (const campo of camposRequeridosMedida) {
+      if (!medida[campo]) {
+        throw new Error(`El campo '${campo}' es requerido en la medida`);
+      }
+    }
+    
+    // 3. Validar que haya al menos una víctima
+    if (!victimas || !Array.isArray(victimas) || victimas.length === 0) {
+      throw new Error('Se requiere al menos una víctima');
+    }
+    
+    console.log('✅ Validaciones completadas');
+    
+    // ===== CREACIÓN EN TRANSACCIÓN =====
+    
+    let victimarioId = null;
+    
+    // 1. Crear victimario (si se proporciona)
+    if (victimario && Object.keys(victimario).length > 0) {
+      console.log('👤 Creando victimario...');
+      
+      // Validar campos del victimario
+      const camposVictimario = ['nombreCompleto', 'tipoDocumento', 'numeroDocumento', 'sexo'];
+      for (const campo of camposVictimario) {
+        if (!victimario[campo]) {
+          throw new Error(`El campo '${campo}' es requerido en el victimario`);
+        }
+      }
+      
+      // Verificar si el victimario ya existe (por documento)
+      const victimarioExistente = await Victimarios.findOne({
+        where: { numeroDocumento: victimario.numeroDocumento.toString() }
+      }, { transaction });
+      
+      if (victimarioExistente) {
+        // Usar el victimario existente
+        victimarioId = victimarioExistente.id;
+        console.log(`✅ Victimario existente encontrado - ID: ${victimarioId}`);
+      } else {
+        // Crear nuevo victimario
+        const victimarioInstance = await Victimarios.create({
+          ...victimario,
+          numeroDocumento: victimario.numeroDocumento.toString(),
+          edad: parseInt(victimario.edad) || 0,
+          comisariaId: medida.comisariaId
+        }, { transaction });
+        
+        victimarioId = victimarioInstance.id;
+        console.log(`✅ Nuevo victimario creado - ID: ${victimarioId}`);
+      }
+    } else {
+      console.log('ℹ️ No se proporcionó victimario');
+    }
+    
+    // 2. Crear la medida de protección
+    console.log('📝 Creando medida de protección...');
+    
+    // Preparar datos de la medida (SOLO campos del formulario)
+    const medidaData = {
+      numeroMedida: parseInt(medida.numeroMedida),
+      lugarHechos: medida.lugarHechos,
+      tipoViolencia: medida.tipoViolencia,
+      fechaUltimosHechos: medida.fechaUltimosHechos,
+      horaUltimosHechos: medida.horaUltimosHechos,
+      comisariaId: parseInt(medida.comisariaId),
+      usuarioId: parseInt(medida.usuarioId),
+      victimarioId: victimarioId
+    };
+    
+    const medidaInstance = await Medidas.create(medidaData, { transaction });
+    console.log(`✅ Medida creada - ID: ${medidaInstance.id}, Número: ${medidaInstance.numeroMedida}`);
+    
+    // 3. Crear víctimas
+    console.log(`👥 Creando ${victimas.length} víctima(s)...`);
+    let victimasCreadas = [];
+    
+    for (let i = 0; i < victimas.length; i++) {
+      const victima = victimas[i];
+      
+      // Validar campos de cada víctima
+      const camposVictima = ['nombreCompleto', 'tipoDocumento', 'numeroDocumento', 'sexo', 'tipoVictimaId'];
+      for (const campo of camposVictima) {
+        if (!victima[campo]) {
+          throw new Error(`Víctima ${i+1}: El campo '${campo}' es requerido`);
+        }
+      }
+      
+      // Crear víctima
+      const victimaData = {
+        ...victima,
+        numeroDocumento: victima.numeroDocumento.toString(),
+        edad: parseInt(victima.edad) || 0,
+        tipoVictimaId: parseInt(victima.tipoVictimaId),
+        comisariaId: parseInt(medida.comisariaId),
+        medidaId: medidaInstance.id
+      };
+      
+      const victimaCreada = await Victimas.create(victimaData, { transaction });
+      victimasCreadas.push(victimaCreada);
+      
+      console.log(`  ✅ Víctima ${i+1} creada - ID: ${victimaCreada.id}`);
+    }
+    
+    // Confirmar transacción
+    await transaction.commit();
+    console.log('✅ Transacción confirmada exitosamente');
+    
+    // ===== OBTENER MEDIDA COMPLETA CON RELACIONES =====
+    console.log('🔄 Obteniendo medida completa con relaciones...');
+    
+    const medidaCompleta = await Medidas.findByPk(medidaInstance.id, {
       include: [
         {
           model: Comisaria,
@@ -14,31 +155,65 @@ exports.getMedidas = async (req, res) => {
         {
           model: Usuario,
           as: 'usuario',
-          attributes: ['id', 'nombre', 'cargo']
+          attributes: ['id', 'nombre', 'documento', 'cargo', 'comisaria_rol']
         },
         {
           model: Victimarios,
           as: 'victimario',
-          attributes: ['id', 'nombreCompleto']
+          attributes: ['id', 'nombreCompleto', 'tipoDocumento', 'numeroDocumento', 'sexo', 'edad']
+        },
+        {
+          model: Victimas,
+          as: 'victimas',
+          attributes: ['id', 'nombreCompleto', 'tipoDocumento', 'numeroDocumento', 'sexo', 'edad', 'tipoVictimaId'],
+          include: [
+            {
+              model: TipoVictima,
+              as: 'tipoVictima',
+              attributes: ['id', 'tipo']
+            }
+          ]
         }
-      ],
-      order: [['createdAt', 'DESC']]
+      ]
     });
     
-    res.json(medidas);
+    console.log('🎉 Medida completa creada exitosamente');
+    
+    // ===== RESPUESTA FINAL =====
+    res.status(201).json({
+      success: true,
+      message: 'Medida de protección creada exitosamente',
+      data: {
+        medida: medidaCompleta,
+        resumen: {
+          totalVictimas: victimasCreadas.length,
+          totalVictimarios: victimarioId ? 1 : 0,
+          numeroMedida: medidaInstance.numeroMedida,
+          fechaCreacion: new Date().toISOString()
+        }
+      }
+    });
+    
   } catch (error) {
-    console.error('Error en getMedidas:', error);
+    // Revertir transacción en caso de error
+    await transaction.rollback();
+    
+    console.error('❌ Error en createMedidaCompleta:', error.message);
     res.status(500).json({ 
-      message: 'Error al obtener medidas de protección', 
-      error: error.message 
+      success: false,
+      message: 'Error al crear medida completa', 
+      error: error.message,
+      details: error.errors ? error.errors.map(e => e.message) : []
     });
   }
-}
+};
 
-// 2. Obtener medida COMPLETA por ID con todas las relaciones
-exports.getMedidasById = async (req, res) => {
+// ===== 2. OBTENER MEDIDA COMPLETA POR ID =====
+exports.getMedidaCompleta = async (req, res) => {
   try {
     const { id } = req.params;
+    
+    console.log(`🔍 Buscando medida completa ID: ${id}`);
     
     const medida = await Medidas.findByPk(id, {
       include: [
@@ -50,12 +225,7 @@ exports.getMedidasById = async (req, res) => {
         {
           model: Usuario,
           as: 'usuario',
-          attributes: ['id', 'nombre', 'documento', 'cargo', 'correo', 'telefono'],
-          include: [{
-            model: Rol,
-            as: 'rol',
-            attributes: ['id', 'rol']
-          }]
+          attributes: ['id', 'nombre', 'documento', 'cargo', 'comisaria_rol']
         },
         {
           model: Victimarios,
@@ -66,413 +236,473 @@ exports.getMedidasById = async (req, res) => {
           model: Victimas,
           as: 'victimas',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
-          include: [{
-            model: TipoVictima,
-            as: 'tipoVictima',
-            attributes: ['id', 'tipo']
-          }]
+          include: [
+            {
+              model: TipoVictima,
+              as: 'tipoVictima',
+              attributes: ['id', 'tipo']
+            }
+          ]
         }
       ]
     });
     
     if (!medida) {
-      return res.status(404).json({ message: 'Medida de protección no encontrada' });
-    }
-    
-    res.json(medida);
-  } catch (error) {
-    console.error('Error en getMedidasById:', error);
-    res.status(500).json({ 
-      message: 'Error al obtener medida de protección', 
-      error: error.message 
-    });
-  }
-}
-
-// 3. Crear medida de protección COMPLETA (con víctimas y victimario)
-exports.createMedidas = async (req, res) => {
-  const transaction = await require('../shared/models').sequelize.transaction();
-  
-  try {
-    const { 
-      numeroMedida, 
-      lugarHechos, 
-      tipoViolencia, 
-      fechaUltimosHechos, 
-      horaUltimosHechos,
-      comisariaId,
-      usuarioId,
-      victimario, // Objeto victimario (1:1)
-      victimas    // Array de víctimas (1:N)
-    } = req.body;
-
-    // Validar campos requeridos
-    if (!numeroMedida || !comisariaId || !usuarioId) {
-      await transaction.rollback();
-      return res.status(400).json({ 
-        message: 'Faltan campos requeridos: numeroMedida, comisariaId, usuarioId' 
-      });
-    }
-
-    // 1. Crear victimario primero (si existe)
-    let victimarioId = null;
-    if (victimario) {
-      const victimarioCreado = await Victimarios.create(victimario, { transaction });
-      victimarioId = victimarioCreado.id;
-    }
-
-    // 2. Crear la medida
-    const medida = await Medidas.create({
-      numeroMedida,
-      lugarHechos,
-      tipoViolencia,
-      fechaUltimosHechos,
-      horaUltimosHechos,
-      comisariaId,
-      usuarioId,
-      victimarioId
-    }, { transaction });
-
-    // 3. Crear víctimas asociadas (si existen)
-    let victimasCreadas = [];
-    if (victimas && victimas.length > 0) {
-      victimasCreadas = await Victimas.bulkCreate(
-        victimas.map(victima => ({
-          ...victima,
-          medidaId: medida.id,
-          comisariaId: comisariaId // Asignar misma comisaría que la medida
-        })),
-        { transaction }
-      );
-    }
-
-    // 4. Commit de la transacción
-    await transaction.commit();
-
-    // 5. Obtener la medida completa con relaciones
-    const medidaCompleta = await Medidas.findByPk(medida.id, {
-      include: [
-        {
-          model: Comisaria,
-          as: 'comisaria'
-        },
-        {
-          model: Usuario,
-          as: 'usuario'
-        },
-        {
-          model: Victimarios,
-          as: 'victimario'
-        },
-        {
-          model: Victimas,
-          as: 'victimas',
-          include: [{
-            model: TipoVictima,
-            as: 'tipoVictima'
-          }]
-        }
-      ]
-    });
-
-    res.status(201).json({
-      message: 'Medida creada exitosamente',
-      medida: medidaCompleta,
-      victimasCreadas: victimasCreadas.length
-    });
-
-  } catch (error) {
-    // Rollback en caso de error
-    await transaction.rollback();
-    
-    console.error('Error al crear medida de protección:', error);
-    
-    // Manejo de errores específicos
-    if (error.name === 'SequelizeUniqueConstraintError') {
-      return res.status(400).json({
-        message: 'El número de medida ya existe',
-        error: error.errors.map(e => e.message)
+      return res.status(404).json({
+        success: false,
+        message: 'Medida no encontrada'
       });
     }
     
-    if (error.name === 'SequelizeValidationError') {
-      return res.status(400).json({
-        message: 'Error de validación',
-        error: error.errors.map(e => e.message)
-      });
-    }
+    console.log(`✅ Medida encontrada - Número: ${medida.numeroMedida}`);
     
-    res.status(500).json({
-      message: 'Error al crear medida de protección', 
-      error: error.message
-    });
-  }
-}
-
-// 4. Actualizar medida de protección
-exports.updateMedidas = async (req, res) => {
-  const transaction = await require('../shared/models').sequelize.transaction();
-  
-  try {
-    const { id } = req.params;
-    const { 
-      numeroMedida, 
-      lugarHechos, 
-      tipoViolencia, 
-      fechaUltimosHechos, 
-      horaUltimosHechos,
-      comisariaId,
-      usuarioId,
-      victimario, // Objeto victimario actualizado
-      victimas    // Array de víctimas actualizado
-    } = req.body;
-
-    // Buscar medida existente
-    const medida = await Medidas.findByPk(id, { transaction });
-    if (!medida) {
-      await transaction.rollback();
-      return res.status(404).json({ message: 'Medida de protección no encontrada' });
-    }
-
-    // 1. Actualizar datos básicos de la medida
-    await medida.update({
-      numeroMedida: numeroMedida || medida.numeroMedida,
-      lugarHechos: lugarHechos || medida.lugarHechos,
-      tipoViolencia: tipoViolencia || medida.tipoViolencia,
-      fechaUltimosHechos: fechaUltimosHechos || medida.fechaUltimosHechos,
-      horaUltimosHechos: horaUltimosHechos || medida.horaUltimosHechos,
-      comisariaId: comisariaId || medida.comisariaId,
-      usuarioId: usuarioId || medida.usuarioId
-    }, { transaction });
-
-    // 2. Actualizar victimario (si se proporciona)
-    if (victimario && medida.victimarioId) {
-      await Victimarios.update(victimario, {
-        where: { id: medida.victimarioId },
-        transaction
-      });
-    }
-
-    // 3. Manejar víctimas (actualizar/crear)
-    if (victimas && victimas.length > 0) {
-      // Para simplificar: eliminar todas y crear nuevas
-      await Victimas.destroy({
-        where: { medidaId: medida.id },
-        transaction
-      });
-      
-      await Victimas.bulkCreate(
-        victimas.map(v => ({
-          ...v,
-          medidaId: medida.id,
-          comisariaId: comisariaId || medida.comisariaId
-        })),
-        { transaction }
-      );
-    }
-
-    // 4. Commit
-    await transaction.commit();
-
-    // 5. Obtener medida actualizada
-    const medidaActualizada = await Medidas.findByPk(id, {
-      include: [
-        {
-          model: Comisaria,
-          as: 'comisaria'
-        },
-        {
-          model: Usuario,
-          as: 'usuario'
-        },
-        {
-          model: Victimarios,
-          as: 'victimario'
-        },
-        {
-          model: Victimas,
-          as: 'victimas',
-          include: [{
-            model: TipoVictima,
-            as: 'tipoVictima'
-          }]
-        }
-      ]
-    });
-
     res.json({
-      message: 'Medida actualizada exitosamente',
-      medida: medidaActualizada
+      success: true,
+      data: medida
     });
-
-  } catch (error) {
-    await transaction.rollback();
-    console.error('Error al actualizar medida de protección:', error);
-    res.status(500).json({ 
-      message: 'Error al actualizar medida de protección', 
-      error: error.message 
-    });
-  }
-}
-
-// 5. Eliminar medida de protección (con sus relaciones)
-exports.deleteMedidas = async (req, res) => {
-  const transaction = await require('../shared/models').sequelize.transaction();
-  
-  try {
-    const { id } = req.params;
     
-    // Buscar medida
-    const medida = await Medidas.findByPk(id, { transaction });
-    if (!medida) {
-      await transaction.rollback();
-      return res.status(404).json({ message: 'Medida de protección no encontrada' });
-    }
-
-    // 1. Eliminar víctimas asociadas
-    await Victimas.destroy({
-      where: { medidaId: id },
-      transaction
-    });
-
-    // 2. Eliminar victimario asociado (si existe)
-    if (medida.victimarioId) {
-      await Victimarios.destroy({
-        where: { id: medida.victimarioId },
-        transaction
-      });
-    }
-
-    // 3. Eliminar la medida
-    await medida.destroy({ transaction });
-
-    // 4. Commit
-    await transaction.commit();
-
-    res.json({ 
-      message: 'Medida de protección eliminada correctamente con todas sus relaciones' 
-    });
-
   } catch (error) {
-    await transaction.rollback();
-    console.error('Error al eliminar medida de protección:', error);
+    console.error('Error en getMedidaCompleta:', error.message);
     res.status(500).json({ 
-      message: 'Error al eliminar medida de protección', 
+      success: false,
+      message: 'Error al obtener medida completa', 
       error: error.message 
     });
   }
-}
+};
 
-// 6. Búsqueda avanzada de medidas
-exports.buscarMedidas = async (req, res) => {
+// ===== 3. OBTENER TODAS LAS MEDIDAS CON RELACIONES BÁSICAS =====
+exports.getMedidasConRelaciones = async (req, res) => {
   try {
-    const { 
-      comisariaId, 
-      usuarioId, 
-      fechaInicio, 
-      fechaFin,
-      tipoViolencia,
-      numeroMedida 
-    } = req.query;
-
+    const { comisariaId, limit = 100, offset = 0 } = req.query;
+    
+    console.log(`📋 Obteniendo medidas con relaciones`);
+    
+    // Construir filtros
     const where = {};
-
-    // Construir condiciones de búsqueda
-    if (comisariaId) where.comisariaId = comisariaId;
-    if (usuarioId) where.usuarioId = usuarioId;
-    if (tipoViolencia) where.tipoViolencia = tipoViolencia;
-    if (numeroMedida) where.numeroMedida = numeroMedida;
-
-    // Rango de fechas
-    if (fechaInicio || fechaFin) {
-      where.createdAt = {};
-      if (fechaInicio) where.createdAt.$gte = new Date(fechaInicio);
-      if (fechaFin) where.createdAt.$lte = new Date(fechaFin);
-    }
-
+    if (comisariaId) where.comisariaId = parseInt(comisariaId);
+    
     const medidas = await Medidas.findAll({
       where,
       include: [
         {
           model: Comisaria,
           as: 'comisaria',
-          attributes: ['id', 'numero', 'lugar']
+          attributes: ['numero', 'lugar']
         },
         {
           model: Usuario,
           as: 'usuario',
-          attributes: ['id', 'nombre', 'cargo']
+          attributes: ['nombre', 'cargo']
+        },
+        {
+          model: Victimas,
+          as: 'victimas',
+          attributes: ['id'],
+          required: false
         }
       ],
-      order: [['createdAt', 'DESC']]
+      order: [['fecha_creacion', 'DESC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
     });
-
+    
+    // Procesar resultados para agregar conteo
+    const medidasConConteo = medidas.map(medida => {
+      const medidaJson = medida.toJSON();
+      medidaJson.total_victimas = medidaJson.victimas ? medidaJson.victimas.length : 0;
+      delete medidaJson.victimas;
+      return medidaJson;
+    });
+    
+    // Obtener total para paginación
+    const total = await Medidas.count({ where });
+    
+    console.log(`✅ Encontradas ${medidasConConteo.length} medidas (Total: ${total})`);
+    
     res.json({
-      total: medidas.length,
-      medidas
+      success: true,
+      data: medidasConConteo,
+      pagination: {
+        total,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        hasMore: (parseInt(offset) + medidasConConteo.length) < total
+      }
     });
-
+    
   } catch (error) {
-    console.error('Error en buscarMedidas:', error);
+    console.error('Error en getMedidasConRelaciones:', error.message);
     res.status(500).json({ 
-      message: 'Error al buscar medidas', 
+      success: false,
+      message: 'Error al obtener medidas', 
       error: error.message 
     });
   }
-}
+};
 
-// 7. Obtener estadísticas de medidas
+// ===== 4. OBTENER TODAS LAS MEDIDAS (BÁSICO) =====
+exports.getMedidas = async (req, res) => {
+  try {
+    const medidas = await Medidas.findAll({
+      order: [['fecha_creacion', 'DESC']],
+      limit: 100
+    });
+    
+    res.json({
+      success: true,
+      count: medidas.length,
+      data: medidas
+    });
+  } catch (error) {
+    console.error('Error en getMedidas:', error.message);
+    res.status(500).json({ 
+      success: false,
+      error: 'Error en el servidor',
+      detalle: error.message 
+    });
+  }
+};
+
+// ===== 5. OBTENER MEDIDA POR ID (BÁSICO) =====
+exports.getMedidasById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const medida = await Medidas.findByPk(id);
+    
+    if (!medida) {
+      return res.status(404).json({
+        success: false,
+        message: 'Medida de protección no encontrada'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: medida
+    });
+    
+  } catch (error) {
+    console.error('Error en getMedidasById:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener medida de protección',
+      error: error.message
+    });
+  }
+};
+
+// ===== 6. CREAR MEDIDA BÁSICA (FUNCIÓN FALTANTE) =====
+exports.createMedidas = async (req, res) => {
+  try {
+    console.log('📝 Creando medida básica...');
+    
+    const { 
+      numeroMedida, 
+      lugarHechos, 
+      tipoViolencia, 
+      fechaUltimosHechos, 
+      horaUltimosHechos, 
+      comisariaId, 
+      usuarioId, 
+      victimarioId 
+    } = req.body;
+
+    // Validar campos requeridos
+    const camposRequeridos = ['numeroMedida', 'lugarHechos', 'tipoViolencia', 'fechaUltimosHechos', 'horaUltimosHechos', 'comisariaId', 'usuarioId'];
+    for (const campo of camposRequeridos) {
+      if (!req.body[campo]) {
+        return res.status(400).json({
+          success: false,
+          message: `El campo '${campo}' es requerido`
+        });
+      }
+    }
+
+    // Crear medida básica
+    const medida = await Medidas.create({
+      numeroMedida: parseInt(numeroMedida),
+      lugarHechos: lugarHechos,
+      tipoViolencia: tipoViolencia,
+      fechaUltimosHechos: fechaUltimosHechos,
+      horaUltimosHechos: horaUltimosHechos,
+      comisariaId: parseInt(comisariaId),
+      usuarioId: parseInt(usuarioId),
+      victimarioId: victimarioId ? parseInt(victimarioId) : null
+    });
+
+    console.log(`✅ Medida básica creada - ID: ${medida.id}`);
+
+    res.status(201).json({
+      success: true,
+      message: 'Medida creada exitosamente',
+      data: medida
+    });
+
+  } catch (error) {
+    console.error('❌ Error en createMedidas:', error.message);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error al crear medida', 
+      error: error.message
+    });
+  }
+};
+
+// ===== 7. ACTUALIZAR MEDIDA =====
+exports.updateMedidas = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  
+  try {
+    const { id } = req.params;
+    
+    console.log(`✏️ Actualizando medida ID: ${id}`);
+    
+    const medida = await Medidas.findByPk(id, { transaction });
+    if (!medida) {
+      await transaction.rollback();
+      return res.status(404).json({
+        success: false,
+        message: 'Medida de protección no encontrada'
+      });
+    }
+
+    // Campos permitidos para actualizar
+    const camposPermitidos = [
+      'numeroMedida', 'lugarHechos', 'tipoViolencia', 
+      'fechaUltimosHechos', 'horaUltimosHechos',
+      'comisariaId', 'usuarioId', 'victimarioId'
+    ];
+    
+    const datosActualizar = {};
+    for (const campo of camposPermitidos) {
+      if (req.body[campo] !== undefined) {
+        if (campo.includes('Id') || campo === 'numeroMedida') {
+          datosActualizar[campo] = parseInt(req.body[campo]) || null;
+        } else {
+          datosActualizar[campo] = req.body[campo];
+        }
+      }
+    }
+    
+    await medida.update(datosActualizar, { transaction });
+    
+    await transaction.commit();
+    
+    console.log(`✅ Medida actualizada ID: ${id}`);
+    
+    res.json({
+      success: true,
+      message: 'Medida actualizada exitosamente',
+      data: medida
+    });
+    
+  } catch (error) {
+    await transaction.rollback();
+    console.error('Error al actualizar medida:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error al actualizar medida de protección',
+      error: error.message
+    });
+  }
+};
+
+// ===== 8. ELIMINAR MEDIDA =====
+exports.deleteMedidas = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  
+  try {
+    const { id } = req.params;
+    
+    console.log(`🗑️ Eliminando medida ID: ${id}`);
+    
+    const medida = await Medidas.findByPk(id, { transaction });
+    if (!medida) {
+      await transaction.rollback();
+      return res.status(404).json({
+        success: false,
+        message: 'Medida de protección no encontrada'
+      });
+    }
+
+    await medida.destroy({ transaction });
+    
+    await transaction.commit();
+    
+    console.log(`✅ Medida eliminada ID: ${id}`);
+    
+    res.json({
+      success: true,
+      message: 'Medida eliminada correctamente'
+    });
+    
+  } catch (error) {
+    await transaction.rollback();
+    console.error('Error al eliminar medida:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error al eliminar medida de protección',
+      error: error.message
+    });
+  }
+};
+
+// ===== 9. BUSCAR MEDIDAS =====
+exports.searchMedidas = async (req, res) => {
+  try {
+    const { 
+      query, 
+      comisariaId
+    } = req.query;
+    
+    console.log('🔍 Buscando medidas con filtros');
+    
+    // Construir condiciones de búsqueda
+    const where = {};
+    
+    if (comisariaId) where.comisariaId = parseInt(comisariaId);
+    
+    // Búsqueda por número de medida o lugar
+    if (query) {
+      where[Op.or] = [
+        { numeroMedida: { [Op.like]: `%${query}%` } },
+        { lugarHechos: { [Op.like]: `%${query}%` } }
+      ];
+    }
+    
+    const medidas = await Medidas.findAll({
+      where,
+      include: [
+        {
+          model: Comisaria,
+          as: 'comisaria',
+          attributes: ['numero', 'lugar']
+        }
+      ],
+      order: [['fecha_creacion', 'DESC']],
+      limit: 50
+    });
+    
+    console.log(`✅ Encontradas ${medidas.length} medidas`);
+    
+    res.json({
+      success: true,
+      count: medidas.length,
+      data: medidas
+    });
+    
+  } catch (error) {
+    console.error('Error en searchMedidas:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error al buscar medidas',
+      error: error.message
+    });
+  }
+};
+
+// ===== 10. OBTENER ESTADÍSTICAS =====
 exports.getEstadisticas = async (req, res) => {
   try {
-    // Total de medidas
-    const totalMedidas = await Medidas.count();
+    console.log('📊 Obteniendo estadísticas...');
     
-    // Medidas por comisaría
+    const totalMedidas = await Medidas.count();
+    const totalVictimas = await Victimas.count();
+    const totalVictimarios = await Victimarios.count();
+    
     const medidasPorComisaria = await Medidas.findAll({
       attributes: [
         'comisariaId',
-        [require('../shared/models').sequelize.fn('COUNT', 'comisariaId'), 'total']
+        [sequelize.fn('COUNT', sequelize.col('id')), 'total']
       ],
       group: ['comisariaId'],
-      include: [{
-        model: Comisaria,
-        as: 'comisaria',
-        attributes: ['numero', 'lugar']
-      }]
+      include: [
+        {
+          model: Comisaria,
+          as: 'comisaria',
+          attributes: ['numero', 'lugar']
+        }
+      ]
     });
     
-    // Medidas por tipo de violencia
-    const medidasPorViolencia = await Medidas.findAll({
-      attributes: [
-        'tipoViolencia',
-        [require('../shared/models').sequelize.fn('COUNT', 'tipoViolencia'), 'total']
-      ],
-      group: ['tipoViolencia']
-    });
+    console.log('✅ Estadísticas obtenidas');
     
-    // Últimas 5 medidas
-    const ultimasMedidas = await Medidas.findAll({
-      include: [{
-        model: Comisaria,
-        as: 'comisaria',
-        attributes: ['numero']
-      }],
-      order: [['createdAt', 'DESC']],
-      limit: 5
-    });
-
     res.json({
-      totalMedidas,
-      medidasPorComisaria,
-      medidasPorViolencia,
-      ultimasMedidas
+      success: true,
+      data: {
+        totales: {
+          medidas: totalMedidas,
+          victimas: totalVictimas,
+          victimarios: totalVictimarios
+        },
+        medidasPorComisaria,
+        timestamp: new Date().toISOString()
+      }
     });
-
+    
   } catch (error) {
-    console.error('Error en getEstadisticas:', error);
-    res.status(500).json({ 
-      message: 'Error al obtener estadísticas', 
-      error: error.message 
+    console.error('Error en getEstadisticas:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener estadísticas',
+      error: error.message
     });
   }
-}
+};
+
+// ===== 11. OBTENER MEDIDAS POR COMISARÍA =====
+exports.getMedidasPorComisaria = async (req, res) => {
+  try {
+    const { comisariaId } = req.params;
+    
+    console.log(`🏢 Obteniendo medidas para comisaría ID: ${comisariaId}`);
+    
+    const medidas = await Medidas.findAll({
+      where: { 
+        comisariaId: parseInt(comisariaId)
+      },
+      include: [
+        {
+          model: Comisaria,
+          as: 'comisaria',
+          attributes: ['numero', 'lugar']
+        },
+        {
+          model: Usuario,
+          as: 'usuario',
+          attributes: ['nombre', 'cargo']
+        }
+      ],
+      order: [['fecha_creacion', 'DESC']]
+    });
+    
+    // Contar víctimas por medida
+    const medidasConConteo = await Promise.all(
+      medidas.map(async (medida) => {
+        const medidaJson = medida.toJSON();
+        const conteoVictimas = await Victimas.count({
+          where: { medidaId: medida.id }
+        });
+        medidaJson.total_victimas = conteoVictimas;
+        return medidaJson;
+      })
+    );
+    
+    console.log(`✅ Encontradas ${medidasConConteo.length} medidas para comisaría ${comisariaId}`);
+    
+    res.json({
+      success: true,
+      count: medidasConConteo.length,
+      data: medidasConConteo
+    });
+    
+  } catch (error) {
+    console.error('Error en getMedidasPorComisaria:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener medidas por comisaría',
+      error: error.message
+    });
+  }
+};

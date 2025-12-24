@@ -2,6 +2,9 @@ let usuariosRegistrados = [];
 let modoEdicionUsuario = false;
 let usuarioEditandoId = null;
 
+// URL base del gateway
+const GATEWAY_URL = 'http://localhost:8080';
+
 // Ventana de notificacion de exito
 async function mostrarExito(mensaje, titulo = '¡Éxito!') {
     return Swal.fire({
@@ -453,7 +456,7 @@ function validarFormularioCompleto() {
     return true;
 }
 
-// Modificacion de rolId dependiendo de Comisaria_rol
+// Mapeo de rolId dependiendo de Comisaria_rol
 function obtenerRolIdPorComisaria(comisaria) {
     const mapeoRoles = {
         'Administrador': 1,
@@ -465,9 +468,122 @@ function obtenerRolIdPorComisaria(comisaria) {
         'Comisaría Sexta': 7
     };
     
-    console.log(`🔍 Obteniendo rolId para comisaría: "${comisaria}" -> ${mapeoRoles[comisaria] || 1}`);
-    return mapeoRoles[comisaria] || 1;
+    const rolId = mapeoRoles[comisaria];
+    console.log(`🔍 Obteniendo rolId para comisaría: "${comisaria}" -> ${rolId} (tipo: ${typeof rolId})`);
+    
+    // Asegurar que siempre retorne un número
+    return rolId !== undefined ? rolId : 1;
 }
+
+// Mapeo de comisariaId dependiendo de Comisaria_rol
+function obtenerComisariaIdPorComisaria(comisaria) {
+    const mapeoComisarias = {
+        'Administrador': 0,
+        'Comisaría Primera': 1,
+        'Comisaría Segunda': 2,
+        'Comisaría Tercera': 3,
+        'Comisaría Cuarta': 4,
+        'Comisaría Quinta': 5,
+        'Comisaría Sexta': 6
+    };
+    
+    const comisariaId = mapeoComisarias[comisaria];
+    console.log(`🔍 Obteniendo comisariaId para comisaría: "${comisaria}" -> ${comisariaId} (tipo: ${typeof comisariaId})`);
+    
+    // Asegurar que siempre retorne un número (no undefined)
+    return comisariaId !== undefined ? comisariaId : 0;
+}
+
+// Generar contraseña automática
+function generarContraseñaAutomatica() {
+    if (modoEdicionUsuario) {
+        return; // No generar en modo edición
+    }
+    
+    const nombreInput = document.getElementById('nombreUsuario');
+    const documentoInput = document.getElementById('documentoUsuario');
+    const comisariaSelect = document.getElementById('comisariaUsuario');
+    const contraseñaInput = document.getElementById('contraseñaUsuario');
+    
+    const nombre = nombreInput.value.trim();
+    const documento = documentoInput.value.trim();
+    const valor = comisariaSelect.value;
+    
+    // Limpiar validaciones anteriores
+    limpiarValidaciones();
+    
+    // Validar campos requeridos y mostrar errores visuales
+    let hayErrores = false;
+    const camposInvalidos = [];
+    
+    if (!nombre) {
+        validarCampoObligatorio(nombreInput);
+        hayErrores = true;
+        const mensajes = Array.from(nombreInput.parentNode.querySelectorAll('.mensaje'));
+        camposInvalidos.push({
+            input: nombreInput,
+            mensajes: mensajes,
+            esRequerido: true
+        });
+    }
+    
+    if (!documento) {
+        validarDocumento(documentoInput);
+        hayErrores = true;
+        const mensajes = Array.from(documentoInput.parentNode.querySelectorAll('.mensaje'));
+        camposInvalidos.push({
+            input: documentoInput,
+            mensajes: mensajes,
+            esRequerido: true
+        });
+    }
+    
+    if (!valor) {
+        validarSelect(comisariaSelect);
+        hayErrores = true;
+        const mensajes = Array.from(comisariaSelect.parentNode.querySelectorAll('.mensaje'));
+        camposInvalidos.push({
+            input: comisariaSelect,
+            mensajes: mensajes,
+            esRequerido: true
+        });
+    }
+    
+    // Si hay errores, mostrarlos y no generar contraseña
+    if (hayErrores) {
+        mostrarErroresValidacion(camposInvalidos);
+        return;
+    }
+    
+    // Mapear comisaria a código para la contraseña
+    let comisariaCodigo = '0';
+    const mapeoComisariasContraseña = {
+        'Administrador': 'admin',
+        'Comisaría Primera': '1',
+        'Comisaría Segunda': '2',
+        'Comisaría Tercera': '3',
+        'Comisaría Cuarta': '4',
+        'Comisaría Quinta': '5',
+        'Comisaría Sexta': '6'
+    };
+    
+    comisariaCodigo = mapeoComisariasContraseña[valor] || '0';
+    
+    // Generar contraseña: primer.nombre.documento.codigo
+    const primerNombre = nombre.split(' ')[0].toLowerCase();
+    const contraseñaGenerada = `${primerNombre}.${documento}.${comisariaCodigo}`;
+    
+    // Mostrar en el campo
+    contraseñaInput.value = contraseñaGenerada;
+    
+    // Validar visualmente la contraseña (quitar errores si los tenía)
+    validarContraseña(contraseñaInput);
+    
+    // Hacer focus en el campo de contraseña
+    contraseñaInput.focus();
+}
+
+// ===== FUNCIONES DE API (USANDO GATEWAY) =====
 
 // Crear nuevo usuario
 async function crearUsuario(usuarioData) {
@@ -478,8 +594,10 @@ async function crearUsuario(usuarioData) {
         }
         
         console.log('📤 Enviando usuario a crear:', usuarioData);
+        console.log('🔍 Tipo de comisariaId:', typeof usuarioData.comisariaId);
+        console.log('🔍 Valor de comisariaId:', usuarioData.comisariaId);
         
-        const response = await fetch('http://localhost:8080/usuarios', {
+        const response = await fetch(`${GATEWAY_URL}/usuarios`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -491,8 +609,18 @@ async function crearUsuario(usuarioData) {
         console.log('📥 Respuesta del servidor - Status:', response.status);
         
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || `Error ${response.status} al crear usuario`);
+            const errorText = await response.text();
+            console.error('❌ Error del servidor:', errorText);
+            let errorMessage = `Error ${response.status} al crear usuario`;
+            
+            try {
+                const errorData = JSON.parse(errorText);
+                errorMessage = errorData.message || errorData.error || errorMessage;
+            } catch (e) {
+                // Si no es JSON, usar el texto como está
+            }
+            
+            throw new Error(errorMessage);
         }
         
         const usuarioCreado = await response.json();
@@ -515,8 +643,9 @@ async function actualizarUsuario(id, usuarioData) {
         }
         
         console.log(`📤 Actualizando usuario ID: ${id}`, usuarioData);
+        console.log(`🔍 comisariaId enviado: ${usuarioData.comisariaId} (tipo: ${typeof usuarioData.comisariaId})`);
         
-        const response = await fetch(`http://localhost:8080/usuarios/${id}`, {
+        const response = await fetch(`${GATEWAY_URL}/usuarios/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -528,8 +657,18 @@ async function actualizarUsuario(id, usuarioData) {
         console.log('📥 Respuesta del servidor - Status:', response.status);
         
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || `Error ${response.status} al actualizar usuario`);
+            const errorText = await response.text();
+            console.error('❌ Error del servidor:', errorText);
+            let errorMessage = `Error ${response.status} al actualizar usuario`;
+            
+            try {
+                const errorData = JSON.parse(errorText);
+                errorMessage = errorData.message || errorData.error || errorMessage;
+            } catch (e) {
+                // Si no es JSON, usar el texto como está
+            }
+            
+            throw new Error(errorMessage);
         }
         
         const usuarioActualizado = await response.json();
@@ -553,7 +692,7 @@ async function cambiarEstadoUsuario(id, nuevoEstado) {
         
         console.log(`🔄 Cambiando estado del usuario ID: ${id} a ${nuevoEstado}`);
         
-        const response = await fetch(`http://localhost:8080/usuarios/${id}/estado`, {
+        const response = await fetch(`${GATEWAY_URL}/usuarios/${id}/estado`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -565,8 +704,18 @@ async function cambiarEstadoUsuario(id, nuevoEstado) {
         console.log('📥 Respuesta del servidor - Status:', response.status);
         
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || `Error ${response.status} al cambiar estado`);
+            const errorText = await response.text();
+            console.error('❌ Error del servidor:', errorText);
+            let errorMessage = `Error ${response.status} al cambiar estado`;
+            
+            try {
+                const errorData = JSON.parse(errorText);
+                errorMessage = errorData.message || errorData.error || errorMessage;
+            } catch (e) {
+                // Si no es JSON, usar el texto como está
+            }
+            
+            throw new Error(errorMessage);
         }
         
         const usuarioActualizado = await response.json();
@@ -580,120 +729,47 @@ async function cambiarEstadoUsuario(id, nuevoEstado) {
     }
 }
 
-// Envío de formulario
-async function manejarEnvioFormulario(event) {
-    event.preventDefault();
-    
-    // Validar formulario completo
-    if (!validarFormularioCompleto()) {
-        // No mostrar alerta de SweetAlert2, solo las validaciones visuales
-        return;
-    }
-    
-    // Obtener referencias a los elementos del formulario
-    const nombreInput = document.getElementById('nombreUsuario');
-    const documentoInput = document.getElementById('documentoUsuario');
-    const cargoInput = document.getElementById('cargoUsuario');
-    const correoInput = document.getElementById('correoUsuario');
-    const telefonoInput = document.getElementById('telefonoUsuario');
-    const comisariaSelect = document.getElementById('comisariaUsuario');
-    const contraseñaInput = document.getElementById('contraseñaUsuario');
-    
-    // Obtener valores
-    const nombre = nombreInput.value.trim();
-    const documento = documentoInput.value.trim();
-    const cargo = cargoInput.value.trim();
-    const correo = correoInput.value.trim();
-    const telefono = telefonoInput.value.trim();
-    const comisaria = comisariaSelect.value;
-    const contraseña = contraseñaInput.value.trim();
-    
-    // Obtener rolId según la comisaría seleccionada
-    const rolId = obtenerRolIdPorComisaria(comisaria);
-    console.log(`🎯 Comisaría seleccionada: ${comisaria}, rolId calculado: ${rolId}`);
-    console.log(`📝 Modo edición: ${modoEdicionUsuario}, ID editando: ${usuarioEditandoId}`);
-    
-    // Preparar datos del usuario
-    const usuarioData = {
-        nombre,
-        documento: parseInt(documento),
-        cargo,
-        correo,
-        telefono,
-        comisaria_rol: comisaria,
-        rolId 
-    };
-    
-    if (contraseña) {
-        usuarioData.contraseña = contraseña;
-    }
-    
-    console.log('📝 Datos del usuario a guardar:', usuarioData);
-    
-    showLoaderUsuario(modoEdicionUsuario ? 'Actualizando usuario...' : 'Creando usuario...');
-    
-    // Determinar si es creación o actualización
-    if (modoEdicionUsuario && usuarioEditandoId) {
-        // Verificar si se está editando el usuario actual Y si se cambió la contraseña
-        const esMiUsuario = esUsuarioActual(usuarioEditandoId);
-        const contraseñaCambiada = contraseña && contraseña.length > 0;
+// Eliminar usuario
+async function eliminarUsuario(id) {
+    try {
+        const token = localStorage.getItem('sirevif_token');
+        if (!token) {
+            throw new Error('No hay sesión activa');
+        }
         
-        // Actualizar usuario existente
-        actualizarUsuario(usuarioEditandoId, usuarioData)
-            .then(async (usuarioActualizado) => {
-                hideLoaderUsuario();
-                console.log('✅ Usuario actualizado:', usuarioActualizado);
-                console.log('📋 Comisaría actualizada:', usuarioActualizado.comisaria_rol);
-                console.log('📋 rolId actualizado:', usuarioActualizado.rolId);
-                
-                // Si el usuario actual cambió su contraseña, cerrar sesión
-                if (esMiUsuario && contraseñaCambiada) {
-                    await mostrarExito('Usuario actualizado exitosamente. Su contraseña ha sido cambiada, por favor inicie sesión nuevamente.', 'Contraseña actualizada');
-                    setTimeout(() => {
-                        cerrarSesion();
-                    }, 1500);
-                    return;
-                }
-                
-                await mostrarExito('Usuario actualizado exitosamente');
-                cerrarFormulario();
-                cargarUsuarios(); // Recargar lista de usuarios
-            })
-            .catch(async (error) => {
-                hideLoaderUsuario();
-                console.error('❌ Error completo al actualizar:', error);
-                await mostrarError('Error al actualizar usuario: ' + error.message);
-            });
-    } else {
-        // Crear nuevo usuario
-        crearUsuario(usuarioData)
-            .then(async (usuarioCreado) => {
-                hideLoaderUsuario();
-                await mostrarExito('Usuario creado exitosamente');
-                cerrarFormulario();
-                cargarUsuarios(); // Recargar lista de usuarios
-            })
-            .catch(async (error) => {
-                hideLoaderUsuario();
-                await mostrarError('Error al crear usuario: ' + error.message);
-            });
-    }
-}
-
-// Loader
-function showLoaderUsuario(text = 'Procesando...') {
-    const loader = document.getElementById('loaderUsuario');
-    const loaderText = document.getElementById('loaderUsuarioText');
-    if (loader && loaderText) {
-        loader.style.display = 'flex';
-        loaderText.textContent = text;
-    }
-}
-
-function hideLoaderUsuario() {
-    const loader = document.getElementById('loaderUsuario');
-    if (loader) {
-        loader.style.display = 'none';
+        console.log(`🗑️ Eliminando usuario ID: ${id}`);
+        
+        const response = await fetch(`${GATEWAY_URL}/usuarios/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        console.log('📥 Respuesta del servidor - Status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Error del servidor:', errorText);
+            let errorMessage = `Error ${response.status} al eliminar usuario`;
+            
+            try {
+                const errorData = JSON.parse(errorText);
+                errorMessage = errorData.message || errorData.error || errorMessage;
+            } catch (e) {
+                // Si no es JSON, usar el texto como está
+            }
+            
+            throw new Error(errorMessage);
+        }
+        
+        console.log('✅ Usuario eliminado exitosamente');
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Error al eliminar usuario:', error);
+        throw error;
     }
 }
 
@@ -702,10 +778,14 @@ async function cargarUsuarios() {
     try {
         const token = localStorage.getItem('sirevif_token');
         if (!token) {
-            throw new Error('No hay sesión activa');
+            console.error('❌ No hay token en localStorage');
+            throw new Error('No hay sesión activa. Por favor, inicie sesión nuevamente.');
         }
         
-        const response = await fetch('http://localhost:8080/usuarios', {
+        console.log('🔑 Token encontrado:', token.substring(0, 20) + '...');
+        console.log('🌐 Cargando usuarios desde gateway...');
+        
+        const response = await fetch(`${GATEWAY_URL}/usuarios`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -713,24 +793,52 @@ async function cargarUsuarios() {
             }
         });
         
+        console.log('📥 Status de respuesta:', response.status);
+        
         if (!response.ok) {
-            throw new Error(`Error ${response.status} al cargar usuarios`);
+            const errorText = await response.text();
+            console.error('❌ Error en respuesta:', errorText);
+            
+            // Si es error 401 o 403, probablemente el token expiró
+            if (response.status === 401 || response.status === 403) {
+                localStorage.removeItem('sirevif_token');
+                localStorage.removeItem('sirevif_usuario');
+                throw new Error('Su sesión ha expirado. Por favor, inicie sesión nuevamente.');
+            }
+            
+            let errorMessage = `Error ${response.status} al cargar usuarios`;
+            try {
+                const errorData = JSON.parse(errorText);
+                errorMessage = errorData.message || errorData.error || errorMessage;
+            } catch (e) {
+                // Si no es JSON, usar el texto como está
+            }
+            
+            throw new Error(errorMessage);
         }
         
-        usuariosRegistrados = await response.json();
-        console.log('✅ Usuarios cargados:', usuariosRegistrados);
+        const usuarios = await response.json();
+        console.log('✅ Usuarios cargados:', usuarios.length, 'usuarios');
         
-        // Verificar que los usuarios tengan comisaria_rol y rolId
-        usuariosRegistrados.forEach(usuario => {
-            console.log(`👤 ${usuario.nombre}: comisaria_rol=${usuario.comisaria_rol}, rolId=${usuario.rolId}`);
+        // Verificar que los usuarios tengan comisaria_rol, rolId y comisariaId
+        usuarios.forEach(usuario => {
+            console.log(`👤 ${usuario.nombre}: comisaria_rol=${usuario.comisaria_rol}, rolId=${usuario.rolId}, comisariaId=${usuario.comisariaId}`);
         });
         
-        // Renderizar usuarios en las secciones correspondientes
+        usuariosRegistrados = usuarios;
         renderizarUsuarios();
         
     } catch (error) {
-        console.error('❌ Error al cargar usuarios:', error);
-        mostrarError('Error al cargar usuarios: ' + error.message);
+        console.error('❌ Error completo en cargarUsuarios:', error);
+        
+        // Si es error de sesión, redirigir al login
+        if (error.message.includes('sesión') || error.message.includes('token')) {
+            await mostrarError(error.message, 'Sesión expirada').then(() => {
+                cerrarSesion();
+            });
+        } else {
+            await mostrarError('Error al cargar usuarios: ' + error.message);
+        }
     }
 }
 
@@ -740,6 +848,15 @@ function renderizarUsuarios() {
     document.querySelectorAll('.usuarios').forEach(seccion => {
         seccion.innerHTML = '';
     });
+    
+    // Si no hay usuarios, mostrar mensaje
+    if (usuariosRegistrados.length === 0) {
+        const primeraSeccion = document.querySelector('.usuarios');
+        if (primeraSeccion) {
+            primeraSeccion.innerHTML = '<p class="sin-usuarios">No hay usuarios registrados</p>';
+        }
+        return;
+    }
     
     // Agrupar usuarios por comisaría
     const usuariosPorComisaria = {};
@@ -817,6 +934,10 @@ function crearTarjetaUsuario(usuario) {
                     <td>${usuario.telefono}</td>
                 </tr>
                 <tr>
+                    <td><strong>Comisaría:</strong></td>
+                    <td>${usuario.comisaria_rol || 'Sin asignar'}</td>
+                </tr>
+                <tr>
                     <td><strong>Estado:</strong></td>
                     <td class="estado-usuario ${usuario.estado === 'inactivo' ? 'estado-inactivo' : 'estado-activo'}">
                         ${usuario.estado === 'inactivo' ? 'Inactivo' : 'Activo'}
@@ -836,7 +957,7 @@ function crearTarjetaUsuario(usuario) {
     // Agregar event listeners a los botones
     const btnEditar = div.querySelector('.btn-editar');
     const btnEstado = div.querySelector('.btn-estado');
-    const btnEliminar = div.querySelector('.btn-liminar'); 
+    const btnEliminar = div.querySelector('.btn-eliminar');
     
     if (btnEditar) {
         btnEditar.addEventListener('click', () => editarUsuario(usuario.id));
@@ -851,6 +972,120 @@ function crearTarjetaUsuario(usuario) {
     }
     
     return div;
+}
+
+// Envío de formulario
+async function manejarEnvioFormulario(event) {
+    event.preventDefault();
+    
+    // Validar formulario completo
+    if (!validarFormularioCompleto()) {
+        // No mostrar alerta de SweetAlert2, solo las validaciones visuales
+        return;
+    }
+    
+    // Obtener referencias a los elementos del formulario
+    const nombreInput = document.getElementById('nombreUsuario');
+    const documentoInput = document.getElementById('documentoUsuario');
+    const cargoInput = document.getElementById('cargoUsuario');
+    const correoInput = document.getElementById('correoUsuario');
+    const telefonoInput = document.getElementById('telefonoUsuario');
+    const comisariaSelect = document.getElementById('comisariaUsuario');
+    const contraseñaInput = document.getElementById('contraseñaUsuario');
+    
+    // Obtener valores
+    const nombre = nombreInput.value.trim();
+    const documento = documentoInput.value.trim();
+    const cargo = cargoInput.value.trim();
+    const correo = correoInput.value.trim();
+    const telefono = telefonoInput.value.trim();
+    const comisaria = comisariaSelect.value;
+    const contraseña = contraseñaInput.value.trim();
+    
+    // Obtener rolId y comisariaId según la comisaría seleccionada
+    const rolId = obtenerRolIdPorComisaria(comisaria);
+    const comisariaId = obtenerComisariaIdPorComisaria(comisaria);
+    
+    console.log(`🎯 Comisaría seleccionada: ${comisaria}`);
+    console.log(`📋 rolId calculado: ${rolId} (tipo: ${typeof rolId})`);
+    console.log(`🏢 comisariaId calculado: ${comisariaId} (tipo: ${typeof comisariaId})`);
+    console.log(`📝 Modo edición: ${modoEdicionUsuario}, ID editando: ${usuarioEditandoId}`);
+    
+    // Preparar datos del usuario (incluyendo comisariaId)
+    const usuarioData = {
+        nombre,
+        documento: parseInt(documento),
+        cargo,
+        correo,
+        telefono,
+        comisaria_rol: comisaria,
+        rolId: rolId,
+        comisariaId: comisariaId  // ✅ NUEVO: Incluir comisariaId (ya es número)
+    };
+    
+    // Asegurar que comisariaId sea un número
+    if (usuarioData.comisariaId === undefined || usuarioData.comisariaId === null) {
+        usuarioData.comisariaId = 0;
+        console.log('⚠️ comisariaId era undefined/null, asignando valor por defecto: 0');
+    }
+    
+    if (contraseña) {
+        usuarioData.contraseña = contraseña;
+    }
+    
+    console.log('📝 Datos del usuario a guardar:', usuarioData);
+    console.log('🔍 Verificación final - comisariaId:', usuarioData.comisariaId, 'tipo:', typeof usuarioData.comisariaId);
+    
+    showLoaderUsuario(modoEdicionUsuario ? 'Actualizando usuario...' : 'Creando usuario...');
+    
+    // Determinar si es creación o actualización
+    if (modoEdicionUsuario && usuarioEditandoId) {
+        // Verificar si se está editando el usuario actual Y si se cambió la contraseña
+        const esMiUsuario = esUsuarioActual(usuarioEditandoId);
+        const contraseñaCambiada = contraseña && contraseña.length > 0;
+        
+        // Actualizar usuario existente
+        actualizarUsuario(usuarioEditandoId, usuarioData)
+            .then(async (usuarioActualizado) => {
+                hideLoaderUsuario();
+                console.log('✅ Usuario actualizado:', usuarioActualizado);
+                console.log('📋 Comisaría actualizada:', usuarioActualizado.comisaria_rol);
+                console.log('📋 rolId actualizado:', usuarioActualizado.rolId);
+                console.log('🏢 comisariaId actualizado:', usuarioActualizado.comisariaId);
+                
+                // Si el usuario actual cambió su contraseña, cerrar sesión
+                if (esMiUsuario && contraseñaCambiada) {
+                    await mostrarExito('Usuario actualizado exitosamente. Su contraseña ha sido cambiada, por favor inicie sesión nuevamente.', 'Contraseña actualizada');
+                    setTimeout(() => {
+                        cerrarSesion();
+                    }, 1500);
+                    return;
+                }
+                
+                await mostrarExito('Usuario actualizado exitosamente');
+                cerrarFormulario();
+                cargarUsuarios(); // Recargar lista de usuarios
+            })
+            .catch(async (error) => {
+                hideLoaderUsuario();
+                console.error('❌ Error completo al actualizar:', error);
+                await mostrarError('Error al actualizar usuario: ' + error.message);
+            });
+    } else {
+        // Crear nuevo usuario
+        crearUsuario(usuarioData)
+            .then(async (usuarioCreado) => {
+                hideLoaderUsuario();
+                await mostrarExito('Usuario creado exitosamente');
+                cerrarFormulario();
+                cargarUsuarios(); // Recargar lista de usuarios
+            })
+            .catch(async (error) => {
+                hideLoaderUsuario();
+                console.error('❌ Error completo al crear:', error);
+                await mostrarError('Error al crear usuario: ' + error.message);
+            });
+    }
 }
 
 // Modificar estado de usuario
@@ -958,24 +1193,9 @@ async function eliminarUsuarioHandler(id) {
     }
     
     try {
-        const token = localStorage.getItem('sirevif_token');
-        if (!token) {
-            throw new Error('No hay sesión activa');
-        }
-        
         showLoaderUsuario('Eliminando usuario...');
         
-        const response = await fetch(`http://localhost:8080/usuarios/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Error ${response.status} al eliminar usuario`);
-        }
+        await eliminarUsuario(id);
         
         hideLoaderUsuario();
         
@@ -1027,7 +1247,7 @@ async function editarUsuario(id) {
     usuarioEditandoId = id;
     
     console.log(`📝 Editando usuario ID: ${id}`);
-    console.log(`📋 Datos actuales: comisaria_rol=${usuario.comisaria_rol}, rolId=${usuario.rolId}`);
+    console.log(`📋 Datos actuales: comisaria_rol=${usuario.comisaria_rol}, rolId=${usuario.rolId}, comisariaId=${usuario.comisariaId}`);
     
     // Llenar formulario con datos del usuario
     document.getElementById('nombreUsuario').value = usuario.nombre || '';
@@ -1061,82 +1281,23 @@ async function editarUsuario(id) {
     
     // Abrir formulario
     document.getElementById('formularioOverlay').style.display = 'flex';
-    
-    // Deshabilitar generación automática de contraseña en modo edición
-    const nombreInput = document.getElementById('nombreUsuario');
-    const documentoInput = document.getElementById('documentoUsuario');
-    const comisariaSelect = document.getElementById('comisariaUsuario');
-    
-    if (nombreInput && documentoInput && comisariaSelect) {
-        // Remover event listeners de generación automática
-        nombreInput.removeEventListener('input', generarContraseñaAutomatica);
-        documentoInput.removeEventListener('input', generarContraseñaAutomatica);
-        comisariaSelect.removeEventListener('change', generarContraseñaAutomatica);
+}
+
+// Loader
+function showLoaderUsuario(text = 'Procesando...') {
+    const loader = document.getElementById('loaderUsuario');
+    const loaderText = document.getElementById('loaderUsuarioText');
+    if (loader && loaderText) {
+        loader.style.display = 'flex';
+        loaderText.textContent = text;
     }
 }
 
-// Generar contraseña automaticamente
-let generarContraseñaAutomatica = function() {};
-
-function setupGeneracionContraseña() {
-    const nombreInput = document.getElementById('nombreUsuario');
-    const documentoInput = document.getElementById('documentoUsuario');
-    const comisariaSelect = document.getElementById('comisariaUsuario');
-    const contraseñaInput = document.getElementById('contraseñaUsuario');
-    
-    if (!nombreInput || !documentoInput || !comisariaSelect || !contraseñaInput) {
-        return;
+function hideLoaderUsuario() {
+    const loader = document.getElementById('loaderUsuario');
+    if (loader) {
+        loader.style.display = 'none';
     }
-    
-    // Remover event listeners anteriores si existen
-    nombreInput.removeEventListener('input', generarContraseñaAutomatica);
-    documentoInput.removeEventListener('input', generarContraseñaAutomatica);
-    comisariaSelect.removeEventListener('change', generarContraseñaAutomatica);
-
-    // Redefinir la función
-    generarContraseñaAutomatica = function() {
-        // Solo generar en modo creación (no en edición)
-        if (modoEdicionUsuario) return;
-        
-        const nombre = nombreInput.value.trim();
-        const documento = documentoInput.value.trim();
-        const valor = comisariaSelect.value;
-        comisaria = 0;
-
-        if (valor === 'Administrador'){
-            comisaria = 'admin';
-        } else if (valor === 'Comisaría Primera'){
-            comisaria = 1;
-        } else if (valor === 'Comisaría Segunda'){
-            comisaria = 2;
-        } else if (valor === 'Comisaría Tercera'){
-            comisaria = 3;
-        } else if (valor === 'Comisaría Cuarta'){
-            comisaria = 4;
-        } else if (valor === 'Comisaría Quinta'){
-            comisaria = 5;
-        } else  if (valor === 'Comisaría Sexta'){
-            comisaria = 6;
-        }
-        console.log(comisaria)
-        
-        if (nombre && documento && comisaria) {
-            const primero = nombre.split(' ')[0];
-            const valor = `${primero}.${documento}.${comisaria}`.toLowerCase();
-            contraseñaInput.value = valor;
-            contraseñaInput.style.backgroundColor = 'rgb(229, 229, 229)';
-            contraseñaInput.readOnly = true;
-        } else {
-            contraseñaInput.value = '';
-            contraseñaInput.readOnly = false;
-        }
-    };
-    
-    nombreInput.addEventListener('input', generarContraseñaAutomatica);
-    documentoInput.addEventListener('input', generarContraseñaAutomatica);
-    comisariaSelect.addEventListener('change', generarContraseñaAutomatica);
-    
-    generarContraseñaAutomatica();
 }
 
 // Mostrar u ocultar contraseña por medio de ícono
@@ -1165,6 +1326,14 @@ function setupToggleContraseña() {
     
     mostrar.addEventListener('click', mostrarContraseña);
     ocultar.addEventListener('click', ocultarContraseña);
+}
+
+// Configurar botón para generar contraseña
+function setupBotonGenerarContraseña() {
+    const botonGenerar = document.getElementById('generarContraseñaBtn');
+    if (botonGenerar) {
+        botonGenerar.addEventListener('click', generarContraseñaAutomatica);
+    }
 }
 
 // Validación de campos
@@ -1219,6 +1388,48 @@ function setupValidaciones() {
             validarContraseña(this);
         });
     }
+}
+
+// Reset formulario
+function resetFormulario() {
+    modoEdicionUsuario = false;
+    usuarioEditandoId = null;
+    
+    // Restablecer valores del formulario
+    document.getElementById('formularioUsuarios').reset();
+    
+    // Restablecer título
+    const titulo = document.querySelector('.headerF h2');
+    if (titulo) {
+        titulo.textContent = 'Registrar nuevo Usuario';
+    }
+    
+    // Restablecer botón
+    const boton = document.getElementById('crearUsuario');
+    if (boton) {
+        boton.textContent = 'Crear';
+    }
+    
+    // Restablecer campo de contraseña
+    const contraseñaInput = document.getElementById('contraseñaUsuario');
+    if (contraseñaInput) {
+        contraseñaInput.value = '';
+        contraseñaInput.placeholder = '';
+        contraseñaInput.style.backgroundColor = '#ffffff';
+        contraseñaInput.readOnly = false;
+        contraseñaInput.type = 'password';
+    }
+    
+    // Asegurar que el icono de mostrar contraseña esté en estado inicial
+    const mostrar = document.getElementById('mostrar');
+    const ocultar = document.getElementById('ocultar');
+    if (mostrar && ocultar) {
+        mostrar.style.display = 'inline';
+        ocultar.style.display = 'none';
+    }
+    
+    // Limpiar validaciones
+    limpiarValidaciones();
 }
 
 // Inicializacion
@@ -1280,8 +1491,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Configurar funcionalidades
-    setupGeneracionContraseña();
     setupToggleContraseña();
+    setupBotonGenerarContraseña();
     setupValidaciones();
     
     // Cargar usuarios al iniciar

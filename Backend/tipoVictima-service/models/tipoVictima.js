@@ -1,4 +1,5 @@
 const { DataTypes } = require('sequelize');
+const sequelize = require("../db/config.js");
 
 module.exports = (sequelize) => {
   const TipoVictima = sequelize.define("TipoVictima", {
@@ -8,11 +9,12 @@ module.exports = (sequelize) => {
       autoIncrement: true
     },
     tipo: {
-      type: DataTypes.STRING(45),
-      allowNull: false
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      unique: true
     }
   }, {
-    tableName: "tipos_victima",
+    tableName: "tipo_victimas",
     timestamps: false
   });
 

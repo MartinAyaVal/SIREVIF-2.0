@@ -1,10 +1,11 @@
-const usuarios = require('../models/usuarios.js');
+const sequelize = require('../db/config.js');
+const Usuario = require('../models/usuarios.js')(sequelize);
 const bcrypt = require('bcrypt');
 
 // Obtener todos los usuarios registrados
 exports.getusuario = async (req, res) => {
     try {
-        const usuario = await usuarios.findAll();
+        const usuario = await Usuario.findAll();
         res.json(usuario);
     } catch (error) {
         res.status(500).json({ message: "Error al obtener usuarios: ", error})
@@ -14,6 +15,14 @@ exports.getusuario = async (req, res) => {
 // Crear usuario
 exports.createusuario = async (req, res) => {
     try {
+        // DEPURACIÓN: Ver qué llega al backend
+        console.log("=".repeat(60));
+        console.log("📥 REQ.BODY COMPLETO:", req.body);
+        console.log("📥 Campos recibidos:", Object.keys(req.body));
+        console.log("📥 comisaria_rol:", req.body.comisaria_rol);
+        console.log("📥 comisariaId:", req.body.comisariaId, "tipo:", typeof req.body.comisariaId);
+        console.log("=".repeat(60));
+        
         const { 
             nombre, 
             documento, 
@@ -22,8 +31,16 @@ exports.createusuario = async (req, res) => {
             telefono, 
             contraseña, 
             comisaria_rol, 
-            rolId 
+            rolId,
+            comisariaId  // <- IMPORTANTE: Extraer comisariaId
         } = req.body;
+
+        // Validar campos requeridos
+        if (!nombre || !documento || !cargo || !correo || !telefono || !comisaria_rol) {
+            return res.status(400).json({ 
+                message: 'Todos los campos son requeridos' 
+            });
+        }
 
         // Validar que la contraseña esté presente
         if (!contraseña) {
@@ -32,19 +49,46 @@ exports.createusuario = async (req, res) => {
             });
         }
 
+        // Validar comisariaId - si no viene, calcularlo
+        let comisariaIdFinal = comisariaId;
+        
+        if (comisariaIdFinal === undefined || comisariaIdFinal === null) {
+            console.log("⚠️ comisariaId no recibido, calculando desde comisaria_rol...");
+            
+            // Mapeo de comisaria_rol a comisariaId
+            const mapeoComisarias = {
+                'Administrador': 0,
+                'Comisaría Primera': 1,
+                'Comisaría Segunda': 2,
+                'Comisaría Tercera': 3,
+                'Comisaría Cuarta': 4,
+                'Comisaría Quinta': 5,
+                'Comisaría Sexta': 6
+            };
+            
+            comisariaIdFinal = mapeoComisarias[comisaria_rol] || 0;
+            console.log(`✅ comisariaId calculado: ${comisariaIdFinal} para "${comisaria_rol}"`);
+        }
+        
+        // Asegurar que comisariaIdFinal sea un número
+        comisariaIdFinal = parseInt(comisariaIdFinal) || 0;
+        console.log(`✅ comisariaId final (número): ${comisariaIdFinal}`);
+
         // Hashear la contraseña
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(contraseña, saltRounds);
 
-        const usuario = await usuarios.create({
+        // Crear usuario con todos los campos
+        const usuario = await Usuario.create({
             nombre: nombre,
-            documento: documento,
+            documento: parseInt(documento),
             cargo: cargo,
             correo: correo,
             telefono: telefono,
-            contraseña: hashedPassword,  // Contraseña hasheada
+            contraseña: hashedPassword,
             comisaria_rol: comisaria_rol,
-            rolId: rolId
+            rolId: parseInt(rolId) || 1,
+            comisariaId: comisariaIdFinal  // <- Campo CRÍTICO
         });
 
         // Opcional: No devolver la contraseña en la respuesta
@@ -53,10 +97,15 @@ exports.createusuario = async (req, res) => {
 
         res.status(201).json(usuarioResponse);
     } catch(error) {
-        console.log('Error al crear usuario:', error);
+        console.log('❌ Error al crear usuario:', error.message);
+        console.log('❌ Errores de validación:', error.errors);
         res.status(500).json({ 
             message: 'Error al crear usuario:', 
-            error: error.message
+            error: error.message,
+            details: error.errors ? error.errors.map(err => ({ 
+                campo: err.path, 
+                mensaje: err.message 
+            })) : []
         });
     }
 };
@@ -65,7 +114,7 @@ exports.createusuario = async (req, res) => {
 exports.getusuariosById = async (req, res) => {
     try {
         const { id } = req.params;
-        const usuario = await usuarios.findByPk(id);
+        const usuario = await Usuario.findByPk(id);
         if (!usuario) return res.status(404).json({ message: 'Usuario no encontrado'});
         
         // Opcional: No devolver la contraseña en la respuesta
@@ -82,6 +131,14 @@ exports.getusuariosById = async (req, res) => {
 exports.updateusuario = async (req, res) => {
     try {
         const { id } = req.params;
+        
+        // DEPURACIÓN
+        console.log("=".repeat(60));
+        console.log(`📥 Actualizando usuario ID: ${id}`);
+        console.log("📥 REQ.BODY:", req.body);
+        console.log("📥 comisariaId recibido:", req.body.comisariaId, "tipo:", typeof req.body.comisariaId);
+        console.log("=".repeat(60));
+        
         const { 
             nombre, 
             documento, 
@@ -90,21 +147,53 @@ exports.updateusuario = async (req, res) => {
             telefono, 
             contraseña, 
             comisaria_rol,
-            rolId  // <-- IMPORTANTE: Agregar rolId aquí
+            rolId,
+            comisariaId  // <- IMPORTANTE: Extraer comisariaId
         } = req.body;
 
-        const usuario = await usuarios.findByPk(id);
+        const usuario = await Usuario.findByPk(id);
         if(!usuario) return res.status(404).json({ message: 'Usuario no encontrado'});
 
-        // Si se actualiza la contraseña, hashearla
+        // Manejar comisariaId - si no viene, mantener el existente o calcular
+        let comisariaIdFinal = comisariaId;
+        
+        if (comisariaIdFinal === undefined || comisariaIdFinal === null) {
+            console.log("⚠️ comisariaId no recibido en actualización...");
+            
+            if (comisaria_rol) {
+                // Si hay nueva comisaria_rol, calcular comisariaId
+                const mapeoComisarias = {
+                    'Administrador': 0,
+                    'Comisaría Primera': 1,
+                    'Comisaría Segunda': 2,
+                    'Comisaría Tercera': 3,
+                    'Comisaría Cuarta': 4,
+                    'Comisaría Quinta': 5,
+                    'Comisaría Sexta': 6
+                };
+                
+                comisariaIdFinal = mapeoComisarias[comisaria_rol] || usuario.comisariaId;
+                console.log(`✅ comisariaId calculado para actualización: ${comisariaIdFinal}`);
+            } else {
+                // Mantener el comisariaId existente
+                comisariaIdFinal = usuario.comisariaId;
+                console.log(`✅ Manteniendo comisariaId existente: ${comisariaIdFinal}`);
+            }
+        }
+        
+        // Asegurar que sea número
+        comisariaIdFinal = parseInt(comisariaIdFinal) || 0;
+
+        // Preparar datos de actualización
         let updateData = {
             nombre: nombre,
-            documento: documento,
+            documento: parseInt(documento),
             cargo: cargo,   
             correo: correo,
             telefono: telefono,
-            comisaria_rol: comisaria_rol,
-            rolId: rolId  // <-- IMPORTANTE: Agregar rolId aquí
+            comisaria_rol: comisaria_rol || usuario.comisaria_rol,
+            rolId: parseInt(rolId) || usuario.rolId,
+            comisariaId: comisariaIdFinal  // <- Campo CRÍTICO
         };
 
         if (contraseña) {
@@ -120,7 +209,12 @@ exports.updateusuario = async (req, res) => {
 
         res.json(usuarioResponse)
     } catch (error) {
-        res.status(500).json({ message: 'Error al actualizar usuario', error})
+        console.log('❌ Error al actualizar usuario:', error);
+        res.status(500).json({ 
+            message: 'Error al actualizar usuario', 
+            error: error.message,
+            details: error.errors ? error.errors.map(err => err.message) : []
+        })
     }
 };
 
@@ -128,7 +222,7 @@ exports.updateusuario = async (req, res) => {
 exports.deleteusuario = async (req, res) => {
     try{
         const { id } = req.params;
-        const usuario = await usuarios.findByPk(id);
+        const usuario = await Usuario.findByPk(id);
         if(!usuario) return res.status(404).json({ message: 'Usuario no encontrado'});
 
         await usuario.destroy();
@@ -144,7 +238,7 @@ exports.login = async (req, res) => {
         const { correo, contraseña } = req.body;
 
         // Buscar usuario por correo
-        const usuario = await usuarios.findOne({ where: { correo } });
+        const usuario = await Usuario.findOne({ where: { correo } });
         if (!usuario) {
             return res.status(404).json({ message: 'Usuario no encontrado' });
         }
@@ -174,7 +268,7 @@ exports.cambiarEstadoUsuario = async (req, res) => {
         const { id } = req.params;
         const { estado } = req.body;
         
-        const usuario = await usuarios.findByPk(id);
+        const usuario = await Usuario.findByPk(id);
         if (!usuario) return res.status(404).json({ message: 'Usuario no encontrado' });
         
         // Validar estado

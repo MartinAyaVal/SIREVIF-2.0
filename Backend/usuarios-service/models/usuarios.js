@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
+const sequelize = require("../db/config.js");
 
 module.exports = (sequelize) => {
   const Usuario = sequelize.define("Usuario", {
@@ -8,16 +9,14 @@ module.exports = (sequelize) => {
       primaryKey: true,
       autoIncrement: true  
     },
-    nombre_completo: {
+    nombre: {
       type: DataTypes.STRING(45),
-      allowNull: false,
-      field: 'nombre_completo'
+      allowNull: false
     },
     documento: {
-      type: DataTypes.INTEGER(10),
+      type: DataTypes.INTEGER,
       allowNull: false,
-      unique: true,
-      field: 'numero_documento'
+      unique: true
     },
     cargo: {
       type: DataTypes.STRING(45),
@@ -38,22 +37,21 @@ module.exports = (sequelize) => {
     contraseña: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      field: 'contrasena'
     },
     comisaria_rol: {
       type: DataTypes.STRING(45),
       allowNull: false,
-      field: 'comisaria_rol'
     },
-    rol_id: {
+    rolId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       field: 'rol_id'
     },
-    comisaria_id: {
+    comisariaId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: 'comisaria_id'
+      field: 'comisaria_id',
+      defaultValue: 0  // <- Agregar valor por defecto
     },
     estado: {
       type: DataTypes.ENUM('activo', 'inactivo'),

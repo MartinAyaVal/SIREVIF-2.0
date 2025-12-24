@@ -163,17 +163,23 @@
                         <tr>
                             <td></td>
                             <td>
-                                <div style="position: relative; display: inline-block; width: 100%;">
-                                    <input autocomplete="off" type="password" id="contraseñaUsuario" style="background-color: rgb(229, 229, 229);" readonly 
-                                        style="padding-right: 60px; width: 100%; box-sizing: border-box;">
-                                    <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;">
-                                        <img src="/Frontend/images/ojo.png" class="ver" id="mostrar" style="display: inline;">
-                                        <img src="/Frontend/images/invisible.png" class="ver" id="ocultar" style="display: none;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="position: relative; flex: 1;">
+                                        <input autocomplete="off" type="password" id="contraseñaUsuario" 
+                                            style="width: 100%; box-sizing: border-box; padding-right: 60px;">
+                                        <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: flex; gap: 5px;">
+                                            <img src="/Frontend/images/ojo.png" class="ver" id="mostrar" style="display: inline; cursor: pointer;">
+                                            <img src="/Frontend/images/invisible.png" class="ver" id="ocultar" style="display: none; cursor: pointer;">
+                                        </div>
                                     </div>
+                                    
                                 </div>
-                                <p class="mensaje">- El <strong>o</strong> es requerido</p>
+                                <p class="mensaje">- La <strong>Contraseña</strong> es requerida</p>
                             </td>
-                            <td></td>
+                            <td><button type="button" id="generarContraseñaBtn" class="btn-generar-contrasena" 
+                                            style="background: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 14px; white-space: nowrap; height: fit-content;">
+                                        Generar Contraseña
+                                    </button></td>
                         </tr>
                     </table>
                 </div>

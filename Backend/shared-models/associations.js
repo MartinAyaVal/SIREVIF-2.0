@@ -9,6 +9,8 @@ function setupAssociations(models) {
     TipoVictima
   } = models;
 
+  console.log('🔗 Configurando asociaciones...');
+
   // 1. Usuario ↔ Rol (N:1)
   Usuario.belongsTo(Rol, {
     foreignKey: 'rolId',
@@ -39,24 +41,24 @@ function setupAssociations(models) {
     as: 'medidas'
   });
 
-  // 4. Medidas ↔ Usuario (N:1)
+  // 4. Medidas ↔ Usuario (N:1) - Usuario que registra la medida
   Medidas.belongsTo(Usuario, {
     foreignKey: 'usuarioId',
     as: 'usuario'
   });
   Usuario.hasMany(Medidas, {
     foreignKey: 'usuarioId',
-    as: 'medidas'
+    as: 'medidasRegistradas'
   });
 
-  // 5. Medidas ↔ Victimarios (1:1 según tu corrección)
+  // 5. Medidas ↔ Victimarios (N:1) - Un victimario puede tener múltiples medidas
   Medidas.belongsTo(Victimarios, {
     foreignKey: 'victimarioId',
     as: 'victimario'
   });
-  Victimarios.hasOne(Medidas, {
+  Victimarios.hasMany(Medidas, {
     foreignKey: 'victimarioId',
-    as: 'medida'
+    as: 'medidas'
   });
 
   // 6. Medidas ↔ Victimas (1:N)
@@ -88,6 +90,19 @@ function setupAssociations(models) {
     foreignKey: 'comisariaId',
     as: 'victimas'
   });
+
+  // 9. Victimarios ↔ Comisaria (N:1) - Nueva relación
+  Victimarios.belongsTo(Comisaria, {
+    foreignKey: 'comisariaId',
+    as: 'comisaria',
+    allowNull: true
+  });
+  Comisaria.hasMany(Victimarios, {
+    foreignKey: 'comisariaId',
+    as: 'victimarios'
+  });
+
+  console.log('✅ Asociaciones configuradas correctamente');
 }
 
 module.exports = setupAssociations;

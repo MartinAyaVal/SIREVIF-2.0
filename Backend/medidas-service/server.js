@@ -1,162 +1,110 @@
-// backend/server.js
+// medidas-service/server.js
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
-const sequelize = require('./db/config.js');
-const Medidas = require('./models/Medidas.js');
+const medidasRoutes = require('./routes/medidasRoutes.js');
 
 const app = express();
+const PORT = process.env.PORT || 3002;
 
-// Middleware
-app.use(cors());
+// ===== MIDDLEWARE =====
+app.use(cors({
+  origin: ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:3000', 'http://localhost:8080'],
+  credentials: true
+}));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../frontend')));
+app.use(express.urlencoded({ extended: true }));
 
-// Sincronizar modelos con la base de datos
-sequelize.sync({ alter: true })
-  .then(() => {
-    console.log('✅ Base de datos sincronizada');
-  })
-  .catch(err => {
-    console.error('❌ Error sincronizando BD:', err);
+// ===== RUTAS API =====
+app.use('/api/medidas', medidasRoutes);
+
+// ===== RUTAS DEL SERVICIO =====
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    service: 'medidas-service',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      createMedidaCompleta: 'POST /api/medidas/completa/nueva',
+      getMedidas: 'GET /api/medidas',
+      getMedidaCompleta: 'GET /api/medidas/completa/:id'
+    }
   });
-
-// RUTAS DE LA API
-
-// 1. Obtener todas las medidas
-app.get('/api/medidas', async (req, res) => {
-  try {
-    const medidas = await Medidas.findAll({
-      order: [['createdAt', 'DESC']],
-      limit: 100
-    });
-    
-    res.json(medidas);
-  } catch (error) {
-    console.error('Error obteniendo medidas:', error);
-    res.status(500).json({ 
-      error: 'Error en el servidor',
-      detalle: error.message 
-    });
-  }
 });
 
-// 2. Obtener medidas por comisaría
-app.get('/api/medidas/comisaria/:id', async (req, res) => {
-  try {
-    const comisariaId = req.params.id;
-    
-    if (isNaN(comisariaId)) {
-      return res.status(400).json({ error: 'ID de comisaría inválido' });
+// Ruta raíz informativa
+app.get('/', (req, res) => {
+  res.json({
+    service: 'medidas-service',
+    port: PORT,
+    status: 'active',
+    timestamp: new Date().toISOString(),
+    note: 'Este servicio es accedido a través del gateway en puerto 8080',
+    exampleRequest: {
+      method: 'POST',
+      url: 'http://localhost:8080/usuarios/completa/nueva',
+      headers: {
+        'Authorization': 'Bearer [tu_token]',
+        'Content-Type': 'application/json'
+      },
+      body: {
+        medida: {
+          numeroMedida: 1001,
+          lugarHechos: "Calle 123",
+          tipoViolencia: "fisica",
+          fechaUltimosHechos: "2024-12-24",
+          horaUltimosHechos: "14:30:00",
+          comisariaId: 1,
+          usuarioId: 1
+        },
+        victimario: { /* ... */ },
+        victimas: [ /* ... */ ]
+      }
     }
-    
-    const medidas = await Medidas.findAll({
-      where: { comisariaId: comisariaId },
-      order: [['createdAt', 'DESC']]
-    });
-    
-    res.json(medidas);
-  } catch (error) {
-    console.error('Error obteniendo medidas por comisaría:', error);
-    res.status(500).json({ error: 'Error en el servidor' });
-  }
+  });
 });
 
-// 3. Obtener medidas detalladas
-app.get('/api/medidas/detalladas', async (req, res) => {
-  try {
-    const medidas = await Medidas.findAll({
-      include: [],
-      order: [['createdAt', 'DESC']],
-      limit: 50
-    });
-    
-    res.json(medidas);
-  } catch (error) {
-    console.error('Error obteniendo medidas detalladas:', error);
-    res.status(500).json({ error: 'Error en el servidor' });
-  }
+// Error handling
+app.use((err, req, res, next) => {
+  console.error('🔥 Error:', err.stack);
+  res.status(500).json({
+    success: false,
+    error: 'Error interno del servidor',
+    message: err.message,
+    timestamp: new Date().toISOString()
+  });
 });
 
-// 4. Crear nueva medida
-app.post('/api/medidas', async (req, res) => {
-  try {
-    const nuevaMedida = await Medidas.create(req.body);
-    res.status(201).json(nuevaMedida);
-  } catch (error) {
-    console.error('Error creando medida:', error);
-    res.status(500).json({ error: 'Error creando medida' });
-  }
+// 404 Handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    error: 'Ruta no encontrada',
+    message: `La ruta ${req.path} no existe en medidas-service`,
+    availableEndpoints: [
+      'POST /api/medidas/completa/nueva',
+      'GET /api/medidas',
+      'GET /api/medidas/completa/:id',
+      'GET /health'
+    ],
+    timestamp: new Date().toISOString()
+  });
 });
 
-// 5. Actualizar medida
-app.put('/api/medidas/:id', async (req, res) => {
-  try {
-    const medidaId = req.params.id;
-    const [updated] = await Medidas.update(req.body, {
-      where: { id: medidaId }
-    });
-    
-    if (updated) {
-      const medidaActualizada = await Medidas.findByPk(medidaId);
-      res.json(medidaActualizada);
-    } else {
-      res.status(404).json({ error: 'Medida no encontrada' });
-    }
-  } catch (error) {
-    console.error('Error actualizando medida:', error);
-    res.status(500).json({ error: 'Error actualizando medida' });
-  }
-});
-
-// 6. Eliminar medida
-app.delete('/api/medidas/:id', async (req, res) => {
-  try {
-    const medidaId = req.params.id;
-    const deleted = await Medidas.destroy({
-      where: { id: medidaId }
-    });
-    
-    if (deleted) {
-      res.json({ message: 'Medida eliminada correctamente' });
-    } else {
-      res.status(404).json({ error: 'Medida no encontrada' });
-    }
-  } catch (error) {
-    console.error('Error eliminando medida:', error);
-    res.status(500).json({ error: 'Error eliminando medida' });
-  }
-});
-
-// Ruta para servir el frontend - SOLUCIÓN ÚNICA
-// ELIGE UNA DE ESTAS DOS OPCIONES (NO AMBAS):
-
-// OPCIÓN A: Usando regex (recomendada para SPA)
-app.get(/\/(?!api).*/, (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/index.html'));
-});
-
-// OPCIÓN B: Usando lógica condicional (más explícita)
-// app.get('*', (req, res, next) => {
-//   if (!req.path.startsWith('/api')) {
-//     res.sendFile(path.join(__dirname, '../frontend/index.html'));
-//   } else {
-//     next(); // Deja que Express maneje rutas API o devuelva 404
-//   }
-// });
-
-// Configurar puerto
-const PORT = process.env.PORT || 3000;
-
-// Iniciar servidor
-app.listen(PORT, async () => {
-  console.log(`🚀 Servidor corriendo en: http://localhost:${PORT}`);
-  console.log(`📁 API disponible en: http://localhost:${PORT}/api/medidas`);
-  
-  try {
-    await sequelize.authenticate();
-    console.log('✅ Conexión a la base de datos establecida');
-  } catch (error) {
-    console.error('❌ Error conectando a la base de datos:', error);
-  }
+// ===== INICIAR SERVIDOR =====
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('\n' + '='.repeat(60));
+  console.log('🚀 MEDIDAS-SERVICE');
+  console.log('='.repeat(60));
+  console.log(`📡 Puerto: ${PORT}`);
+  console.log(`🌐 URL: http://localhost:${PORT}`);
+  console.log(`❤️  Health: http://localhost:${PORT}/health`);
+  console.log(`📊 API: http://localhost:${PORT}/api/medidas`);
+  console.log('='.repeat(60));
+  console.log('\n🎯 ACCESO A TRAVÉS DEL GATEWAY:');
+  console.log('   🟢 POST http://localhost:8080/usuarios/completa/nueva');
+  console.log('   🟢 POST http://localhost:8080/medidas/completa/nueva');
+  console.log('   🔵 GET  http://localhost:8080/medidas/*');
+  console.log('='.repeat(60) + '\n');
 });

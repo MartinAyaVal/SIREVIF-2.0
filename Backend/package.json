@@ -1,30 +1,16 @@
 {
   "name": "sirevif-backend",
   "version": "1.0.0",
-  "description": "Sistema de Registro de Violencia Intrafamiliar",
-  "main": "sync-database.js",
   "scripts": {
     "db:sync": "node sync-database.js",
-    "db:reset": "set NODE_ENV=development && node sync-database.js --force",
-    "db:seed": "node scripts/seed-data.js",
-    "start:all": "concurrently \"npm run start --prefix comisaria-service\" \"npm run start --prefix usuarios-service\" \"npm run start --prefix medidas-service\" \"npm run start --prefix gateway-service\" \"npm run start --prefix victimas-service\" \"npm run start --prefix victimarios-service\"",
-    "dev": "nodemon sync-database.js"
-  },
-  "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "dotenv": "^16.6.1",
-    "mysql2": "^3.0.0",
-    "sequelize": "^6.0.0"
+    "db:check": "node check-db.js",
+    "db:create": "node scripts/create-database.js",
+    "start:all": "concurrently \"cd comisaria-service && npm start\" \"cd usuarios-service && npm start\" \"cd medidas-service && npm start\" \"cd gateway-service && npm start\""
   },
   "devDependencies": {
-    "concurrently": "^8.0.0",
-    "nodemon": "^3.0.0"
+    "concurrently": "^8.2.0"
   },
-  "keywords": [
-    "sirevif",
-    "medidas",
-    "proteccion"
-  ],
-  "author": "",
-  "license": "ISC"
+  "dependencies": {
+    "axios": "^1.13.2"
+  }
 }

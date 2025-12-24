@@ -1,123 +1,99 @@
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import morgan from "morgan";
-import router from "./routes/gatewayRoutes.js";
+const express = require('express');
+const cors = require('cors');
+const gatewayRouter = require('./routes/gatewayRoutes.js');
 
-dotenv.config();
 const app = express();
 
-// Configuración de CORS más permisiva para debug
-// Configuración CORS más específica y segura
+// ===== MIDDLEWARE CRÍTICO =====
 const allowedOrigins = [
+    'http://localhost:8080',
     'http://localhost:5500',
     'http://127.0.0.1:5500',
     'http://localhost:3000',
-    'http://127.0.0.1:3000',
     'http://localhost:3005',
-    'http://127.0.0.1:3005',
-    // Agrega otros puertos que uses
+    'http://localhost:3006'
 ];
 
-// CORRECCIÓN 1: Configuración simplificada de CORS
-const corsOptions = {
-    origin: function (origin, callback) {
-        // Permitir requests sin origen (como mobile apps o curl)
-        if (!origin) return callback(null, true);
-        
-        if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-        } else {
-            console.log(`🚫 Origen bloqueado por CORS: ${origin}`);
-            return callback(new Error('Not allowed by CORS'), false);
-        }
-    },
+app.use(cors({
+    origin: allowedOrigins,
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
-    exposedHeaders: ['Authorization', 'Content-Disposition'],
-    credentials: true,  
-    maxAge: 86400, 
-    optionsSuccessStatus: 200 
-};
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-user-id', 'x-user-documento', 'x-user-rol']
+}));
 
-// Usa la configuración CORS directamente
-app.use(cors(corsOptions));
-
+// Parsear JSON y URL-encoded
 app.use(express.json());
-app.use(morgan("dev"));
+app.use(express.urlencoded({ extended: true }));
 
-// Ruta para verificar que el gateway está funcionando
-app.get("/", (req, res) => {
-  res.json({
-    message: "🚪 API Gateway funcionando",
-    timestamp: new Date().toISOString(),
-    endpoints: [
-      "/comisarias",
-      "/medidas", 
-      "/roles",
-      "/tipo_victima",
-      "/usuarios",
-      "/victimarios",
-      "/victimas"
-    ].map(endpoint => ({
-      endpoint,
-      url: `http://localhost:${process.env.PORT || 8080}${endpoint}`,
-      example: `curl -X GET http://localhost:${process.env.PORT || 8080}${endpoint}`
-    }))
-  });
-});
+// ===== RUTAS DEL GATEWAY =====
+app.use('/', gatewayRouter);
 
-// Manejo de errores para CORS
+// ===== MANEJO DE ERRORES DE JSON =====
 app.use((err, req, res, next) => {
-  if (err.message === 'Not allowed by CORS') {
-    return res.status(403).json({
-      error: "CORS Error",
-      message: "Origen no permitido",
-      allowedOrigins: allowedOrigins
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        console.error('❌ Gateway: Error de JSON mal formado:', err.message);
+        return res.status(400).json({
+            success: false,
+            error: 'JSON mal formado',
+            message: 'El cuerpo de la solicitud no es un JSON válido'
+        });
+    }
+    next(err);
+});
+
+// ===== RUTA DE FALLBACK =====
+app.use('*', (req, res) => {
+    res.status(404).json({
+        success: false,
+        error: 'Ruta no encontrada',
+        message: `La ruta ${req.originalUrl} no existe en el gateway`,
+        availableRoutes: [
+            'POST /usuarios/auth/login',
+            'GET /usuarios (requiere token)',
+            'POST /usuarios (requiere token)',
+            'GET /medidas (requiere token)',
+            'POST /medidas (requiere token)',
+            'GET /health',
+            'GET /usuarios/health',
+            'GET /medidas/health'
+        ]
     });
-  }
-  next(err);
 });
 
-app.use("/", router);
-
-// Middleware para rutas no encontradas
-app.use((req, res) => {
-  res.status(404).json({
-    error: "Ruta no encontrada",
-    message: `La ruta ${req.method} ${req.originalUrl} no existe en el gateway`,
-    availableEndpoints: [
-      "/comisarias",
-      "/medidas", 
-      "/roles",
-      "/tipo_victima",
-      "/usuarios",
-      "/victimarios",
-      "/victimas"
-    ]
-  });
-});
-
+// ===== INICIAR GATEWAY =====
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
-  console.log(`🚪 API Gateway corriendo en puerto ${PORT}`);
-  console.log(`🔗 Endpoint de prueba: http://localhost:${PORT}/`);
-  console.log(`📡 Orígenes permitidos:`);
-  allowedOrigins.forEach(origin => console.log(`   ✅ ${origin}`));
-  console.log(`\n📋 Servicios configurados:`);
-  console.log(`  |-------------------------------------------|`);
-  console.log(`  |- Comisarias:      | ${process.env.COMISARIAS_SERVICE || 'No configurado'} |`);
-  console.log(`  |-------------------------------------------|`);
-  console.log(`  |- Medidas:         | ${process.env.MEDIDAS_SERVICE || 'No configurado'} |`);
-  console.log(`  |-------------------------------------------|`);
-  console.log(`  |- Roles:           | ${process.env.ROLES_SERVICE || 'No configurado'} |`);
-  console.log(`  |-------------------------------------------|`);
-  console.log(`  |- Tipo de Victima: | ${process.env.TIPO_VICTIMA_SERVICE || 'No configurado'} |`);
-  console.log(`  |-------------------------------------------|`);
-  console.log(`  |- Usuarios:        | ${process.env.USUARIOS_SERVICE || 'No configurado'} |`);
-  console.log(`  |-------------------------------------------|`);
-  console.log(`  |- Victimarios:     | ${process.env.VICTIMARIOS_SERVICE || 'No configurado'} |`);
-  console.log(`  |-------------------------------------------|`);
-  console.log(`  |- Victimas:        | ${process.env.VICTIMAS_SERVICE || 'No configurado'} |`);
-  console.log(`  |-------------------------------------------|`);
+    console.log("\n" + "=".repeat(70));
+    console.log(`🚀 GATEWAY CENTRAL corriendo en: http://localhost:${PORT}`);
+    console.log("=".repeat(70));
+    console.log("📋 ENDPOINTS DISPONIBLES:");
+    console.log("\n🔐 AUTENTICACIÓN (público):");
+    console.log(`   POST http://localhost:${PORT}/usuarios/auth/login`);
+    
+    console.log("\n👥 GESTIÓN DE USUARIOS (requiere token):");
+    console.log(`   GET    http://localhost:${PORT}/usuarios`);
+    console.log(`   POST   http://localhost:${PORT}/usuarios`);
+    console.log(`   GET    http://localhost:${PORT}/usuarios/:id`);
+    console.log(`   PUT    http://localhost:${PORT}/usuarios/:id`);
+    console.log(`   DELETE http://localhost:${PORT}/usuarios/:id`);
+    console.log(`   PATCH  http://localhost:${PORT}/usuarios/:id/estado`);
+    
+    console.log("\n🛡️  MEDIDAS DE PROTECCIÓN (requiere token):");
+    console.log(`   GET    http://localhost:${PORT}/medidas`);
+    console.log(`   POST   http://localhost:${PORT}/medidas`);
+    console.log(`   GET    http://localhost:${PORT}/medidas/:id`);
+    console.log(`   PUT    http://localhost:${PORT}/medidas/:id`);
+    console.log(`   DELETE http://localhost:${PORT}/medidas/:id`);
+    
+    console.log("\n❤️  HEALTH CHECKS (públicos):");
+    console.log(`   Gateway:    GET http://localhost:${PORT}/health`);
+    console.log(`   Usuarios:   GET http://localhost:${PORT}/usuarios/health`);
+    console.log(`   Medidas:    GET http://localhost:${PORT}/medidas/health`);
+    
+    console.log("\n🔧 SERVICIOS BACKEND:");
+    console.log(`   Usuarios:   http://localhost:3005`);
+    console.log(`   Medidas:    http://localhost:3006 (ajusta si es diferente)`);
+    console.log("=".repeat(70));
+    console.log("💡 Nota: Usa POST /usuarios/auth/login para obtener token JWT");
+    console.log("=".repeat(70) + "\n");
 });

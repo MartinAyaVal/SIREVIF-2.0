@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
-const usuarios = require("../models/usuarios.js");
+const sequelize = require('../db/config.js');
+const Usuario = require('../models/usuarios.js')(sequelize);
 
 dotenv.config();
 const SECRET = process.env.JWT_SECRET;
@@ -54,7 +55,7 @@ const loginUsuario = async (req, res) => {
 
         // Buscar usuario
         console.log("🔍 Buscando usuario con documento:", documento);
-        const usuario = await usuarios.findOne({
+        const usuario = await Usuario.findOne({
             where: { 
                 documento: documento.toString()
             }

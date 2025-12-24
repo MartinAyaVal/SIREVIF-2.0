@@ -1,4 +1,5 @@
 const { DataTypes } = require('sequelize');
+const sequelize = require("../db/config.js");
 
 module.exports = (sequelize) => {
   const Comisaria = sequelize.define("Comisaria", {
@@ -13,7 +14,7 @@ module.exports = (sequelize) => {
       unique: true
     },
     lugar: {
-      type: DataTypes.STRING(45),
+      type: DataTypes.STRING(100),
       allowNull: false
     }
   }, {

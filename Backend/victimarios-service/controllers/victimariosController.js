@@ -1,56 +1,111 @@
 const Victimario = require('../models/victimarios.js');
+const sequelize = require('../db/config.js');
 
 // Obtener todos los victimarios registrados
 exports.getVictimarios = async (req, res) => {
   try {
-    const victimarios = await Victimario.findAll();
-    res.json(victimarios);
+    const victimarios = await Victimario.findAll({
+      order: [['createdAt', 'DESC']]
+    });
+    res.json({
+      success: true,
+      count: victimarios.length,
+      data: victimarios
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener victimario', error });
+    console.error('Error en getVictimarios:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error al obtener victimarios', 
+      error: error.message 
+    });
   }
 };
 
-// Crear victimario
+// Crear victimario - versión actualizada para formulario
 exports.createVictimario = async (req, res) => {
   try {
-    const nombre = req.body.nombreCompleto;
-    const nacimiento = req.body.fechaNacimiento;
-    const edad = req.body.edad;
-    const tipoDoc = req.body.tipoDocumento;
-    const otroDoc = req.body.otroTipoDocumento;
-    const numeroDoc = req.body.numeroDocumento;
-    const expedicionDoc = req.body.documentoExpedido;
-    const sexo = req.body.sexo;
-    const lgt = req.body.lgtbi;
-    const cualLgt = req.body.cualLgtbi;
-    const estadoC = req.body.estadoCivil;
-    const direccion = req.body.direccion;
-    const barrio = req.body.barrio;
-    const ocupacion = req.body.ocupacion;
-    const estudios = req.body.estudios;
+    console.log('📥 Datos recibidos para crear victimario:', req.body);
     
-    const victimario = await Victimario.create({ 
-      nombreCompleto: nombre, 
-      fechaNacimiento: nacimiento,
-      edad: edad,
-      tipoDocumento: tipoDoc,
-      otroTipoDocumento: otroDoc,
-      numeroDocumento: numeroDoc,
-      documentoExpedido: expedicionDoc,
-      sexo: sexo,
-      lgtbi: lgt,
-      cualLgtbi: cualLgt,
-      estadoCivil: estadoC,
-      direccion: direccion,
-      barrio: barrio,
-      ocupacion: ocupacion,
-      estudios: estudios,
+    const {
+      nombreCompleto,
+      fechaNacimiento,
+      edad,
+      tipoDocumento,
+      otroTipoDocumento,
+      numeroDocumento,
+      documentoExpedido,
+      sexo,
+      lgtbi,
+      cualLgtbi,
+      otroGeneroIdentificacion,
+      estadoCivil,
+      direccion,
+      barrio,
+      ocupacion,
+      estudios,
+      telefono,
+      correo,
+      antecedentes,
+      comisariaId
+    } = req.body;
+
+    // Validación de campos requeridos
+    const camposRequeridos = [
+      'nombreCompleto', 'fechaNacimiento', 'edad', 'tipoDocumento', 
+      'numeroDocumento', 'documentoExpedido', 'sexo', 'estadoCivil',
+      'direccion', 'barrio', 'ocupacion', 'estudios'
+    ];
+    
+    for (const campo of camposRequeridos) {
+      if (!req.body[campo]) {
+        return res.status(400).json({
+          success: false,
+          message: `El campo '${campo}' es requerido`
+        });
+      }
+    }
+
+    // Crear el victimario
+    const victimario = await Victimario.create({
+      nombreCompleto,
+      fechaNacimiento,
+      edad: parseInt(edad) || 0,
+      tipoDocumento,
+      otroTipoDocumento: otroTipoDocumento || null,
+      numeroDocumento: numeroDocumento.toString(),
+      documentoExpedido,
+      sexo,
+      lgtbi: lgtbi || 'NO',
+      cualLgtbi: cualLgtbi || null,
+      otroGeneroIdentificacion: otroGeneroIdentificacion || null,
+      estadoCivil,
+      direccion,
+      barrio,
+      ocupacion,
+      estudios,
+      telefono: telefono || null,
+      correo: correo || null,
+      antecedentes: antecedentes || null,
+      comisariaId: comisariaId ? parseInt(comisariaId) : null
     });
     
-    res.status(201).json(victimario);
+    console.log('✅ Victimario creado exitosamente:', victimario.id);
+    
+    res.status(201).json({
+      success: true,
+      message: 'Victimario creado exitosamente',
+      data: victimario
+    });
+    
   } catch (error) {
-    console.log('Error al crear victimario:', error);
-    res.status(500).json({ message: 'Error al crear victimario', error });
+    console.error('❌ Error al crear victimario:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error al crear victimario', 
+      error: error.message,
+      details: error.errors ? error.errors.map(e => e.message) : []
+    });
   }
 };
 
@@ -59,57 +114,77 @@ exports.getVictimarioById = async (req, res) => {
   try {
     const { id } = req.params;
     const victimario = await Victimario.findByPk(id);
-    if (!victimario) return res.status(404).json({ message: 'Victimario no encontrada' });
-    res.json(victimario);
+    
+    if (!victimario) {
+      return res.status(404).json({
+        success: false,
+        message: 'Victimario no encontrado'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: victimario
+    });
+    
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener victimario', error });
+    console.error('Error en getVictimarioById:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error al obtener victimario', 
+      error: error.message 
+    });
   }
 };
 
-// Actualizar victimario por Id
+// Actualizar victimario por Id - versión actualizada
 exports.updateVictimario = async (req, res) => {
   try {
     const { id } = req.params;
-    const nombre = req.body.nombreCompleto;
-    const nacimiento = req.body.fechaNacimiento;
-    const edad = req.body.edad;
-    const tipoDoc = req.body.tipoDocumento;
-    const otroDoc = req.body.otroTipoDocumento;
-    const numeroDoc = req.body.numeroDocumento;
-    const expedicionDoc = req.body.documentoExpedido;
-    const sexo = req.body.sexo;
-    const lgt = req.body.lgtbi;
-    const cualLgt = req.body.cualLgtbi;
-    const estadoC = req.body.estadoCivil;
-    const direccion = req.body.direccion;
-    const barrio = req.body.barrio;
-    const ocupacion = req.body.ocupacion;
-    const estudios = req.body.estudios;
     
     const victimario = await Victimario.findByPk(id);
-    if (!victimario) return res.status(404).json({ message: 'Victimario no encontrada' });
+    if (!victimario) {
+      return res.status(404).json({
+        success: false,
+        message: 'Victimario no encontrado'
+      });
+    }
 
-    await victimario.update({ 
-      nombreCompleto: nombre, 
-      fechaNacimiento: nacimiento,
-      edad: edad,
-      tipoDocumento: tipoDoc,
-      otroTipoDocumento: otroDoc,
-      numeroDocumento: numeroDoc,
-      documentoExpedido: expedicionDoc,
-      sexo: sexo,
-      lgtbi: lgt,
-      cualLgtbi: cualLgt,
-      estadoCivil: estadoC,
-      direccion: direccion,
-      barrio: barrio,
-      ocupacion: ocupacion,
-      estudios: estudios,
+    // Actualizar solo los campos que vienen en el body
+    const camposPermitidos = [
+      'nombreCompleto', 'fechaNacimiento', 'edad', 'tipoDocumento', 
+      'otroTipoDocumento', 'numeroDocumento', 'documentoExpedido', 
+      'sexo', 'lgtbi', 'cualLgtbi', 'otroGeneroIdentificacion',
+      'estadoCivil', 'direccion', 'barrio', 'ocupacion', 'estudios',
+      'telefono', 'correo', 'antecedentes', 'comisariaId'
+    ];
+    
+    const datosActualizar = {};
+    for (const campo of camposPermitidos) {
+      if (req.body[campo] !== undefined) {
+        if (campo === 'edad' || campo === 'comisariaId') {
+          datosActualizar[campo] = parseInt(req.body[campo]) || 0;
+        } else {
+          datosActualizar[campo] = req.body[campo];
+        }
+      }
+    }
+    
+    await victimario.update(datosActualizar);
+    
+    res.json({
+      success: true,
+      message: 'Victimario actualizado exitosamente',
+      data: victimario
     });
-    res.json(victimario);
+    
   } catch (error) {
-    console.log('Error al actualizar victimario:', error);
-    res.status(500).json({ message: 'Error al actualizar victimario', error });
+    console.error('Error al actualizar victimario:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error al actualizar victimario', 
+      error: error.message 
+    });
   }
 };
 
@@ -118,11 +193,92 @@ exports.deleteVictimario = async (req, res) => {
   try {
     const { id } = req.params;
     const victimario = await Victimario.findByPk(id);
-    if (!victimario) return res.status(404).json({ message: 'Victimario no encontrada' });
+    
+    if (!victimario) {
+      return res.status(404).json({
+        success: false,
+        message: 'Victimario no encontrado'
+      });
+    }
 
     await victimario.destroy();
-    res.json({ message: 'Victimario eliminada correctamente' });
+    
+    res.json({
+      success: true,
+      message: 'Victimario eliminado correctamente'
+    });
+    
   } catch (error) {
-    res.status(500).json({ message: 'Error al eliminar Victimario', error });
+    console.error('Error al eliminar victimario:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error al eliminar victimario', 
+      error: error.message 
+    });
+  }
+};
+
+// Buscar victimarios por documento o nombre
+exports.searchVictimarios = async (req, res) => {
+  try {
+    const { query } = req.query;
+    
+    if (!query || query.length < 3) {
+      return res.status(400).json({
+        success: false,
+        message: 'La búsqueda requiere al menos 3 caracteres'
+      });
+    }
+    
+    const victimarios = await Victimario.findAll({
+      where: {
+        [sequelize.Op.or]: [
+          { nombreCompleto: { [sequelize.Op.like]: `%${query}%` } },
+          { numeroDocumento: { [sequelize.Op.like]: `%${query}%` } }
+        ]
+      },
+      limit: 50,
+      order: [['nombreCompleto', 'ASC']]
+    });
+    
+    res.json({
+      success: true,
+      count: victimarios.length,
+      data: victimarios
+    });
+    
+  } catch (error) {
+    console.error('Error en searchVictimarios:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error al buscar victimarios', 
+      error: error.message 
+    });
+  }
+};
+
+// Obtener victimarios por comisaria
+exports.getVictimariosByComisaria = async (req, res) => {
+  try {
+    const { comisariaId } = req.params;
+    
+    const victimarios = await Victimario.findAll({
+      where: { comisariaId: parseInt(comisariaId) },
+      order: [['createdAt', 'DESC']]
+    });
+    
+    res.json({
+      success: true,
+      count: victimarios.length,
+      data: victimarios
+    });
+    
+  } catch (error) {
+    console.error('Error en getVictimariosByComisaria:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error al obtener victimarios por comisaría', 
+      error: error.message 
+    });
   }
 };

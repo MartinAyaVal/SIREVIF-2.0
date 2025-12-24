@@ -7,58 +7,51 @@ module.exports = (sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
-    numero_medida: {
-      type: DataTypes.INTEGER(3),
+    numeroMedida: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-      unique: true,
       field: 'numero_medida'
     },
-    lugar_ocurrencia: {
-      type: DataTypes.STRING(45),
+    lugarHechos: {
+      type: DataTypes.STRING,
       allowNull: false,
-      field: 'lugar_ocurrencia'
+      field: 'lugar_hechos'
     },
-    tipo_violencia: {
-      type: DataTypes.STRING(45),
+    tipoViolencia: {
+      type: DataTypes.STRING,
       allowNull: false,
       field: 'tipo_violencia'
     },
-    fecha_ultimos_hechos: {
-      type: DataTypes.DATE,
+    fechaUltimosHechos: {
+      type: DataTypes.DATEONLY,
       allowNull: false,
       field: 'fecha_ultimos_hechos'
     },
-    hora_ultimos_hechos: {
+    horaUltimosHechos: {
       type: DataTypes.TIME,
       allowNull: false,
       field: 'hora_ultimos_hechos'
     },
-    fecha_creacion: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-      field: 'fecha_creacion'
-    },
-    // CLAVES FORÁNEAS
-    comisaria_id: {
+    comisariaId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       field: 'comisaria_id'
     },
-    usuario_id: {
+    usuarioId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       field: 'usuario_id'
     },
-    victimario_id: {
+    victimarioId: {
       type: DataTypes.INTEGER,
       allowNull: true,
       field: 'victimario_id'
     }
   }, {
-    tableName: "medidas_proteccion",
-    timestamps: false,
+    tableName: "medidas_de_proteccion",
+    timestamps: true,
     createdAt: 'fecha_creacion',
-    updatedAt: false
+    updatedAt: 'fecha_actualizacion'
   });
 
   return Medidas;

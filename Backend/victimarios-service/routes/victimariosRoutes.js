@@ -1,11 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const victimariosController = require('../controllers/victimariosController.js')
+const victimarioController = require('../controllers/victimariosController.js');
 
-router.get('/', victimariosController.getVictimarios);
-router.post('/', victimariosController.createVictimario);
-router.get('/:id', victimariosController.getVictimarioById);
-router.put('/:id', victimariosController.updateVictimario);
-router.delete('/:id', victimariosController.deleteVictimario);
+// Rutas básicas
+router.get('/', victimarioController.getVictimarios);
+router.post('/', victimarioController.createVictimario);
+router.get('/:id', victimarioController.getVictimarioById);
+router.put('/:id', victimarioController.updateVictimario);
+router.delete('/:id', victimarioController.deleteVictimario);
+
+// Rutas específicas
+router.get('/buscar/search', victimarioController.searchVictimarios);
+router.get('/comisaria/:comisariaId', victimarioController.getVictimariosByComisaria);
 
 module.exports = router;

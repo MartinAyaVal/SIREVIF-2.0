@@ -1,11 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const victimasController = require('../controllers/victimasController.js')
+const victimaController = require('../controllers/victimasController.js');
 
-router.get('/', victimasController.getVictimas);
-router.post('/', victimasController.createVictima);
-router.get('/:id', victimasController.getVictimaById);
-router.put('/:id', victimasController.updateVictima);
-router.delete('/:id', victimasController.deleteVictima);
+// Rutas básicas
+router.get('/', victimaController.getVictimas);
+router.post('/', victimaController.createVictima);
+router.get('/:id', victimaController.getVictimaById);
+router.put('/:id', victimaController.updateVictima);
+router.delete('/:id', victimaController.deleteVictima);
+
+// Rutas específicas
+router.post('/multiple', victimaController.createMultipleVictimas);
+router.get('/medida/:medidaId', victimaController.getVictimasByMedidaId);
+router.get('/buscar/search', victimaController.searchVictimas);
 
 module.exports = router;
