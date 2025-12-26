@@ -8,30 +8,30 @@
     <link rel="stylesheet" href="/Frontend/CSS/barraLateral.css">
     <link rel="icon" href="/Frontend/images/logoAlcaldia.png">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <title>SIREVIF 2.0</title>
+    <title>SIREVIF 2.0 - Usuarios</title>
 </head>
 <body>
     <header id="barra" class="barra">
-        <img id="menuHamburguesa" class="hamburguesa" src="/Frontend/images/hamburguesa.png" alt="">
-        <img id="logo" class="logo" src="/Frontend/images/logoAlcaldia.png" alt="">
+        <img id="menuHamburguesa" class="hamburguesa" src="/Frontend/images/hamburguesa.png" alt="Menú">
+        <img id="logo" class="logo" src="/Frontend/images/logoAlcaldia.png" alt="Logo">
         <p id="titulo" class="titulo">SIREVIF 2.0</p>
         <p id="nombreUsuarioHeader" class="texto">Cargando...</p>
         <p id="comisariaUsuarioHeader" class="texto">Cargando...</p>
         <nav>
             <a id="boton" title="Medidas de Protección" href="index.html" class="botonBarra">
-                <img class="imgBarra" src="/Frontend/images/medidas.png">
+                <img class="imgBarra" src="/Frontend/images/medidas.png" alt="Medidas">
                 Medidas de Protección 
             </a>
-            <a id="boton" title="estadisticas" href="estadisticas.html" class="botonBarra">
-                <img class="imgBarra" src="/Frontend/images/estadisticas.png">
+            <a id="boton" title="Estadísticas" href="estadisticas.html" class="botonBarra">
+                <img class="imgBarra" src="/Frontend/images/estadisticas.png" alt="Estadísticas">
                 Estadísticas
             </a>
             <a id="boton" title="Usuarios" href="usuarios.html" class="actual">
-                <img class="imgBarra" src="/Frontend/images/usuarios.png">
+                <img class="imgBarra" src="/Frontend/images/usuarios.png" alt="Usuarios">
                 Usuarios
             </a>
             <a id="boton" title="Mi Cuenta" href="miCuenta.html" class="botonBarra">
-                <img class="imgBarra" src="/Frontend/images/usuario.png">
+                <img class="imgBarra" src="/Frontend/images/usuario.png" alt="Mi Cuenta">
                 Mi cuenta
             </a>
         </nav>
@@ -42,11 +42,12 @@
     </header>
 
     <h1 class="tituloUsuarios">Usuarios Registrados</h1>
-    <button class="añadir" id="abrirFormulario">Crear Nuevo Usuario <img src="/Frontend/images/añadir.png" alt=""></button>
+    <button class="añadir" id="abrirFormulario">Crear Nuevo Usuario <img src="/Frontend/images/añadir.png" alt="Añadir"></button>
     
-    <div id="divCerrarSesion" class="fondoCerrarSesion">
+    <!-- Diálogo de confirmación para cerrar sesión -->
+    <div id="divCerrarSesion" class="fondoCerrarSesion" style="display: none;">
         <div class="cerrarSesion">
-            <img src="/Frontend/images/logoAlcaldia.png" class="imgCerrarSesion">
+            <img src="/Frontend/images/logoAlcaldia.png" class="imgCerrarSesion" alt="Logo">
             <p>¿Está seguro que desea cerrar sesión?</p>
             <div class="botonesCerrarSesion">
                 <button id="cerrarSesion" class="boton1cerrarSesion">Sí, cerrar sesión</button>
@@ -55,69 +56,55 @@
         </div>
     </div>
 
-   <div class="seccionaes">
+    <!-- Secciones para organizar usuarios por comisaría -->
+    <div class="seccionaes">
         <div class="seccionUsuarios">
-        <h class="tituloSec">Administrador</h>
-        <div class="usuarios">
-
-        </div>
-        </div>
-
-        <div class="seccionUsuarios">
-            <h class="tituloSec">Usuarios Comisaría Primera</h>
-            <div class="usuarios">
-
-            </div>
+            <h2 class="tituloSec">Administrador</h2>
+            <div class="usuarios"></div>
         </div>
 
         <div class="seccionUsuarios">
-            <h class="tituloSec">Usuarios Comisaría Segunda</h>
-            <div class="usuarios">
-
-            </div>
+            <h2 class="tituloSec">Usuarios Comisaría Primera</h2>
+            <div class="usuarios"></div>
         </div>
 
         <div class="seccionUsuarios">
-            <h class="tituloSec">Usuarios Comisaría Tercera</h>
-            <div class="usuarios">
-
-            </div>
+            <h2 class="tituloSec">Usuarios Comisaría Segunda</h2>
+            <div class="usuarios"></div>
         </div>
 
         <div class="seccionUsuarios">
-            <h class="tituloSec">Usuarios Comisaría Cuarta</h>
-            <div class="usuarios">
-
-            </div>
+            <h2 class="tituloSec">Usuarios Comisaría Tercera</h2>
+            <div class="usuarios"></div>
         </div>
 
         <div class="seccionUsuarios">
-            <h class="tituloSec">Usuarios Comisaría Quinta</h>
-            <div class="usuarios">
-
-            </div>
+            <h2 class="tituloSec">Usuarios Comisaría Cuarta</h2>
+            <div class="usuarios"></div>
         </div>
 
         <div class="seccionUsuarios">
-            <h class="tituloSec">Usuarios Comisaría Sexta</h>
-            <div class="usuarios">
-
-            </div>
+            <h2 class="tituloSec">Usuarios Comisaría Quinta</h2>
+            <div class="usuarios"></div>
         </div>
-   </div>
 
-    <div id="formularioOverlay" class="fondoF">
+        <div class="seccionUsuarios">
+            <h2 class="tituloSec">Usuarios Comisaría Sexta</h2>
+            <div class="usuarios"></div>
+        </div>
+    </div>
+
+    <!-- Formulario overlay para crear/editar usuarios -->
+    <div id="formularioOverlay" class="fondoF" style="display: none;">
         <div class="formulario">
-            
             <div class="headerF">
-                <img title="Cancelar Registro" class="botonCancelar" src="/Frontend/images/salir.png">
+                <img title="Cancelar Registro" class="botonCancelar" src="/Frontend/images/salir.png" alt="Cancelar">
                 <h2>Registrar nuevo Usuario</h2>
             </div>
             
             <form id="formularioUsuarios">
-                <!-- Formulario de registro usuarios -->
                 <div class="seccionF">
-                    <!-- Sección Victimas -->
+                    <!-- Primera fila: Nombre, Documento, Cargo -->
                     <table class="tablaF">
                         <tr>
                             <td>Nombre completo:</td>
@@ -125,20 +112,40 @@
                             <td>Cargo:</td>
                         </tr>
                         <tr>
-                            <td><input autocomplete="off" type="text" name="nombreUsuario" id="nombreUsuario"><p class="mensaje">- El <strong>Nombre completo</strong> es requerido</p></td>
-                            <td><input autocomplete="off" type="number" name="documentoUsuario" id="documentoUsuario"><p class="mensaje">- El <strong>Número de documento</strong> es requerido</p><p class="mensaje">- El mínimo de caráctares es de 7</p></td>
-                            <td><input autocomplete="off" type="text" name="cargoUsuario" id="cargoUsuario"><p class="mensaje">- El <strong>Cargo</strong> es requerido</p></td>
+                            <td>
+                                <input autocomplete="off" type="text" name="nombreUsuario" id="nombreUsuario">
+                                <p class="mensaje">- El <strong>Nombre completo</strong> es requerido</p>
+                            </td>
+                            <td>
+                                <input autocomplete="off" type="number" name="documentoUsuario" id="documentoUsuario">
+                                <p class="mensaje">- El <strong>Número de documento</strong> es requerido</p>
+                                <p class="mensaje">- El mínimo de caracteres es de 7</p>
+                            </td>
+                            <td>
+                                <input autocomplete="off" type="text" name="cargoUsuario" id="cargoUsuario">
+                                <p class="mensaje">- El <strong>Cargo</strong> es requerido</p>
+                            </td>
                         </tr>
                     </table>
+                    
+                    <!-- Segunda fila: Correo, Teléfono, Rol -->
                     <table class="tablaF">
                         <tr>
                             <td>Correo:</td>
                             <td>Teléfono:</td>
-                            <td>Rol:</td>
+                            <td>Comisaría/Rol:</td>
                         </tr>
                         <tr>
-                            <td><input class="correo" autocomplete="off" type="text" name="correoUsuario" id="correoUsuario"><p class="mensaje">- El <strong>Correo</strong> es requerido</p><p class="mensaje">- Ingrese un correo valido</p></td>
-                            <td><input autocomplete="off" type="number" name="telefonoUsuario" id="telefonoUsuario"><p class="mensaje">- El <strong>Teléfono</strong> es requerido</p><p class="mensaje">- El mínimo de caráctares es de 10</p></td>
+                            <td>
+                                <input class="correo" autocomplete="off" type="text" name="correoUsuario" id="correoUsuario">
+                                <p class="mensaje">- El <strong>Correo</strong> es requerido</p>
+                                <p class="mensaje">- Ingrese un correo válido</p>
+                            </td>
+                            <td>
+                                <input autocomplete="off" type="number" name="telefonoUsuario" id="telefonoUsuario">
+                                <p class="mensaje">- El <strong>Teléfono</strong> es requerido</p>
+                                <p class="mensaje">- El mínimo de caracteres es de 10</p>
+                            </td>
                             <td>
                                 <select id="comisariaUsuario" name="comisariaUsuario">
                                     <option value="">- - Seleccione - -</option>
@@ -154,6 +161,8 @@
                             </td>
                         </tr>
                     </table>
+                    
+                    <!-- Tercera fila: Contraseña -->
                     <table class="tablaF">
                         <tr>
                             <td></td>
@@ -168,38 +177,108 @@
                                         <input autocomplete="off" type="password" id="contraseñaUsuario" 
                                             style="width: 100%; box-sizing: border-box; padding-right: 60px;">
                                         <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: flex; gap: 5px;">
-                                            <img src="/Frontend/images/ojo.png" class="ver" id="mostrar" style="display: inline; cursor: pointer;">
-                                            <img src="/Frontend/images/invisible.png" class="ver" id="ocultar" style="display: none; cursor: pointer;">
+                                            <img src="/Frontend/images/ojo.png" class="ver" id="mostrar" style="display: inline; cursor: pointer;" alt="Mostrar">
+                                            <img src="/Frontend/images/invisible.png" class="ver" id="ocultar" style="display: none; cursor: pointer;" alt="Ocultar">
                                         </div>
                                     </div>
-                                    
                                 </div>
                                 <p class="mensaje">- La <strong>Contraseña</strong> es requerida</p>
                             </td>
-                            <td><button type="button" id="generarContraseñaBtn" class="btn-generar-contrasena" 
-                                            style="background: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 14px; white-space: nowrap; height: fit-content;">
-                                        Generar Contraseña
-                                    </button></td>
+                            <td>
+                                <button type="button" id="generarContraseñaBtn" class="btn-generar-contraseña" 
+                                    style="background: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 14px; white-space: nowrap; height: fit-content;">
+                                    Generar Contraseña
+                                </button>
+                            </td>
                         </tr>
                     </table>
                 </div>
                 
-                <div class="">
-                    <button class="botonGuardar" id="crearUsuario">Crear</button>
+                <!-- Botón de acción -->
+                <div class="boton-container">
+                    <button class="botonGuardar" id="crearUsuario" type="button">Crear</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="/Frontend/JS/barraLateral.js"></script>
-    <script src="/Frontend/JS/usuarios.js"></script>
     <script src="/Frontend/JS/infoBarra.js"></script>
     <script src="/Frontend/JS/timeout.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
-    <div id="loaderUsuario" class="loader-usuario">
-        <div class="loader-usuario-spinner"></div>
-        <div class="loader-usuario-text" id="loaderUsuarioText">Procesando...</div>
-    </div>
+    <!-- Archivo combinado de usuarios -->
+    <script src="/Frontend/JS/usuarios.js"></script>
+    
+    <!-- Script de inicialización -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 DOM cargado - Inicializando página de usuarios...');
+        
+        // Verificar token
+        const token = localStorage.getItem('sirevif_token');
+        const usuario = localStorage.getItem('sirevif_usuario');
+        
+        if (!token || !usuario) {
+            console.error('❌ No hay sesión activa');
+            alert('No hay sesión activa. Redirigiendo al login...');
+            window.location.href = '/Frontend/HTML/login.html';
+            return;
+        }
+        
+        // Configurar logout
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('divCerrarSesion').style.display = 'flex';
+            });
+        }
+        
+        const cancelarCerrarBtn = document.getElementById('cancelarCerrarSesion');
+        if (cancelarCerrarBtn) {
+            cancelarCerrarBtn.addEventListener('click', function() {
+                document.getElementById('divCerrarSesion').style.display = 'none';
+            });
+        }
+        
+        const confirmarCerrarBtn = document.getElementById('cerrarSesion');
+        if (confirmarCerrarBtn) {
+            confirmarCerrarBtn.addEventListener('click', function() {
+                if (typeof cerrarSesion === 'function') {
+                    cerrarSesion();
+                } else {
+                    localStorage.removeItem('sirevif_token');
+                    localStorage.removeItem('sirevif_usuario');
+                    window.location.href = '/Frontend/HTML/login.html';
+                }
+            });
+        }
+        
+        // Inicializar sistema de usuarios
+        setTimeout(() => {
+            if (typeof inicializarUsuarios === 'function') {
+                console.log('🔄 Inicializando sistema de usuarios...');
+                inicializarUsuarios();
+            } else {
+                console.error('❌ Error: función inicializarUsuarios no encontrada');
+                // Mostrar error silencioso en consola, no al usuario
+            }
+        }, 300);
+    });
+    
+    // Función global para debug (solo disponible en consola)
+    window.debugUsuarios = function() {
+        console.log('=== DEBUG USUARIOS ===');
+        console.log('Token:', localStorage.getItem('sirevif_token') ? '✓ Presente' : '✗ Ausente');
+        console.log('Usuario:', localStorage.getItem('sirevif_usuario'));
+        console.log('Funciones disponibles:');
+        console.log('  - renderizarUsuarios:', typeof renderizarUsuarios);
+        console.log('  - cargarUsuarios:', typeof cargarUsuarios);
+        console.log('  - inicializarUsuarios:', typeof inicializarUsuarios);
+        console.log('=== FIN DEBUG ===');
+    };
+    </script>
 </body>
 </html>

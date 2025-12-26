@@ -43,7 +43,7 @@ const loginProxy = createProxyMiddleware({
         
         if (req.body) {
             const bodyData = JSON.stringify(req.body);
-            console.log(`[Gateway] 🔐 Body a enviar:`, req.body);
+            console.log(`[Gateway] 🔐 Body a enviar:`, JSON.stringify(req.body, null, 2));
             
             proxyReq.setHeader('Content-Type', 'application/json');
             proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
@@ -86,12 +86,13 @@ const loginProxy = createProxyMiddleware({
 
 router.post('/usuarios/auth/login', loginProxy);
 
-// 2. Health checks - Rutas públicas
+// 2. Health checks - Rutas públicas (CORREGIDAS)
 router.get('/usuarios/health', 
     createProxyMiddleware({
         target: serviciosConfig.usuarios.url,
         changeOrigin: true,
         pathRewrite: {
+            '^/usuarios/health': '/health',
             '^/usuarios': '/'
         },
         onError: (err, req, res) => {
@@ -99,7 +100,8 @@ router.get('/usuarios/health',
             res.status(503).json({
                 service: 'usuarios-service',
                 status: 'DOWN',
-                error: err.message
+                error: err.message,
+                timestamp: new Date().toISOString()
             });
         }
     })
@@ -110,7 +112,17 @@ router.get('/medidas/health',
         target: serviciosConfig.medidas.url,
         changeOrigin: true,
         pathRewrite: {
+            '^/medidas/health': '/health',
             '^/medidas': '/'
+        },
+        onError: (err, req, res) => {
+            console.error(`[Gateway] ❌ Error health medidas:`, err.message);
+            res.status(503).json({
+                service: 'medidas-service',
+                status: 'DOWN',
+                error: err.message,
+                timestamp: new Date().toISOString()
+            });
         }
     })
 );
@@ -119,7 +131,7 @@ router.get('/medidas/health',
 // Todas las rutas de usuarios (excepto login y health) requieren autenticación
 router.use('/usuarios', authMiddleware.autenticarToken);
 
-// Proxy para CRUD de usuarios
+// Proxy para CRUD de usuarios (excluyendo login y health)
 router.use('/usuarios', 
     createProxyMiddleware({
         target: serviciosConfig.usuarios.url,
@@ -130,6 +142,12 @@ router.use('/usuarios',
         onProxyReq: (proxyReq, req, res) => {
             console.log(`[Gateway] 👥 Usuarios: ${req.method} ${req.originalUrl}`);
             
+            // DEPURACIÓN SOLO PARA PUT (actualizaciones)
+            if (req.method === 'PUT' && req.body) {
+                console.log('[Gateway] 📦 Body para actualizar usuario:');
+                console.log(JSON.stringify(req.body, null, 2));
+            }
+            
             // Pasar información del usuario autenticado
             if (req.usuario) {
                 proxyReq.setHeader('X-User-ID', req.usuario.id || '');
@@ -137,13 +155,23 @@ router.use('/usuarios',
                 proxyReq.setHeader('X-User-Rol', req.usuario.rolId || '');
                 proxyReq.setHeader('X-User-Nombre', req.usuario.nombre || '');
             }
+            
+            // Asegurar que el body se envíe correctamente
+            if (req.body && ['POST', 'PUT', 'PATCH'].includes(req.method)) {
+                const bodyData = JSON.stringify(req.body);
+                proxyReq.setHeader('Content-Type', 'application/json');
+                proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+                proxyReq.write(bodyData);
+                proxyReq.end();
+            }
         },
         onError: (err, req, res) => {
             console.error(`[Gateway] ❌ Error proxy usuarios:`, err.message);
             res.status(500).json({
                 success: false,
                 error: 'Error de conexión con servicio de usuarios',
-                message: err.message
+                message: err.message,
+                timestamp: new Date().toISOString()
             });
         }
     })
@@ -171,6 +199,24 @@ router.use('/medidas',
                 proxyReq.setHeader('X-User-Rol', req.usuario.rolId || '');
                 proxyReq.setHeader('X-User-Comisaria', req.usuario.comisariaId || 0);
             }
+            
+            // Asegurar que el body se envíe correctamente
+            if (req.body && ['POST', 'PUT', 'PATCH'].includes(req.method)) {
+                const bodyData = JSON.stringify(req.body);
+                proxyReq.setHeader('Content-Type', 'application/json');
+                proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+                proxyReq.write(bodyData);
+                proxyReq.end();
+            }
+        },
+        onError: (err, req, res) => {
+            console.error(`[Gateway] ❌ Error proxy medidas:`, err.message);
+            res.status(500).json({
+                success: false,
+                error: 'Error de conexión con servicio de medidas',
+                message: err.message,
+                timestamp: new Date().toISOString()
+            });
         }
     })
 );
@@ -210,7 +256,8 @@ router.post('/test-login', (req, res) => {
     res.json({
         success: true,
         message: 'Gateway funcionando correctamente',
-        receivedData: req.body
+        receivedData: req.body,
+        timestamp: new Date().toISOString()
     });
 });
 

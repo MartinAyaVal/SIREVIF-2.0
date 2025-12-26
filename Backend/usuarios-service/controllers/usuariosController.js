@@ -5,10 +5,26 @@ const bcrypt = require('bcrypt');
 // Obtener todos los usuarios registrados
 exports.getusuario = async (req, res) => {
     try {
-        const usuario = await Usuario.findAll();
-        res.json(usuario);
+        const usuarios = await Usuario.findAll({
+            attributes: { exclude: ['contraseña'] }  // No incluir contraseña
+        });
+        
+        // DEVOLVER EN FORMATO ESPERADO POR FRONTEND
+        res.json({
+            success: true,
+            message: "Usuarios obtenidos correctamente",
+            data: usuarios,
+            count: usuarios.length
+        });
+        
+        console.log(`✅ Usuarios enviados: ${usuarios.length}`);
     } catch (error) {
-        res.status(500).json({ message: "Error al obtener usuarios: ", error})
+        console.error('❌ Error al obtener usuarios:', error);
+        res.status(500).json({ 
+            success: false,
+            message: "Error al obtener usuarios", 
+            error: error.message
+        });
     }
 };
 
@@ -132,89 +148,135 @@ exports.updateusuario = async (req, res) => {
     try {
         const { id } = req.params;
         
-        // DEPURACIÓN
-        console.log("=".repeat(60));
-        console.log(`📥 Actualizando usuario ID: ${id}`);
-        console.log("📥 REQ.BODY:", req.body);
-        console.log("📥 comisariaId recibido:", req.body.comisariaId, "tipo:", typeof req.body.comisariaId);
-        console.log("=".repeat(60));
+        // ===== DEPURACIÓN MEJORADA (sin middleware) =====
+        console.log("\n" + "=".repeat(70));
+        console.log(`🛠️  ACTUALIZANDO USUARIO ID: ${id}`);
+        console.log("=".repeat(70));
+        console.log("📥 REQ.BODY RECIBIDO:");
+        console.log(JSON.stringify(req.body, null, 2));
         
-        const { 
-            nombre, 
-            documento, 
-            cargo,
-            correo, 
-            telefono, 
-            contraseña, 
-            comisaria_rol,
-            rolId,
-            comisariaId  // <- IMPORTANTE: Extraer comisariaId
-        } = req.body;
-
+        console.log("\n🔍 VALORES ESPECÍFICOS:");
+        console.log(`  • nombre: ${req.body.nombre}`);
+        console.log(`  • documento: ${req.body.documento} (tipo: ${typeof req.body.documento})`);
+        console.log(`  • cargo: ${req.body.cargo}`);
+        console.log(`  • correo: ${req.body.correo}`);
+        console.log(`  • telefono: ${req.body.telefono}`);
+        console.log(`  • contrasena: ${req.body.contrasena || '(no enviada)'}`);
+        console.log(`  • contraseña: ${req.body.contraseña || '(no enviada)'}`);
+        console.log(`  • comisaria_rol: ${req.body.comisaria_rol}`);
+        console.log(`  • rolId: ${req.body.rolId} (tipo: ${typeof req.body.rolId})`);
+        console.log(`  • comisariaId: ${req.body.comisariaId} (tipo: ${typeof req.body.comisariaId})`);
+        console.log("=".repeat(70) + "\n");
+        // ===== FIN DEPURACIÓN =====
+        
         const usuario = await Usuario.findByPk(id);
-        if(!usuario) return res.status(404).json({ message: 'Usuario no encontrado'});
+        if(!usuario) {
+            return res.status(404).json({ 
+                success: false,
+                message: 'Usuario no encontrado'
+            });
+        }
 
-        // Manejar comisariaId - si no viene, mantener el existente o calcular
-        let comisariaIdFinal = comisariaId;
+        // Extraer campos - aceptar ambos nombres para contraseña
+        const password = req.body.contrasena || req.body.contraseña;
+
+        // Validar campos requeridos
+        if (!req.body.nombre || !req.body.documento || !req.body.cargo || !req.body.correo || !req.body.telefono) {
+            return res.status(400).json({ 
+                success: false,
+                message: 'Faltan campos requeridos' 
+            });
+        }
+
+        console.log("🔧 Procesando comisariaId...");
         
-        if (comisariaIdFinal === undefined || comisariaIdFinal === null) {
-            console.log("⚠️ comisariaId no recibido en actualización...");
+        // Manejar comisariaId
+        let comisariaIdFinal = req.body.comisariaId;
+        
+        // Si NO viene comisariaId, calcularlo desde comisaria_rol
+        if (comisariaIdFinal === undefined || comisariaIdFinal === null || comisariaIdFinal === '') {
+            console.log("⚠️  No se recibió comisariaId, calculando...");
             
-            if (comisaria_rol) {
-                // Si hay nueva comisaria_rol, calcular comisariaId
-                const mapeoComisarias = {
-                    'Administrador': 0,
-                    'Comisaría Primera': 1,
-                    'Comisaría Segunda': 2,
-                    'Comisaría Tercera': 3,
-                    'Comisaría Cuarta': 4,
-                    'Comisaría Quinta': 5,
-                    'Comisaría Sexta': 6
-                };
-                
-                comisariaIdFinal = mapeoComisarias[comisaria_rol] || usuario.comisariaId;
-                console.log(`✅ comisariaId calculado para actualización: ${comisariaIdFinal}`);
+            // Mapeo de comisaria_rol a comisariaId
+            const mapeoComisarias = {
+                'Administrador': 0,
+                'Comisaría 1': 1,
+                'Comisaría 2': 2,
+                'Comisaría 3': 3,
+                'Comisaría 4': 4,
+                'Comisaría 5': 5,
+                'Comisaría 6': 6,
+                'Comisaría Primera': 1,
+                'Comisaría Segunda': 2,
+                'Comisaría Tercera': 3,
+                'Comisaría Cuarta': 4,
+                'Comisaría Quinta': 5,
+                'Comisaría Sexta': 6
+            };
+            
+            if (req.body.comisaria_rol && mapeoComisarias[req.body.comisaria_rol] !== undefined) {
+                comisariaIdFinal = mapeoComisarias[req.body.comisaria_rol];
+                console.log(`✅ Calculado: comisariaId = ${comisariaIdFinal} para "${req.body.comisaria_rol}"`);
             } else {
-                // Mantener el comisariaId existente
+                // Mantener el valor actual
                 comisariaIdFinal = usuario.comisariaId;
-                console.log(`✅ Manteniendo comisariaId existente: ${comisariaIdFinal}`);
+                console.log(`✅ Manteniendo valor actual: comisariaId = ${comisariaIdFinal}`);
             }
         }
         
-        // Asegurar que sea número
+        // Convertir a número
         comisariaIdFinal = parseInt(comisariaIdFinal) || 0;
+        console.log(`✅ comisariaId final: ${comisariaIdFinal}`);
 
-        // Preparar datos de actualización
-        let updateData = {
-            nombre: nombre,
-            documento: parseInt(documento),
-            cargo: cargo,   
-            correo: correo,
-            telefono: telefono,
-            comisaria_rol: comisaria_rol || usuario.comisaria_rol,
-            rolId: parseInt(rolId) || usuario.rolId,
-            comisariaId: comisariaIdFinal  // <- Campo CRÍTICO
+        // Preparar datos para actualizar
+        const updateData = {
+            nombre: req.body.nombre.trim(),
+            documento: parseInt(req.body.documento) || usuario.documento,
+            cargo: req.body.cargo.trim(),
+            correo: req.body.correo.trim(),
+            telefono: req.body.telefono.trim(),
+            comisaria_rol: (req.body.comisaria_rol || usuario.comisaria_rol).trim(),
+            rolId: parseInt(req.body.rolId) || usuario.rolId || 1,
+            comisariaId: comisariaIdFinal
         };
 
-        if (contraseña) {
+        console.log("📝 Datos a actualizar:");
+        console.log(JSON.stringify(updateData, null, 2));
+
+        // Solo actualizar contraseña si se proporciona una nueva
+        if (password && password.trim() !== '') {
+            console.log("🔐 Actualizando contraseña...");
             const saltRounds = 10;
-            updateData.contraseña = await bcrypt.hash(contraseña, saltRounds);
+            updateData.contraseña = await bcrypt.hash(password.trim(), saltRounds);
+        } else {
+            console.log("⚠️  No se cambió la contraseña");
         }
 
+        // Realizar la actualización
         await usuario.update(updateData);
+        
+        console.log(`✅ Usuario ID ${id} actualizado correctamente`);
+        console.log("=".repeat(70));
 
-        // Opcional: No devolver la contraseña en la respuesta
+        // Preparar respuesta
         const usuarioResponse = usuario.toJSON();
         delete usuarioResponse.contraseña;
 
-        res.json(usuarioResponse)
+        res.json({
+            success: true,
+            message: "Usuario actualizado correctamente",
+            data: usuarioResponse
+        });
+        
     } catch (error) {
-        console.log('❌ Error al actualizar usuario:', error);
+        console.error('❌ ERROR en updateusuario:', error.message);
+        console.error('❌ Stack trace:', error.stack);
+        
         res.status(500).json({ 
+            success: false,
             message: 'Error al actualizar usuario', 
-            error: error.message,
-            details: error.errors ? error.errors.map(err => err.message) : []
-        })
+            error: error.message
+        });
     }
 };
 

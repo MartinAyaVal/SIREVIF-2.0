@@ -1,3 +1,5 @@
+[file name]: login.js
+[file content begin]
 const formulario = document.getElementById('formulario');
 const boton = document.getElementById('boton');
 const textoBoton = document.getElementById('textoBoton');
@@ -39,7 +41,7 @@ function ocultarLoader() {
 }
         
 function mostrarError(message) {
-    mensajeError.textContent = message;
+    mensajeError.innerHTML = message; // Usar innerHTML para permitir saltos de línea
     mensajeError.style.display = 'block';
     mensajeExito.style.display = 'none';
 }
@@ -65,33 +67,67 @@ function verificarSesionExistente() {
     }
 }
 
-// === PRUEBA DE CONEXIÓN ===
+// === PRUEBA DE CONEXIÓN - MEJORADA ===
 async function probarConexion() {
     try {
         console.log('🔍 Probando conexión con gateway...');
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
         const response = await fetch('http://localhost:8080/health', {
             method: 'GET',
             headers: {
                 'Accept': 'application/json'
-            }
+            },
+            signal: controller.signal
         });
         
+        clearTimeout(timeoutId);
+        
         if (!response.ok) {
-            throw new Error(`Gateway no responde: ${response.status}`);
+            throw new Error(`Gateway HTTP ${response.status}`);
         }
         
         const data = await response.json();
         console.log('✅ Gateway OK:', data);
+        
+        // Verificar también que el servicio de usuarios esté disponible
+        const userServiceHealth = await fetch('http://localhost:8080/usuarios/health', {
+            signal: controller.signal
+        });
+        
+        if (!userServiceHealth.ok) {
+            throw new Error('Servicio de usuarios no disponible');
+        }
+        
+        const userServiceData = await userServiceHealth.json();
+        console.log('✅ Servicio de usuarios OK:', userServiceData);
+        
         return true;
         
     } catch (error) {
         console.error('❌ Error conectando con gateway:', error);
-        mostrarError('No se puede conectar al Gateway. Verifica que esté corriendo en puerto 8080.');
+        
+        let mensaje = 'No se puede conectar al servidor. ';
+        if (error.name === 'AbortError') {
+            mensaje += 'Tiempo de espera agotado. ';
+        }
+        
+        mensaje += 'Verifica:<br>';
+        mensaje += '1. Gateway corriendo en puerto 8080<br>';
+        mensaje += '2. Servicio de usuarios en puerto 3005<br>';
+        mensaje += '3. Firewall desactivado para desarrollo<br>';
+        mensaje += '<br>Comandos:<br>';
+        mensaje += '• Gateway: <code>node server.js</code> en carpeta gateway<br>';
+        mensaje += '• Usuarios: <code>node server.js</code> en carpeta usuarios-service';
+        
+        mostrarError(mensaje);
         return false;
     }
 }
 
-// === MANEJADOR DE SUBMIT ===
+// === MANEJADOR DE SUBMIT - MEJORADO ===
 async function manejarSubmit(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -101,6 +137,10 @@ async function manejarSubmit(e) {
     // Obtener valores del formulario
     const documento = document.getElementById('documento').value.trim();
     const contrasena = document.getElementById('contrasena').value;
+    
+    console.log('📝 Datos del formulario:');
+    console.log('  • Documento:', documento);
+    console.log('  • Contraseña:', contrasena ? '***' + contrasena.substring(contrasena.length - 3) : 'VACÍA');
     
     // Validar campos
     if (!documento || !contrasena) {
@@ -115,6 +155,7 @@ async function manejarSubmit(e) {
     }
     
     // Primero probar conexión
+    console.log('🔌 Probando conexión con servidor...');
     const conexionOK = await probarConexion();
     if (!conexionOK) {
         return;
@@ -124,30 +165,36 @@ async function manejarSubmit(e) {
     mostrarLoader();
     
     try {
+        // IMPORTANTE: Enviar documento como STRING (no como número) porque el modelo lo espera como string
         const payload = {
-            documento: parseInt(documento),
+            documento: documento, // Enviar como string, no como número
             contrasena: contrasena
         };
         
         console.log('📤 Enviando al servidor:', { 
             documento: payload.documento, 
+            tipo_documento: typeof payload.documento,
             contrasena: '***' + contrasena.substring(contrasena.length - 3) 
         });
         console.log('🌐 URL destino: http://localhost:8080/usuarios/auth/login');
         
-        // Enviar petición al Gateway SIN timeout primero
+        // Enviar petición con timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+        
         const response = await fetch('http://localhost:8080/usuarios/auth/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify(payload)
-            // Sin timeout para ver qué pasa
+            body: JSON.stringify(payload),
+            signal: controller.signal
         });
         
+        clearTimeout(timeoutId);
+        
         console.log('📥 Respuesta HTTP status:', response.status);
-        console.log('📥 Respuesta headers:', Object.fromEntries(response.headers.entries()));
         
         // Leer respuesta como texto primero
         const responseText = await response.text();
@@ -165,27 +212,45 @@ async function manejarSubmit(e) {
         } catch (parseError) {
             console.error('❌ Error parseando respuesta:', parseError);
             console.error('❌ Texto completo:', responseText);
-            throw new Error('Respuesta inválida del servidor: ' + responseText.substring(0, 100));
+            ocultarLoader();
+            mostrarError('Respuesta inválida del servidor. Contacta al administrador.');
+            return;
         }
         
         if (response.ok && data.success) {
+            // VALIDAR DATOS RECIBIDOS
+            if (!data.token) {
+                throw new Error('No se recibió token de autenticación');
+            }
+            
+            if (!data.usuario) {
+                console.warn('⚠️ No se recibieron datos de usuario completos');
+                data.usuario = {
+                    documento: payload.documento,
+                    nombre: 'Usuario',
+                    rolId: 0,
+                    comisariaId: 0
+                };
+            }
+            
             // Guardar token y datos de usuario
             localStorage.setItem('sirevif_token', data.token);
-            console.log('✅ Token guardado:', data.token.substring(0, 20) + '...');
+            console.log('✅ Token guardado en localStorage');
             
-            if (data.usuario) {
-                console.log('👤 Datos del usuario:', data.usuario);
-                localStorage.setItem('sirevif_usuario', JSON.stringify(data.usuario));
-            } else {
-                console.warn('⚠️ No se recibieron datos de usuario');
-            }
+            console.log('👤 Datos del usuario:', data.usuario);
+            localStorage.setItem('sirevif_usuario', JSON.stringify(data.usuario));
 
             // Ingreso exitoso
             textoLoader.textContent = "¡Autenticación exitosa!";
             textoLoader.style.color = "#4CAF50";
             
+            // Mostrar mensaje de éxito
+            mensajeExito.textContent = `Bienvenido/a ${data.usuario.nombre}`;
+            mensajeExito.style.display = 'block';
+            mensajeError.style.display = 'none';
+            
             // Pequeña pausa para feedback visual
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 1500));
             
             // Redirigir a index
             console.log('🔄 Redirigiendo a dashboard...');
@@ -193,7 +258,19 @@ async function manejarSubmit(e) {
             
         } else {
             ocultarLoader();
-            mostrarError(data.message || data.error || `Error ${response.status}: Error desconocido`);
+            
+            let errorMessage = 'Error de autenticación';
+            if (data && data.message) {
+                errorMessage = data.message;
+            } else if (response.status === 401) {
+                errorMessage = 'Documento o contraseña incorrectos';
+            } else if (response.status === 404) {
+                errorMessage = 'Usuario no encontrado. Verifica tu documento.';
+            } else if (data && data.error) {
+                errorMessage = data.error;
+            }
+            
+            mostrarError(errorMessage);
             console.error('❌ Error en respuesta:', data);
         }
         
@@ -235,10 +312,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (documentoInput) {
         documentoInput.focus();
         console.log('✅ Foco puesto en campo documento');
-    }
-    
-    // Limpiar mensajes cuando el usuario empiece a escribir
-    if (documentoInput) {
+        
+        // Limpiar mensajes cuando el usuario empiece a escribir
         documentoInput.addEventListener('input', () => {
             if (mensajeError) mensajeError.style.display = 'none';
             if (mensajeExito) mensajeExito.style.display = 'none';
@@ -263,11 +338,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // DEBUG: Mostrar instrucciones
     console.log('🔧 Para probar manualmente, ejecuta en la consola:');
-    console.log('   fetch("http://localhost:8080/usuarios/auth/login", {');
-    console.log('     method: "POST",');
-    console.log('     headers: {"Content-Type": "application/json"},');
-    console.log('     body: JSON.stringify({documento: 12345678, contrasena: "test"})');
-    console.log('   }).then(r => r.text()).then(console.log).catch(console.error)');
+    console.log('   window.probarLogin(12345678, "test123")');
 });
 
 // Función global para pruebas
@@ -277,10 +348,11 @@ window.probarLogin = async function(documento, contrasena) {
     const response = await fetch('http://localhost:8080/usuarios/auth/login', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ documento, contrasena })
+        body: JSON.stringify({ documento: documento.toString(), contrasena })
     });
     
     const text = await response.text();
     console.log('📥 Respuesta:', text);
     return text;
 };
+[file content end]

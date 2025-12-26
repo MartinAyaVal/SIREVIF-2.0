@@ -1,29 +1,26 @@
-// usuariosRoutes.js - VERSIÓN CORRECTA (CommonJS)
 const express = require('express');
 const router = express.Router();
 const usuarioController = require('../controllers/usuariosController.js');
 
-// ⭐⭐ NO necesitas importar authMiddleware aquí
-// El servicio de usuarios NO debe verificar tokens
+// RUTA PRINCIPAL PARA OBTENER TODOS LOS USUARIOS
+router.get('/', usuarioController.getusuario);
 
-// RUTAS ESPECÍFICAS primero
+// RUTAS ESPECÍFICAS
 router.get('/health', (req, res) => {
     res.json({ 
+        success: true,
         status: 'Servidor de usuarios corriendo correctamente',
         timestamp: new Date().toISOString()
     });
 });
 
-// Rutas con parámetros específicos
-router.patch('/:id/estado', usuarioController.cambiarEstadoUsuario);
-
-// Rutas con :id
+// Rutas con parámetros
 router.get('/:id', usuarioController.getusuariosById);
 router.put('/:id', usuarioController.updateusuario);
 router.delete('/:id', usuarioController.deleteusuario);
+router.patch('/:id/estado', usuarioController.cambiarEstadoUsuario);
 
-// Rutas genéricas (al final)
-router.get('/', usuarioController.getusuario);
+// Ruta para crear usuario
 router.post('/', usuarioController.createusuario);
 
-module.exports = router;  // ← CommonJS export
+module.exports = router;

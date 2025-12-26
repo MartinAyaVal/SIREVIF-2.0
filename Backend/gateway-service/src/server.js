@@ -11,14 +11,23 @@ const allowedOrigins = [
     'http://127.0.0.1:5500',
     'http://localhost:3000',
     'http://localhost:3005',
-    'http://localhost:3006'
+    'http://localhost:3006',
+    'null' // Para archivos locales
 ];
 
 app.use(cors({
-    origin: allowedOrigins,
+    origin: function (origin, callback) {
+        // Permitir requests sin origin (como archivos locales)
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            console.log(`❌ Origen bloqueado: ${origin}`);
+            callback(new Error('Origen no permitido por CORS'));
+        }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-user-id', 'x-user-documento', 'x-user-rol']
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-user-id', 'x-user-documento', 'x-user-rol', 'x-user-nombre', 'x-user-comisaria']
 }));
 
 // Parsear JSON y URL-encoded
@@ -55,7 +64,8 @@ app.use('*', (req, res) => {
             'POST /medidas (requiere token)',
             'GET /health',
             'GET /usuarios/health',
-            'GET /medidas/health'
+            'GET /medidas/health',
+            'POST /test-login'
         ]
     });
 });
@@ -89,6 +99,9 @@ app.listen(PORT, () => {
     console.log(`   Gateway:    GET http://localhost:${PORT}/health`);
     console.log(`   Usuarios:   GET http://localhost:${PORT}/usuarios/health`);
     console.log(`   Medidas:    GET http://localhost:${PORT}/medidas/health`);
+    
+    console.log("\n🧪 TEST:");
+    console.log(`   Test:       POST http://localhost:${PORT}/test-login`);
     
     console.log("\n🔧 SERVICIOS BACKEND:");
     console.log(`   Usuarios:   http://localhost:3005`);

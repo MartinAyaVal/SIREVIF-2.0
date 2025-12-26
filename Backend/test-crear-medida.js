@@ -11,7 +11,7 @@ async function testCrearMedida() {
     console.log('1. 🔐 Obteniendo token...');
     const loginRes = await axios.post(`${GATEWAY_URL}/usuarios/auth/login`, {
       documento: "123456789",
-      contrasena: "admin123"
+      contraseña: "admin123"
     });
     
     if (!loginRes.data.token) {
