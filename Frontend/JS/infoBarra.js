@@ -1,5 +1,5 @@
 /**
- * ARCHIVO: infoBarra.js (VERSIÓN COMPLETA CON CONTROL DE ROLES)
+ * ARCHIVO: infoBarra.js (VERSIÓN MEJORADA CON CONTROL DE ROLES COMPLETO)
  * DESCRIPCIÓN: Carga información del usuario, controla accesos por rol y maneja logout
  */
 
@@ -7,7 +7,8 @@
 const CONFIG = {
     TOKEN_KEY: 'sirevif_token',
     USER_KEY: 'sirevif_usuario',
-    LOGIN_URL: '/Frontend/HTML/login.html'
+    LOGIN_URL: '/Frontend/HTML/login.html',
+    ROL_ADMINISTRADOR: 1 // Solo rol 1 es administrador
 };
 
 // ===== VARIABLES GLOBALES =====
@@ -18,25 +19,52 @@ let btnCancelarLogout = null;
 // ===== FUNCIÓN: Control de accesos por rol =====
 
 /**
- * Oculta o muestra elementos del menú según el rol del usuario
+ * Obtiene el rol del usuario actual
  */
-function controlarAccesosPorRol() {
-    console.log('🔒 Verificando permisos por rol...');
-    
+function obtenerRolUsuario() {
     try {
-        // Obtener usuario del localStorage
         const usuarioStorage = localStorage.getItem(CONFIG.USER_KEY);
-        
         if (!usuarioStorage) {
             console.warn('⚠️ No se pudo obtener información del usuario');
-            return;
+            return null;
         }
         
         const usuarioData = JSON.parse(usuarioStorage);
-        const rolId = usuarioData.rolId;
-        const esAdministrador = rolId === 1;
+        const rolId = usuarioData.rolId || usuarioData.rol_id || 0;
         
-        console.log(`📊 Rol del usuario: ${rolId} - ${esAdministrador ? 'ADMIN' : 'USUARIO'} (${usuarioData.nombre})`);
+        console.log(`📊 Rol del usuario obtenido: ${rolId} (${usuarioData.nombre})`);
+        return rolId;
+    } catch (error) {
+        console.error('❌ Error al obtener rol:', error);
+        return null;
+    }
+}
+
+/**
+ * Verifica si el usuario actual es administrador
+ */
+function esAdministrador() {
+    const rolId = obtenerRolUsuario();
+    return rolId === CONFIG.ROL_ADMINISTRADOR;
+}
+
+/**
+ * Oculta o muestra elementos del menú según el rol del usuario
+ */
+function controlarAccesosPorRol() {
+    console.log('🔒 Aplicando control de accesos por rol...');
+    
+    try {
+        const rolId = obtenerRolUsuario();
+        
+        if (rolId === null) {
+            console.warn('⚠️ No se pudo obtener rol del usuario');
+            return;
+        }
+        
+        const esAdmin = rolId === CONFIG.ROL_ADMINISTRADOR;
+        
+        console.log(`📋 Estado: ${esAdmin ? 'ADMINISTRADOR' : 'USUARIO NORMAL'} (Rol ID: ${rolId})`);
         
         // Selectores para elementos relacionados con usuarios
         const selectoresUsuarios = [
@@ -44,7 +72,12 @@ function controlarAccesosPorRol() {
             'a[title="Usuarios"]',              // Botón con title="Usuarios"
             'a[href="#usuarios"]',              // Enlaces internos
             '.menu-usuarios',                    // Clase menu-usuarios
-            '#menu-usuarios'                     // ID menu-usuarios
+            '#menu-usuarios',                    // ID menu-usuarios
+            '#botonUsuarios',                    // ID específico para botón usuarios
+            '.usuarios-link',                    // Clase general para links de usuarios
+            '[data-role="admin-only"]',          // Elementos con data-role
+            '[data-admin-only="true"]',          // Elementos con data-admin-only
+            '.admin-only'                        // Clase admin-only
         ];
         
         // Aplicar a todos los selectores encontrados
@@ -52,12 +85,19 @@ function controlarAccesosPorRol() {
             const elementos = document.querySelectorAll(selector);
             
             elementos.forEach(elemento => {
-                if (!esAdministrador) {
+                if (!esAdmin) {
+                    // Ocultar completamente para no-admins
                     elemento.style.display = 'none';
                     elemento.style.visibility = 'hidden';
                     elemento.style.opacity = '0';
                     elemento.style.pointerEvents = 'none';
+                    elemento.style.position = 'absolute';
+                    elemento.style.height = '0';
+                    elemento.style.width = '0';
+                    elemento.style.overflow = 'hidden';
                     elemento.setAttribute('data-hidden-by-role', 'true');
+                    elemento.setAttribute('aria-hidden', 'true');
+                    elemento.setAttribute('tabindex', '-1');
                     console.log(`👁️‍🗨️ Ocultado: ${selector}`);
                 } else {
                     // Si es admin, asegurarse que esté visible
@@ -65,16 +105,54 @@ function controlarAccesosPorRol() {
                     elemento.style.visibility = '';
                     elemento.style.opacity = '';
                     elemento.style.pointerEvents = '';
+                    elemento.style.position = '';
+                    elemento.style.height = '';
+                    elemento.style.width = '';
+                    elemento.style.overflow = '';
                     elemento.removeAttribute('data-hidden-by-role');
+                    elemento.setAttribute('aria-hidden', 'false');
+                    elemento.removeAttribute('tabindex');
                     console.log(`👁️‍🗨️ Visible para admin: ${selector}`);
                 }
             });
         });
         
+        // Controlar accesos a la página actual
+        controlarAccesoPaginaActual(rolId);
+        
         console.log('✅ Permisos aplicados correctamente');
         
     } catch (error) {
         console.error('❌ Error al controlar accesos por rol:', error);
+    }
+}
+
+/**
+ * Controla el acceso a la página actual según el rol
+ */
+function controlarAccesoPaginaActual(rolId) {
+    const path = window.location.pathname;
+    const esPaginaUsuarios = path.includes('usuarios.html');
+    
+    if (esPaginaUsuarios && rolId !== CONFIG.ROL_ADMINISTRADOR) {
+        console.log('🚫 Usuario no admin intentando acceder a usuarios.html - Redirigiendo...');
+        
+        // Mostrar mensaje de error
+        Swal.fire({
+            title: 'Acceso denegado',
+            text: 'No tienes permisos para acceder a esta sección. Solo los administradores pueden gestionar usuarios.',
+            icon: 'error',
+            confirmButtonText: 'Volver al inicio',
+            confirmButtonColor: '#4CAF50',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showCloseButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            willClose: () => {
+                window.location.href = '/Frontend/HTML/index.html';
+            }
+        });
     }
 }
 
@@ -104,8 +182,9 @@ function cargarInformacionHeader() {
         console.log('✅ Usuario cargado:', usuarioData.nombre);
         console.log('📋 Datos del usuario:', {
             nombre: usuarioData.nombre,
-            rolId: usuarioData.rolId,
-            comisaria: usuarioData.comisaria_rol
+            rolId: usuarioData.rolId || usuarioData.rol_id,
+            comisaria: usuarioData.comisaria_rol,
+            esAdmin: (usuarioData.rolId || usuarioData.rol_id) === CONFIG.ROL_ADMINISTRADOR
         });
         
         // Actualizar elementos del header si existen
@@ -375,14 +454,13 @@ window.SIREVIF.Sesion = {
     },
     obtenerRol: function() {
         const usuario = this.obtenerUsuario();
-        return usuario ? usuario.rolId : null;
+        return usuario ? (usuario.rolId || usuario.rol_id) : null;
     },
-    esAdministrador: function() {
-        return this.obtenerRol() === 1;
-    },
+    esAdministrador: esAdministrador,
     estaAutenticado: function() {
         return !!localStorage.getItem(CONFIG.TOKEN_KEY);
-    }
+    },
+    controlarAccesosPorRol: controlarAccesosPorRol // Nueva función exportada
 };
 
 console.log('✅ infoBarra.js cargado (con control de roles y modal de confirmación)');

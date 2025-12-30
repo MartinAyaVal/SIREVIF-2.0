@@ -9,6 +9,59 @@ const GATEWAY_URL = 'http://localhost:8080';
 let modoEdicionUsuario = false;
 let usuarioEditandoId = null;
 
+// ===== FUNCIONES DE VERIFICACIÓN DE PERMISOS =====
+function verificarPermisosAdministrador() {
+    const usuarioStorage = localStorage.getItem('sirevif_usuario');
+    if (!usuarioStorage) {
+        console.error('❌ No hay información de usuario en localStorage');
+        mostrarErrorAccesoDenegado();
+        return false;
+    }
+    
+    try {
+        const usuarioData = JSON.parse(usuarioStorage);
+        const rolId = usuarioData.rolId || usuarioData.rol_id || 0;
+        
+        console.log('🔐 Verificando permisos de administrador...');
+        console.log('📋 Datos del usuario:', usuarioData);
+        console.log('👑 rolId detectado:', rolId);
+        
+        const esAdministrador = rolId === 1;
+        
+        if (!esAdministrador) {
+            console.log('🚫 Usuario no es administrador - Acceso denegado');
+            mostrarErrorAccesoDenegado();
+            return false;
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('❌ Error al verificar permisos:', error);
+        mostrarErrorAccesoDenegado();
+        return false;
+    }
+}
+
+function mostrarErrorAccesoDenegado() {
+    // Solo mostrar si estamos en la página de usuarios
+    if (window.location.pathname.includes('usuarios.html')) {
+        Swal.fire({
+            title: 'Acceso denegado',
+            text: 'No tienes permisos para acceder a esta sección. Solo los administradores pueden gestionar usuarios.',
+            icon: 'error',
+            confirmButtonText: 'Volver al inicio',
+            confirmButtonColor: '#4CAF50',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showCloseButton: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '/Frontend/HTML/index.html';
+            }
+        });
+    }
+}
+
 // ===== FUNCIONES DE NOTIFICACIONES =====
 async function mostrarExito(mensaje, titulo = '¡Éxito!') {
     return Swal.fire({
@@ -52,6 +105,12 @@ async function mostrarConfirmacion(pregunta, titulo = 'Confirmación', textoConf
 
 // ===== FUNCIONES DE INTERFAZ DE FORMULARIO =====
 function abrirFormularioCreacion() {
+    // Verificar permisos antes de abrir
+    if (!verificarPermisosAdministrador()) {
+        mostrarError('Solo los administradores pueden crear usuarios');
+        return;
+    }
+    
     resetFormulario();
     document.getElementById('formularioOverlay').style.display = 'flex';
 }
@@ -682,6 +741,13 @@ async function cargarUsuarios() {
             if (response.status === 401 || response.status === 403) {
                 localStorage.removeItem('sirevif_token');
                 localStorage.removeItem('sirevif_usuario');
+                
+                if (response.status === 403) {
+                    // Acceso denegado por falta de permisos de administrador
+                    const errorData = await response.json();
+                    throw new Error(`Acceso denegado: ${errorData.message || 'No tienes permisos de administrador'}`);
+                }
+                
                 throw new Error('Su sesión ha expirado');
             }
             
@@ -715,11 +781,13 @@ async function cargarUsuarios() {
         console.error('❌ Error al cargar usuarios:', error);
         
         if (error.message.includes('sesión') || error.message.includes('token')) {
-            mostrarError(error.message, 'Sesión expirada').then(() => {
-                cerrarSesion();
-            });
+            await mostrarError(error.message, 'Sesión expirada');
+            window.SIREVIF.Sesion.ejecutarCierreSesion();
+        } else if (error.message.includes('Acceso denegado')) {
+            await mostrarError(error.message, 'Permisos insuficientes');
+            // No cerrar sesión, solo mostrar error
         } else {
-            mostrarError('Error al cargar usuarios: ' + error.message);
+            await mostrarError('Error al cargar usuarios: ' + error.message);
         }
         
         throw error;
@@ -1232,26 +1300,6 @@ function asignarEventListenersTarjetas() {
     });
 }
 
-// ===== FUNCIONES DE INICIALIZACIÓN =====
-function verificarPermisosAdministrador() {
-    const usuarioStorage = localStorage.getItem('sirevif_usuario');
-    if (!usuarioStorage) return false;
-    
-    try {
-        const usuarioData = JSON.parse(usuarioStorage);
-        return usuarioData.rolId === 1;
-    } catch (error) {
-        console.error('Error al verificar permisos:', error);
-        return false;
-    }
-}
-
-function cerrarSesion() {
-    localStorage.removeItem('sirevif_token');
-    localStorage.removeItem('sirevif_usuario');
-    window.location.href = '/Frontend/HTML/login.html';
-}
-
 function inicializarInterfaz() {
     console.log('🚀 Inicializando interfaz de usuarios...');
     
@@ -1304,13 +1352,15 @@ function inicializarInterfaz() {
 function inicializarUsuarios() {
     console.log('🚀 Sistema de usuarios inicializando...');
     
-    // Verificar permisos de administrador
+    // 🔒 Verificar permisos de administrador ANTES de hacer nada
     if (!verificarPermisosAdministrador()) {
-        mostrarError('No tienes permisos para acceder a esta sección.', 'Acceso denegado').then(() => {
-            window.location.href = '/Frontend/HTML/index.html';
-        });
+        // Si no es admin, no inicializar nada
+        console.log('🚫 Usuario no es administrador - Sistema de usuarios no inicializado');
         return false;
     }
+    
+    // Solo si es admin, continuar con la inicialización
+    console.log('✅ Usuario es administrador - Inicializando sistema...');
     
     // Inicializar interfaz
     inicializarInterfaz();
@@ -1320,42 +1370,8 @@ function inicializarUsuarios() {
         cargarUsuarios();
     }, 100);
     
-    console.log('✅ Sistema de usuarios inicializado');
+    console.log('✅ Sistema de usuarios inicializado (solo administrador)');
     return true;
-}
-
-// ===== FUNCIONES DE DEBUG =====
-function testEdicionUsuario() {
-    console.log('🧪=== TEST EDICIÓN USUARIO ===');
-    
-    // Verificar que haya usuarios en la página
-    const tarjetas = document.querySelectorAll('.usuario-tarjeta');
-    console.log(`📋 Tarjetas de usuario encontradas: ${tarjetas.length}`);
-    
-    if (tarjetas.length === 0) {
-        console.error('❌ No hay tarjetas de usuario en la página');
-        return;
-    }
-    
-    // Tomar el primer usuario
-    const primeraTarjeta = tarjetas[0];
-    const usuarioId = primeraTarjeta.dataset.id;
-    console.log(`🔍 Probando con usuario ID: ${usuarioId}`);
-    
-    // Simular clic en botón de editar
-    const botonEditar = primeraTarjeta.querySelector('.btn-editar');
-    if (botonEditar) {
-        console.log('✅ Botón de editar encontrado');
-        console.log('📋 Datos del botón:', {
-            id: botonEditar.dataset.id,
-            class: botonEditar.className
-        });
-        botonEditar.click();
-    } else {
-        console.error('❌ No se encontró botón de editar en la tarjeta');
-    }
-    
-    console.log('🧪=== FIN TEST ===');
 }
 
 // ===== HACER FUNCIONES GLOBALES =====
@@ -1368,7 +1384,13 @@ window.inicializarUsuarios = inicializarUsuarios;
 window.configurarFormularioEdicion = configurarFormularioEdicion;
 window.validarFormularioUsuarioCompleto = validarFormularioUsuarioCompleto;
 window.cerrarFormulario = cerrarFormulario;
-window.cerrarSesion = cerrarSesion;
-window.testEdicionUsuario = testEdicionUsuario; // Para debugging
+window.verificarPermisosAdministrador = verificarPermisosAdministrador;
 
 console.log('✅ usuarios.js cargado - Sistema de validación visual activado');
+
+// Inicializar cuando el DOM esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inicializarUsuarios);
+} else {
+    setTimeout(inicializarUsuarios, 100);
+}

@@ -1,7 +1,7 @@
 /**
  * ARCHIVO: barraLateral.js (VERSIÓN FINAL)
  * DESCRIPCIÓN: Solo maneja la barra lateral desplegable
- * NOTA: El logout lo maneja cargarHeader.js
+ * NOTA: El logout lo maneja infoBarra.js
  */
 
 console.log('🔧 Inicializando barraLateral.js (solo funcionalidad visual)...');
@@ -163,7 +163,7 @@ function inicializarBarraLateral() {
     window.addEventListener('resize', manejarResize);
     manejarResize();
     
-    console.log('✅ Barra lateral lista (logout manejado por cargarHeader.js)');
+    console.log('✅ Barra lateral lista (logout manejado por infoBarra.js)');
 }
 
 // Inicializar cuando el DOM esté listo
@@ -173,22 +173,6 @@ if (document.readyState === 'loading') {
     inicializarBarraLateral();
 }
 
-// Función para cerrar sesión
-function cerrarSesion() {
-    // Limpiar localStorage
-    localStorage.removeItem('sirevif_token');
-    localStorage.removeItem('sirevif_usuario');
-    
-    // Redirigir a login
-    window.location.href = '/Frontend/HTML/login.html';
-}
-
-// En el evento DOMContentLoaded de barraLateral.js, modifica el logoutBtn:
-document.getElementById('logoutBtn').addEventListener('click', function(e) {
-    e.preventDefault();
-    
-    // Mostrar confirmación
-    if (confirm('¿Está seguro de que desea cerrar sesión?')) {
-        cerrarSesion();
-    }
-});
+// Hacer funciones disponibles globalmente
+window.toggleBarraDesktop = toggleBarraDesktop;
+window.toggleMenuMobile = toggleMenuMobile;

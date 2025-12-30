@@ -6,9 +6,6 @@
     <link rel="icon" href="/Frontend/images/logoAlcaldia.png" type="image/png">
     <link rel="stylesheet" href="/Frontend/CSS/login.css">
     <title>Iniciar Sesión - SIREVIF 2.0</title>
-    <style>
-
-    </style>
 </head>
 <body>
 
@@ -32,12 +29,21 @@
                 
                 <div class="datos">
                     <label for="documento">Número de Documento</label>
-                    <input type="number" id="documento" name="documento" placeholder="Ingrese su documento" required>
+                    <input type="number" id="documento" name="documento" placeholder="Ingrese su documento" 
+                           required maxlength="10" pattern="\d{5,10}" 
+                           title="Mínimo 5, máximo 10 dígitos">
                 </div>
                 
                 <div class="datos">
                     <label for="contrasena">Contraseña</label>
-                    <input type="password" id="contrasena" name="contrasena" placeholder="Ingrese su contraseña" required>
+                    <div class="contrasena-container">
+                        <input type="password" id="contrasena" name="contrasena" 
+                               placeholder="Ingrese su contraseña" required>
+                        <img src="/Frontend/images/ojo.png" class="ojo-icono" id="mostrar" 
+                             alt="Mostrar contraseña" title="Mostrar contraseña">
+                        <img src="/Frontend/images/invisible.png" class="ojo-icono" id="ocultar" 
+                             alt="Ocultar contraseña" title="Ocultar contraseña">
+                    </div>
                 </div>
                 
                 <div id="mensajeError" class="mensajeError"></div>

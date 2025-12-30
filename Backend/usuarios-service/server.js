@@ -9,12 +9,12 @@ const app = express();
 
 // ===== MIDDLEWARE CRÍTICO =====
 const allowedOrigins = [
-    'http://localhost:8080',  // Gateway
-    'http://localhost:5500',  // Frontend Live Server
-    'http://127.0.0.1:5500',  // Frontend alternativo
-    'http://localhost:3000',  // Otro frontend
-    'http://localhost:3005',  // Self
-    'http://localhost:3006'   // Servicio de medidas
+    'http://localhost:8080',
+    'http://localhost:5500',
+    'http://127.0.0.1:5500',
+    'http://localhost:3000',
+    'http://localhost:3005',
+    'http://localhost:3006'
 ];
 
 app.use(cors({
@@ -32,7 +32,7 @@ app.use((req, res, next) => {
     next();
 });
 
-// Parsear JSON y URL-encoded CON límites más grandes
+// Parsear JSON y URL-encoded
 app.use(express.json({ 
     limit: '10mb',
     verify: (req, res, buf) => {
@@ -59,8 +59,8 @@ app.use(express.urlencoded({
 }));
 
 // ===== RUTAS =====
-app.use('/auth', authRoutes);        // POST /auth/login
-app.use('/', usuariosRoutes);        // GET /, POST /, etc.
+app.use('/auth', authRoutes);
+app.use('/', usuariosRoutes);
 
 // ===== RUTAS DE PRUEBA =====
 app.get('/health', (req, res) => {

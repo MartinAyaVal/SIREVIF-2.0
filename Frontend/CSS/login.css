@@ -10,19 +10,19 @@ body {
     background-image: url(/Frontend/images/bandera.png);
     background-size: cover;
     background-position: center;
-    background-attachment: fixed; /* Agregado para mejor efecto en móviles */
+    background-attachment: fixed;
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px; /* Padding para móviles */
+    padding: 20px;
 }
 
 .login {
     display: flex;
     width: 65%;
-    min-width: 300px; /* Ancho mínimo */
-    max-width: 1000px; /* Ancho máximo */
+    min-width: 300px;
+    max-width: 1000px;
     height: 500px;
     background: white;
     border-radius: 20px;
@@ -50,7 +50,7 @@ body {
     background: white;
     padding: 15px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-    object-fit: contain; /* Para que la imagen se ajuste correctamente */
+    object-fit: contain;
 }
 
 .titulo {
@@ -103,6 +103,7 @@ body {
 /* Grupos de input */
 .datos {
     margin-bottom: 15px;
+    position: relative;
 }
 
 .datos label {
@@ -132,6 +133,56 @@ body {
 
 .datos input:hover {
     border-color: #4CAF50;
+}
+
+/* Contenedor de contraseña */
+.contrasena-container {
+    position: relative;
+}
+
+.contrasena-container input {
+    padding-right: 50px !important;
+}
+
+.ojo-icono {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+    z-index: 10;
+}
+
+.ojo-icono:hover {
+    opacity: 1;
+}
+
+#ocultar {
+    display: none;
+}
+
+/* Help text */
+.help-text {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+}
+
+/* Quitar flechas del input number */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
 }
 
 /* Botón de login */
@@ -193,7 +244,7 @@ body {
     border-top: 1px solid #e0e0e0;
 }
 
-.texto-advertencia {
+.textoPie {
     margin-top: 5px;
     font-size: 11px;
     color: #999;
@@ -213,6 +264,7 @@ body {
         
 .mensajeExito {
     color: #2e7d32;
+    background-color: #e8f5e9;
     padding: 12px;
     border-radius: 6px;
     margin-top: 40px;
@@ -242,7 +294,7 @@ body {
     height: 70px;
     border: 6px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
-    border-top-color: #4CAF50; /* Verde */
+    border-top-color: #4CAF50;
     animation: spin 1s ease-in-out infinite;
     box-shadow: 0 0 20px rgba(76, 175, 80, 0.5);
 }
@@ -335,6 +387,16 @@ body.loading-active button:not(.loader *) {
     .subtitulo {
         font-size: 16px;
     }
+    
+    .ojo-icono {
+        right: 12px;
+        width: 22px;
+        height: 22px;
+    }
+    
+    .contrasena-container input {
+        padding-right: 45px !important;
+    }
 }
 
 /* Móviles y tablets pequeñas */
@@ -396,8 +458,18 @@ body.loading-active button:not(.loader *) {
         padding-top: 15px;
     }
     
-    .texto-advertencia {
+    .textoPie {
         font-size: 10px;
+    }
+    
+    .ojo-icono {
+        right: 12px;
+        width: 20px;
+        height: 20px;
+    }
+    
+    .contrasena-container input {
+        padding-right: 40px !important;
     }
 }
 
@@ -408,7 +480,7 @@ body.loading-active button:not(.loader *) {
     }
     
     .login {
-        max-width: 800%;
+        max-width: 100%;
         border-radius: 15px;
         margin: 20px 0;
     }
@@ -457,6 +529,16 @@ body.loading-active button:not(.loader *) {
         padding: 12px;
         font-size: 14px;
     }
+    
+    .ojo-icono {
+        right: 10px;
+        width: 18px;
+        height: 18px;
+    }
+    
+    .contrasena-container input {
+        padding-right: 35px !important;
+    }
 }
 
 /* Pantallas muy pequeñas (altura limitada) */
@@ -503,6 +585,16 @@ body.loading-active button:not(.loader *) {
     
     .datos input {
         padding: 8px 12px;
+    }
+    
+    .ojo-icono {
+        right: 10px;
+        width: 16px;
+        height: 16px;
+    }
+    
+    .contrasena-container input {
+        padding-right: 35px !important;
     }
 }
 

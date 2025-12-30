@@ -18,7 +18,7 @@ module.exports = (sequelize) => {
       }
     },
     documento: {
-      type: DataTypes.STRING(20),  // CAMBIADO A STRING para evitar problemas
+      type: DataTypes.STRING(20),
       allowNull: false,
       unique: {
         msg: "Este documento ya está registrado"
@@ -68,10 +68,6 @@ module.exports = (sequelize) => {
       validate: {
         notEmpty: {
           msg: "La contraseña es requerida"
-        },
-        len: {
-          args: [6, 100],
-          msg: "La contraseña debe tener al menos 6 caracteres"
         }
       }
     },
@@ -114,73 +110,19 @@ module.exports = (sequelize) => {
   }, {
     tableName: "usuarios",
     timestamps: false,
-    hooks: {
-      beforeCreate: async (usuario) => {
-        if (usuario.contraseña) {
-          console.log(`🔐 Hasheando contraseña para nuevo usuario ${usuario.documento}...`);
-          try {
-            const salt = await bcrypt.genSalt(10);
-            usuario.contraseña = await bcrypt.hash(usuario.contraseña, salt);
-            console.log(`✅ Contraseña hasheada correctamente`);
-          } catch (error) {
-            console.error(`❌ Error al hashear contraseña:`, error);
-            throw error;
-          }
-        }
-      },
-      beforeUpdate: async (usuario) => {
-        if (usuario.changed('contraseña')) {
-          console.log(`🔐 Actualizando contraseña para usuario ${usuario.documento}...`);
-          try {
-            const salt = await bcrypt.genSalt(10);
-            usuario.contraseña = await bcrypt.hash(usuario.contraseña, salt);
-            console.log(`✅ Contraseña actualizada correctamente`);
-          } catch (error) {
-            console.error(`❌ Error al actualizar contraseña:`, error);
-            throw error;
-          }
-        }
-      }
-    }
+    // ¡NO HAY HOOKS! El hash se hace en el controller
   });
 
-  // MÉTODO PARA VALIDAR CONTRASEÑA - MEJORADO
+  // Método para validar contraseña
   Usuario.prototype.validarContraseña = async function(password) {
     try {
-      console.log(`🔐 Validando contraseña para usuario ${this.documento}:`);
-      console.log(`   Password recibida:`, password ? "***" + password.substring(password.length - 3) : "VACÍA");
-      console.log(`   Hash almacenado:`, this.contraseña ? "***" + this.contraseña.substring(10) + "..." : "NO HAY HASH");
-      
       if (!this.contraseña) {
-        console.log(`❌ Usuario no tiene contraseña en BD`);
         return false;
       }
-      
-      if (!password) {
-        console.log(`❌ No se recibió contraseña para validar`);
-        return false;
-      }
-      
-      const isValid = await bcrypt.compare(password, this.contraseña);
-      console.log(`   Resultado bcrypt.compare:`, isValid ? "✅ VÁLIDA" : "❌ INVÁLIDA");
-      return isValid;
-      
+      return await bcrypt.compare(password, this.contraseña);
     } catch (error) {
-      console.error(`🔥 Error en validarContraseña:`, error.message);
+      console.error(`Error en validarContraseña:`, error);
       return false;
-    }
-  };
-
-  // MÉTODO PARA CREAR CONTRASEÑA (útil para debug)
-  Usuario.prototype.crearHashContraseña = async function(password) {
-    try {
-      const salt = await bcrypt.genSalt(10);
-      const hash = await bcrypt.hash(password, salt);
-      console.log(`🔐 Hash creado para ${this.documento}:`, hash.substring(0, 20) + "...");
-      return hash;
-    } catch (error) {
-      console.error(`❌ Error al crear hash:`, error);
-      return null;
     }
   };
 

@@ -21,17 +21,61 @@ const serviciosConfig = {
     }
 };
 
+// ===== MIDDLEWARE PARA VERIFICAR ROL DE ADMINISTRADOR =====
+const verificarRolAdministrador = (req, res, next) => {
+    try {
+        // Obtener información del usuario del token
+        const usuario = req.usuario;
+        
+        if (!usuario) {
+            console.log('[Auth] ❌ No se pudo obtener información del usuario');
+            return res.status(401).json({
+                success: false,
+                error: 'No autenticado',
+                message: 'Usuario no autenticado'
+            });
+        }
+        
+        console.log(`[Auth] 👑 Verificando rol: Usuario ID ${usuario.id}, Rol ID: ${usuario.rolId}`);
+        
+        // Verificar si el usuario es administrador (rolId === 1)
+        // Solo rol 1 (Administrador) puede acceder a gestión de usuarios
+        // Roles mayores a 1 (2, 3, etc.) NO pueden acceder
+        if (usuario.rolId !== 1) {
+            console.log(`[Auth] 🚫 Acceso denegado: Usuario ${usuario.documento} (Rol: ${usuario.rolId}) intentó acceder a gestión de usuarios`);
+            
+            return res.status(403).json({
+                success: false,
+                error: 'Acceso denegado',
+                message: 'No tienes permisos para acceder a esta sección. Solo administradores pueden gestionar usuarios.',
+                userRole: usuario.rolId,
+                requiredRole: 1
+            });
+        }
+        
+        console.log(`[Auth] ✅ Acceso permitido: Administrador ${usuario.documento}`);
+        next();
+    } catch (error) {
+        console.error('[Auth] 🔥 Error al verificar rol:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error de autorización',
+            message: 'Error interno al verificar permisos'
+        });
+    }
+};
+
 // ===== MIDDLEWARE PARA LOGS =====
 router.use((req, res, next) => {
     console.log(`[Gateway] 📥 ${req.method} ${req.originalUrl}`);
-    console.log(`[Gateway] 📥 Origin: ${req.headers.origin}`);
-    console.log(`[Gateway] 📥 Content-Type: ${req.headers['content-type']}`);
+    console.log(`[Gateway] 📥 Origin: ${req.headers.origin || 'Ninguno'}`);
+    console.log(`[Gateway] 📥 Content-Type: ${req.headers['content-type'] || 'Ninguno'}`);
     next();
 });
 
 // ===== RUTAS PÚBLICAS (sin autenticación) =====
 
-// 1. Login - Ruta pública (MEJORADA)
+// 1. Login - Ruta pública
 const loginProxy = createProxyMiddleware({
     target: serviciosConfig.usuarios.url,
     changeOrigin: true,
@@ -48,7 +92,6 @@ const loginProxy = createProxyMiddleware({
             proxyReq.setHeader('Content-Type', 'application/json');
             proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
             
-            // Escribir el body
             proxyReq.write(bodyData);
             proxyReq.end();
         } else {
@@ -58,14 +101,15 @@ const loginProxy = createProxyMiddleware({
     onProxyRes: (proxyRes, req, res) => {
         console.log(`[Gateway] 🔐 Respuesta del servicio usuarios: ${proxyRes.statusCode}`);
         
-        // Modificar headers de respuesta si es necesario
+        // Modificar headers CORS
         proxyRes.headers['access-control-allow-origin'] = req.headers.origin || '*';
         proxyRes.headers['access-control-allow-credentials'] = 'true';
+        proxyRes.headers['access-control-allow-methods'] = 'GET, POST, PUT, DELETE, PATCH, OPTIONS';
+        proxyRes.headers['access-control-allow-headers'] = 'Content-Type, Authorization, X-Requested-With';
     },
     onError: (err, req, res) => {
         console.error(`[Gateway] ❌ Error en proxy login:`, err.message);
         
-        // Si hay error de conexión con el servicio
         if (err.code === 'ECONNREFUSED') {
             return res.status(503).json({
                 success: false,
@@ -80,13 +124,13 @@ const loginProxy = createProxyMiddleware({
             message: err.message || 'Error desconocido'
         });
     },
-    proxyTimeout: 30000, // 30 segundos
+    proxyTimeout: 30000,
     timeout: 30000
 });
 
 router.post('/usuarios/auth/login', loginProxy);
 
-// 2. Health checks - Rutas públicas (CORREGIDAS)
+// 2. Health checks - Rutas públicas
 router.get('/usuarios/health', 
     createProxyMiddleware({
         target: serviciosConfig.usuarios.url,
@@ -129,9 +173,14 @@ router.get('/medidas/health',
 
 // ===== RUTAS PROTEGIDAS DE USUARIOS =====
 // Todas las rutas de usuarios (excepto login y health) requieren autenticación
+// Y solo administradores (rolId === 1) pueden acceder
+
 router.use('/usuarios', authMiddleware.autenticarToken);
 
-// Proxy para CRUD de usuarios (excluyendo login y health)
+// 🔒 Aplicar verificación de rol para todas las rutas CRUD de usuarios
+router.use('/usuarios', verificarRolAdministrador);
+
+// Proxy para CRUD de usuarios
 router.use('/usuarios', 
     createProxyMiddleware({
         target: serviciosConfig.usuarios.url,
@@ -140,13 +189,7 @@ router.use('/usuarios',
             '^/usuarios': '/'
         },
         onProxyReq: (proxyReq, req, res) => {
-            console.log(`[Gateway] 👥 Usuarios: ${req.method} ${req.originalUrl}`);
-            
-            // DEPURACIÓN SOLO PARA PUT (actualizaciones)
-            if (req.method === 'PUT' && req.body) {
-                console.log('[Gateway] 📦 Body para actualizar usuario:');
-                console.log(JSON.stringify(req.body, null, 2));
-            }
+            console.log(`[Gateway] 👥 Usuarios: ${req.method} ${req.originalUrl} (Admin: ${req.usuario.documento})`);
             
             // Pasar información del usuario autenticado
             if (req.usuario) {
@@ -179,6 +222,7 @@ router.use('/usuarios',
 
 // ===== RUTAS PROTEGIDAS DE MEDIDAS DE PROTECCIÓN =====
 // Todas las rutas de medidas requieren autenticación
+// Cualquier usuario autenticado puede acceder (sin restricción de rol)
 router.use('/medidas', authMiddleware.autenticarToken);
 
 // Proxy para CRUD de medidas
@@ -190,7 +234,7 @@ router.use('/medidas',
             '^/medidas': '/'
         },
         onProxyReq: (proxyReq, req, res) => {
-            console.log(`[Gateway] 🛡️  Medidas: ${req.method} ${req.originalUrl}`);
+            console.log(`[Gateway] 🛡️  Medidas: ${req.method} ${req.originalUrl} (Usuario: ${req.usuario.documento})`);
             
             // Pasar información del usuario autenticado
             if (req.usuario) {
@@ -239,13 +283,17 @@ router.get('/health', (req, res) => {
         servicios: servicios,
         endpoints: {
             auth: 'POST /usuarios/auth/login',
-            usuarios: 'GET /usuarios (requiere token)',
-            medidas: 'GET /medidas (requiere token)',
+            usuarios: 'GET /usuarios (solo administradores)',
+            medidas: 'GET /medidas (cualquier usuario autenticado)',
             health: {
                 gateway: 'GET /health',
                 usuarios: 'GET /usuarios/health',
                 medidas: 'GET /medidas/health'
             }
+        },
+        security: {
+            usuarios: 'Solo rolId === 1 (Administrador)',
+            medidas: 'Cualquier rol autenticado'
         }
     });
 });

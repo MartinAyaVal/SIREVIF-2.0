@@ -5,34 +5,80 @@ const gatewayRouter = require('./routes/gatewayRoutes.js');
 const app = express();
 
 // ===== MIDDLEWARE CRÍTICO =====
-const allowedOrigins = [
-    'http://localhost:8080',
-    'http://localhost:5500',
-    'http://127.0.0.1:5500',
-    'http://localhost:3000',
-    'http://localhost:3005',
-    'http://localhost:3006',
-    'null' // Para archivos locales
-];
-
-app.use(cors({
+// Configuración CORS mejorada
+const corsOptions = {
     origin: function (origin, callback) {
-        // Permitir requests sin origin (como archivos locales)
-        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        // Permitir requests sin origin (archivos locales, Postman, etc.)
+        if (!origin) {
+            console.log('[CORS] ✅ Request sin origin (archivo local)');
+            return callback(null, true);
+        }
+        
+        // Lista de orígenes permitidos
+        const allowedOrigins = [
+            'http://localhost:8080',
+            'http://localhost:5500',
+            'http://127.0.0.1:5500',
+            'http://localhost:3000',
+            'http://localhost:3005',
+            'http://localhost:3006',
+            'file://', // Para archivos HTML locales
+            'null'
+        ];
+        
+        // Verificar si el origen está permitido
+        const isAllowed = allowedOrigins.some(allowedOrigin => 
+            origin === allowedOrigin || 
+            origin.startsWith(allowedOrigin) ||
+            allowedOrigin.includes(origin)
+        );
+        
+        if (isAllowed) {
+            console.log(`[CORS] ✅ Origen permitido: ${origin}`);
             callback(null, true);
         } else {
-            console.log(`❌ Origen bloqueado: ${origin}`);
+            console.log(`[CORS] ❌ Origen bloqueado: ${origin}`);
             callback(new Error('Origen no permitido por CORS'));
         }
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-user-id', 'x-user-documento', 'x-user-rol', 'x-user-nombre', 'x-user-comisaria']
-}));
+    allowedHeaders: [
+        'Content-Type', 
+        'Authorization', 
+        'Origin', 
+        'Accept', 
+        'X-Requested-With',
+        'x-user-id',
+        'x-user-documento', 
+        'x-user-rol', 
+        'x-user-nombre', 
+        'x-user-comisaria'
+    ],
+    exposedHeaders: [
+        'Authorization',
+        'X-User-ID',
+        'X-User-Rol'
+    ],
+    maxAge: 86400 // 24 horas en cache
+};
+
+// Aplicar CORS antes de cualquier otra ruta
+app.use(cors(corsOptions));
+
+// Middleware para manejar preflight requests
+app.options('*', cors(corsOptions));
+
+// Middleware para logs de CORS
+app.use((req, res, next) => {
+    console.log(`[CORS] 🌐 ${req.method} ${req.originalUrl}`);
+    console.log(`[CORS] 📍 Origin: ${req.headers.origin || 'Ninguno'}`);
+    next();
+});
 
 // Parsear JSON y URL-encoded
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ===== RUTAS DEL GATEWAY =====
 app.use('/', gatewayRouter);
@@ -47,6 +93,17 @@ app.use((err, req, res, next) => {
             message: 'El cuerpo de la solicitud no es un JSON válido'
         });
     }
+    
+    // Manejo de errores CORS
+    if (err.message && err.message.includes('CORS')) {
+        console.error('❌ Error CORS:', err.message);
+        return res.status(403).json({
+            success: false,
+            error: 'CORS Error',
+            message: 'Acceso no permitido desde este origen'
+        });
+    }
+    
     next(err);
 });
 
@@ -75,6 +132,11 @@ const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
     console.log("\n" + "=".repeat(70));
     console.log(`🚀 GATEWAY CENTRAL corriendo en: http://localhost:${PORT}`);
+    console.log("=".repeat(70));
+    console.log("🔒 CONFIGURACIÓN CORS:");
+    console.log("   • Orígenes permitidos: http://localhost:5500, http://127.0.0.1:5500");
+    console.log("   • Credenciales: Habilitadas");
+    console.log("   • Métodos permitidos: GET, POST, PUT, DELETE, PATCH, OPTIONS");
     console.log("=".repeat(70));
     console.log("📋 ENDPOINTS DISPONIBLES:");
     console.log("\n🔐 AUTENTICACIÓN (público):");

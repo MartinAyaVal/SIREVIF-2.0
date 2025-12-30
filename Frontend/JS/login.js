@@ -1,5 +1,3 @@
-[file name]: login.js
-[file content begin]
 const formulario = document.getElementById('formulario');
 const boton = document.getElementById('boton');
 const textoBoton = document.getElementById('textoBoton');
@@ -11,8 +9,7 @@ const mensajeExito = document.getElementById('mensajeExito');
 const textosLoader = [
     "Autenticando usuario",
     "Verificando credenciales",
-    "Conectando con el servidor",
-    "Generando token de acceso"
+    "Conectando con el servidor"
 ];
         
 let loaderStateIndex = 0;
@@ -41,7 +38,7 @@ function ocultarLoader() {
 }
         
 function mostrarError(message) {
-    mensajeError.innerHTML = message; // Usar innerHTML para permitir saltos de línea
+    mensajeError.innerHTML = message;
     mensajeError.style.display = 'block';
     mensajeExito.style.display = 'none';
 }
@@ -55,7 +52,6 @@ function verificarSesionExistente() {
         try {
             const userData = JSON.parse(usuario);
             console.log('✅ Sesión activa encontrada para:', userData.nombre);
-            // Redirigir automáticamente si hay sesión
             setTimeout(() => {
                 window.location.href = '/Frontend/HTML/index.html';
             }, 1000);
@@ -92,7 +88,6 @@ async function probarConexion() {
         const data = await response.json();
         console.log('✅ Gateway OK:', data);
         
-        // Verificar también que el servicio de usuarios esté disponible
         const userServiceHealth = await fetch('http://localhost:8080/usuarios/health', {
             signal: controller.signal
         });
@@ -108,23 +103,46 @@ async function probarConexion() {
         
     } catch (error) {
         console.error('❌ Error conectando con gateway:', error);
-        
-        let mensaje = 'No se puede conectar al servidor. ';
-        if (error.name === 'AbortError') {
-            mensaje += 'Tiempo de espera agotado. ';
-        }
-        
-        mensaje += 'Verifica:<br>';
-        mensaje += '1. Gateway corriendo en puerto 8080<br>';
-        mensaje += '2. Servicio de usuarios en puerto 3005<br>';
-        mensaje += '3. Firewall desactivado para desarrollo<br>';
-        mensaje += '<br>Comandos:<br>';
-        mensaje += '• Gateway: <code>node server.js</code> en carpeta gateway<br>';
-        mensaje += '• Usuarios: <code>node server.js</code> en carpeta usuarios-service';
-        
-        mostrarError(mensaje);
+        mostrarError('Sin conexión al servidor');
         return false;
     }
+}
+
+// === FUNCIÓN PARA VALIDAR DOCUMENTO ===
+function validarDocumento(documento) {
+    // Remover cualquier caracter no numérico
+    documento = documento.replace(/[^0-9]/g, '');
+    
+    // Validar longitud
+    if (documento.length < 5 || documento.length > 10) {
+        return {
+            valido: false,
+            mensaje: 'El documento debe tener entre 5 y 10 dígitos'
+        };
+    }
+    
+    // Validar que sea solo números
+    if (!/^\d+$/.test(documento)) {
+        return {
+            valido: false,
+            mensaje: 'El documento solo puede contener números'
+        };
+    }
+    
+    return {
+        valido: true,
+        documento: documento
+    };
+}
+
+// === FUNCIÓN PARA LIMITAR DOCUMENTO ===
+function limitarDocumento(input) {
+    if (input.value.length > 10) {
+        input.value = input.value.slice(0, 10);
+    }
+    
+    // Solo permitir números
+    input.value = input.value.replace(/[^0-9]/g, '');
 }
 
 // === MANEJADOR DE SUBMIT - MEJORADO ===
@@ -142,15 +160,22 @@ async function manejarSubmit(e) {
     console.log('  • Documento:', documento);
     console.log('  • Contraseña:', contrasena ? '***' + contrasena.substring(contrasena.length - 3) : 'VACÍA');
     
-    // Validar campos
+    // Validar campos vacíos
     if (!documento || !contrasena) {
         mostrarError('Por favor ingresa documento y contraseña');
         return;
     }
     
-    // Validar que documento sea numérico
-    if (isNaN(documento) || documento.length < 5) {
-        mostrarError('Documento inválido. Debe ser un número de cédula válido');
+    // Validar documento con función específica
+    const validacionDocumento = validarDocumento(documento);
+    if (!validacionDocumento.valido) {
+        mostrarError(validacionDocumento.mensaje);
+        return;
+    }
+    
+    // Validar contraseña
+    if (contrasena.length < 4) {
+        mostrarError('La contraseña debe tener al menos 4 caracteres');
         return;
     }
     
@@ -165,9 +190,9 @@ async function manejarSubmit(e) {
     mostrarLoader();
     
     try {
-        // IMPORTANTE: Enviar documento como STRING (no como número) porque el modelo lo espera como string
+        // ENVIAR DOCUMENTO COMO STRING
         const payload = {
-            documento: documento, // Enviar como string, no como número
+            documento: validacionDocumento.documento,
             contrasena: contrasena
         };
         
@@ -244,11 +269,6 @@ async function manejarSubmit(e) {
             textoLoader.textContent = "¡Autenticación exitosa!";
             textoLoader.style.color = "#4CAF50";
             
-            // Mostrar mensaje de éxito
-            mensajeExito.textContent = `Bienvenido/a ${data.usuario.nombre}`;
-            mensajeExito.style.display = 'block';
-            mensajeError.style.display = 'none';
-            
             // Pequeña pausa para feedback visual
             await new Promise(resolve => setTimeout(resolve, 1500));
             
@@ -307,19 +327,72 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('❌ No se encontró el formulario con ID "formulario"');
     }
     
-    // Enfocar automáticamente en el campo documento
+    // Configurar campo documento
     const documentoInput = document.getElementById('documento');
     if (documentoInput) {
+        // Enfocar automáticamente
         documentoInput.focus();
         console.log('✅ Foco puesto en campo documento');
         
         // Limpiar mensajes cuando el usuario empiece a escribir
-        documentoInput.addEventListener('input', () => {
+        documentoInput.addEventListener('input', function() {
             if (mensajeError) mensajeError.style.display = 'none';
             if (mensajeExito) mensajeExito.style.display = 'none';
+            
+            // Limitar documento a 10 dígitos y solo números
+            limitarDocumento(this);
+            
+            // Aplicar validación en tiempo real
+            const validacion = validarDocumento(this.value);
+            if (!validacion.valido && this.value.length > 0) {
+                this.style.borderColor = '#d32f2f';
+                this.style.boxShadow = '0 0 0 4px rgba(211, 47, 47, 0.1)';
+            } else {
+                this.style.borderColor = '';
+                this.style.boxShadow = '';
+            }
+        });
+        
+        // Prevenir pegar texto no numérico
+        documentoInput.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+            const numbersOnly = pastedText.replace(/[^0-9]/g, '');
+            document.execCommand('insertText', false, numbersOnly);
+        });
+        
+        // Validar documento al salir del campo
+        documentoInput.addEventListener('blur', function() {
+            if (this.value.trim() !== '') {
+                const validacion = validarDocumento(this.value);
+                if (!validacion.valido) {
+                    mostrarError(validacion.mensaje);
+                }
+            }
+        });
+        
+        // Prevenir teclas no numéricas
+        documentoInput.addEventListener('keydown', function(e) {
+            // Permitir: backspace, delete, tab, escape, enter
+            if ([46, 8, 9, 27, 13, 110].indexOf(e.keyCode) !== -1 ||
+                // Permitir: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                (e.keyCode === 65 && e.ctrlKey === true) ||
+                (e.keyCode === 67 && e.ctrlKey === true) ||
+                (e.keyCode === 86 && e.ctrlKey === true) ||
+                (e.keyCode === 88 && e.ctrlKey === true) ||
+                // Permitir: home, end, left, right
+                (e.keyCode >= 35 && e.keyCode <= 39)) {
+                return;
+            }
+            
+            // Asegurar que sea un número
+            if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                e.preventDefault();
+            }
         });
     }
     
+    // Configurar campo contraseña
     const contrasenaInput = document.getElementById('contrasena');
     if (contrasenaInput) {
         contrasenaInput.addEventListener('input', () => {
@@ -336,9 +409,35 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Configurar iconos de mostrar/ocultar contraseña
+    const mostrarBtn = document.getElementById('mostrar');
+    const ocultarBtn = document.getElementById('ocultar');
+    
+    if (mostrarBtn && ocultarBtn && contrasenaInput) {
+        // Mostrar contraseña
+        mostrarBtn.addEventListener('click', function() {
+            contrasenaInput.type = 'text';
+            mostrarBtn.style.display = 'none';
+            ocultarBtn.style.display = 'inline';
+        });
+        
+        // Ocultar contraseña
+        ocultarBtn.addEventListener('click', function() {
+            contrasenaInput.type = 'password';
+            ocultarBtn.style.display = 'none';
+            mostrarBtn.style.display = 'inline';
+        });
+    }
+    
     // DEBUG: Mostrar instrucciones
     console.log('🔧 Para probar manualmente, ejecuta en la consola:');
     console.log('   window.probarLogin(12345678, "test123")');
+    
+    // Mostrar información de la versión
+    console.log('📱 Login SIREVIF 2.0 - Versión mejorada');
+    console.log('   • Documento limitado a 10 dígitos');
+    console.log('   • Iconos locales para mostrar/ocultar contraseña');
+    console.log('   • Validación mejorada en tiempo real');
 });
 
 // Función global para pruebas
@@ -355,4 +454,7 @@ window.probarLogin = async function(documento, contrasena) {
     console.log('📥 Respuesta:', text);
     return text;
 };
-[file content end]
+
+// Exportar funciones para uso global
+window.limitarDocumento = limitarDocumento;
+window.validarDocumento = validarDocumento;
