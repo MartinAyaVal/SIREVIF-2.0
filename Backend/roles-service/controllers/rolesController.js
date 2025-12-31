@@ -1,40 +1,72 @@
-const Roles = require('../models/roles.js');
+const Rol = require('../models/roles.js');
 
-// Obterner todos los Roles registrados
+// Obtener todos los Roles registrados
 exports.getRol = async (req, res) => {
     try {
-        const rol = await Roles.findAll();
-        res.json(rol);
+        const roles = await Rol.findAll({
+            order: [['id', 'ASC']]
+        });
+        
+        res.json(roles);
+        
     } catch (error) {
-        res.status(500).json({ message: 'Error al obtener roles', error });
+        console.error('Error al obtener roles:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Error al obtener roles',
+            error: error.message 
+        });
     }
 };
 
 // Crear Rol
 exports.createRol = async (req, res) => {
   try {
-    const rol = req.body.rol;
+    const { rol } = req.body;
     
-    const nuevo = await Roles.create({ 
-      rol: rol, 
+    if (!rol) {
+      return res.status(400).json({
+        success: false,
+        message: 'El campo "rol" es requerido'
+      });
+    }
+    
+    const nuevoRol = await Rol.create({ 
+      rol: rol 
     });
     
-    res.status(201).json(nuevo);
+    res.status(201).json(nuevoRol); 
+    
   } catch (error) {
-    console.log('Error al crear rol:', error);
-    res.status(500).json({ message: 'Error al crear rol', error });
+    console.error('Error al crear rol:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error al crear rol',
+      error: error.message 
+    });
   }
 };
 
-// Obtener rol por medio de Id
+// Obtener rol por ID
 exports.getRolById = async (req, res) => {
   try {
     const { id } = req.params;
-    const rol = await Roles.findByPk(id);
-    if (!rol) return res.status(404).json({ message: 'Rol no encontrado' });
-    res.json(rol);
+    const rol = await Rol.findByPk(id);
+    
+    if (!rol) {
+      return res.status(404).json({ 
+        message: 'Rol no encontrado' 
+      });
+    }
+    
+    res.json(rol); 
+    
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener rol', error });
+    console.error('Error al obtener rol:', error);
+    res.status(500).json({ 
+      message: 'Error al obtener rol',
+      error: error.message 
+    });
   }
 };
 
@@ -42,18 +74,28 @@ exports.getRolById = async (req, res) => {
 exports.updateRol = async (req, res) => {
   try {
     const { id } = req.params;
-    const rol = req.body.rol;
+    const { rol } = req.body;
     
-    const nuevo = await Roles.findByPk(id);
-    if (!nuevo) return res.status(404).json({ message: 'Tipo de Victima no encontrada' });
+    const rolExistente = await Rol.findByPk(id);
+    
+    if (!rolExistente) {
+      return res.status(404).json({ 
+        message: 'Rol no encontrado' 
+      });
+    }
 
-    await nuevo.update({ 
-      rol:rol
+    await rolExistente.update({ 
+      rol: rol 
     });
-    res.json(nuevo);
+    
+    res.json(rolExistente); 
+    
   } catch (error) {
-    console.log('Error al actualizar Rol:', error);
-    res.status(500).json({ message: 'Error al actualizar Rol', error });
+    console.error('Error al actualizar Rol:', error);
+    res.status(500).json({ 
+      message: 'Error al actualizar Rol',
+      error: error.message 
+    });
   }
 };
 
@@ -61,12 +103,22 @@ exports.updateRol = async (req, res) => {
 exports.deleteRol = async (req, res) => {
   try {
     const { id } = req.params;
-    const rol = await Roles.findByPk(id);
-    if (!rol) return res.status(404).json({ message: 'Rol no encontrado' });
+    const rol = await Rol.findByPk(id);
+    
+    if (!rol) {
+      return res.status(404).json({ 
+        message: 'Rol no encontrado' 
+      });
+    }
 
     await rol.destroy();
-    res.json({ message: 'Rol eliminado correctamente' });
+    
+    res.status(204).send();
   } catch (error) {
-    res.status(500).json({ message: 'Error al eliminar Rol', error });
+    console.error('Error al eliminar Rol:', error);
+    res.status(500).json({ 
+      message: 'Error al eliminar Rol',
+      error: error.message 
+    });
   }
 };

@@ -58,7 +58,7 @@ const loginUsuario = async (req, res) => {
             console.log("❌ Usuario no encontrado");
             return res.status(404).json({ 
                 success: false,
-                message: "Usuario no encontrado"
+                message: "El usuario no se encuentra registrado"
             });
         }
 
@@ -72,7 +72,7 @@ const loginUsuario = async (req, res) => {
         if (usuario.estado === 'inactivo') {
             return res.status(403).json({ 
                 success: false,
-                message: "Usuario inactivo"
+                message: "Tu usuario se encuentra inhabilitado. Contacta al administrador."
             });
         }
 

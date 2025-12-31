@@ -8,6 +8,7 @@ const GATEWAY_URL = 'http://localhost:8080';
 // Variables globales de estado UI
 let modoEdicionUsuario = false;
 let usuarioEditandoId = null;
+let usuarioActualId = null; // Para identificar al usuario actual
 
 // ===== FUNCIONES DE VERIFICACIÓN DE PERMISOS =====
 function verificarPermisosAdministrador() {
@@ -26,10 +27,15 @@ function verificarPermisosAdministrador() {
         console.log('📋 Datos del usuario:', usuarioData);
         console.log('👑 rolId detectado:', rolId);
         
+        // Guardar ID del usuario actual para verificación
+        usuarioActualId = usuarioData.id;
+        console.log('👤 ID del usuario actual:', usuarioActualId);
+        
+        // Solo rolId === 1 es administrador
         const esAdministrador = rolId === 1;
         
         if (!esAdministrador) {
-            console.log('🚫 Usuario no es administrador - Acceso denegado');
+            console.log('🚫 Usuario no es administrador (Rol:', rolId, ') - Acceso denegado');
             mostrarErrorAccesoDenegado();
             return false;
         }
@@ -47,7 +53,7 @@ function mostrarErrorAccesoDenegado() {
     if (window.location.pathname.includes('usuarios.html')) {
         Swal.fire({
             title: 'Acceso denegado',
-            text: 'No tienes permisos para acceder a esta sección. Solo los administradores pueden gestionar usuarios.',
+            text: 'No tienes permisos para acceder a esta sección. Solo los administradores (Rol 1) pueden gestionar usuarios.',
             icon: 'error',
             confirmButtonText: 'Volver al inicio',
             confirmButtonColor: '#4CAF50',
@@ -101,6 +107,84 @@ async function mostrarConfirmacion(pregunta, titulo = 'Confirmación', textoConf
         focusCancel: true
     });
     return result.isConfirmed;
+}
+
+// ===== FUNCIÓN ESPECIAL PARA ACCIONES CRÍTICAS =====
+async function mostrarConfirmacionCritica(pregunta, titulo = '⚠️ Acción Crítica', advertencia = '') {
+    const result = await Swal.fire({
+        title: titulo,
+        html: `
+            <div style="text-align: center;">
+                <p>${pregunta}</p>
+                ${advertencia ? `<p style="color: #d32f2f; font-weight: bold; margin-top: 10px;">${advertencia}</p>` : ''}
+            </div>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, continuar',
+        cancelButtonText: 'Cancelar',
+        cancelButtonColor: '#d33',
+        confirmButtonColor: '#ff9800',
+        reverseButtons: true,
+        focusCancel: true,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showCloseButton: false,
+        width: 500
+    });
+    return result.isConfirmed;
+}
+
+// ===== FUNCIONES DE SEGURIDAD MEJORADA =====
+
+/**
+ * Verifica si la acción se está realizando sobre el propio usuario
+ */
+function esAccionSobreMismoUsuario(idUsuarioAccion) {
+    // Asegurar que idUsuarioAccion sea número para comparación
+    const idAccion = parseInt(idUsuarioAccion);
+    
+    // Primero obtener el usuario actual
+    const usuarioStorage = localStorage.getItem('sirevif_usuario');
+    
+    if (!usuarioStorage) {
+        console.error('❌ No hay información de usuario en localStorage');
+        return false;
+    }
+    
+    try {
+        const usuarioData = JSON.parse(usuarioStorage);
+        const usuarioActualId = parseInt(usuarioData.id);
+        
+        console.log(`🔍 Comparando IDs:`);
+        console.log(`   • ID de acción: ${idAccion} (tipo: ${typeof idAccion})`);
+        console.log(`   • ID usuario actual: ${usuarioActualId} (tipo: ${typeof usuarioActualId})`);
+        console.log(`   • Datos completos:`, usuarioData);
+        
+        return idAccion === usuarioActualId;
+    } catch (error) {
+        console.error('❌ Error al comparar usuarios:', error);
+        return false;
+    }
+}
+
+/**
+ * Ejecuta cierre de sesión seguro después de acción crítica - VERSIÓN SIMPLIFICADA
+ */
+async function cerrarSesionDespuesAccionCritica(mensaje = 'Sesión cerrada por seguridad') {
+    console.log('🔒 Ejecutando cierre de sesión inmediato...');
+    
+    // Cerrar sesión INMEDIATAMENTE sin mostrar mensaje adicional
+    if (window.SIREVIF && window.SIREVIF.Sesion && typeof window.SIREVIF.Sesion.ejecutarCierreSesion === 'function') {
+        console.log('✅ Usando función de cierre de sesión del sistema');
+        window.SIREVIF.Sesion.ejecutarCierreSesion();
+    } else {
+        // Fallback directo
+        console.log('⚠️ Usando fallback de cierre de sesión');
+        localStorage.removeItem('sirevif_token');
+        localStorage.removeItem('sirevif_usuario');
+        window.location.href = '/Frontend/HTML/login.html';
+    }
 }
 
 // ===== FUNCIONES DE INTERFAZ DE FORMULARIO =====
@@ -652,6 +736,7 @@ function configurarFormularioEdicion(usuario) {
     usuarioEditandoId = usuario.id;
     
     console.log(`📝 Configurando formulario para editar usuario ID: ${usuario.id}`, usuario);
+    console.log(`👤 Es el mismo usuario? ${esAccionSobreMismoUsuario(usuario.id) ? 'SÍ (ACCIÓN CRÍTICA)' : 'NO'}`);
     
     // Llenar formulario con datos del usuario
     document.getElementById('nombreUsuario').value = usuario.nombre || '';
@@ -694,7 +779,15 @@ function configurarFormularioEdicion(usuario) {
     const contraseñaInput = document.getElementById('contraseñaUsuario');
     if (contraseñaInput) {
         contraseñaInput.value = '';
-        contraseñaInput.placeholder = 'Dejar vacío para mantener la contraseña actual';
+        
+        // Mostrar advertencia si es el mismo usuario
+        if (esAccionSobreMismoUsuario(usuario.id)) {
+            contraseñaInput.placeholder = '⚠️ Cambiar tu contraseña cerrará tu sesión';
+            contraseñaInput.title = 'Si cambias tu propia contraseña, tu sesión se cerrará automáticamente';
+        } else {
+            contraseñaInput.placeholder = 'Dejar vacío para mantener la contraseña actual';
+        }
+        
         contraseñaInput.required = false;
         contraseñaInput.style.border = '';
         contraseñaInput.style.boxShadow = '';
@@ -881,6 +974,8 @@ async function cambiarEstadoUsuario(id, nuevoEstado) {
             throw new Error('No hay sesión activa');
         }
         
+        console.log(`📤 Cambiando estado usuario ID: ${id} a: ${nuevoEstado}`);
+        
         const response = await fetch(`${GATEWAY_URL}/usuarios/${id}/estado`, {
             method: 'PATCH',
             headers: {
@@ -890,21 +985,28 @@ async function cambiarEstadoUsuario(id, nuevoEstado) {
             body: JSON.stringify({ estado: nuevoEstado })
         });
         
+        console.log('📥 Respuesta HTTP:', response.status, response.statusText);
+        
         if (!response.ok) {
             const errorText = await response.text();
+            console.error('❌ Error en respuesta:', errorText);
             throw new Error(`Error ${response.status}: ${errorText}`);
         }
         
         const result = await response.json();
+        console.log('📥 Resultado JSON:', result);
         
-        if (result.success || result.id) {
-            return result;
-        } else {
-            throw new Error(result.message || 'Error al cambiar estado');
-        }
+        // DEPURACIÓN: Ver estructura de la respuesta
+        console.log('🔍 Estructura de respuesta:');
+        console.log('  - success:', result.success);
+        console.log('  - id:', result.id);
+        console.log('  - data:', result.data);
+        console.log('  - message:', result.message);
+        
+        return result;
         
     } catch (error) {
-        console.error('❌ Error al cambiar estado:', error);
+        console.error('❌ Error en cambiarEstadoUsuario:', error);
         throw error;
     }
 }
@@ -979,13 +1081,14 @@ async function obtenerUsuarioPorId(id) {
     }
 }
 
-// ===== MANEJADORES DE EVENTOS =====
+// ===== MANEJADORES DE EVENTOS MEJORADOS CON SEGURIDAD =====
 async function manejarEnvioFormulario(event) {
     event.preventDefault();
     
     console.log('📝 Procesando envío de formulario...');
     console.log('Modo edición:', modoEdicionUsuario);
     console.log('ID editando:', usuarioEditandoId);
+    console.log('Es el mismo usuario?', esAccionSobreMismoUsuario(usuarioEditandoId));
     
     // ===== VALIDACIÓN VISUAL COMPLETA =====
     if (!validarFormularioUsuarioCompleto()) {
@@ -1035,15 +1138,57 @@ async function manejarEnvioFormulario(event) {
     
     try {
         if (modoEdicionUsuario && usuarioEditandoId) {
+            // ===== ACCIÓN CRÍTICA: Cambiar contraseña propia =====
+            const esMismoUsuario = esAccionSobreMismoUsuario(usuarioEditandoId);
+            const estaCambiandoContraseña = contraseña !== '';
+            
+            if (esMismoUsuario && estaCambiandoContraseña) {
+                console.log('⚠️ ADVERTENCIA: Administrador cambiando su propia contraseña');
+                
+                // Mostrar confirmación especial
+                const confirmado = await mostrarConfirmacionCritica(
+                    '¿Está seguro de cambiar su propia contraseña?',
+                    'Cambio de Contraseña',
+                    '⚠️ Esta acción cerrará su sesión automáticamente. Podrá ingresar nuevamente con sus nuevas credenciales.'
+                );
+                
+                if (!confirmado) {
+                    console.log('❌ Cambio de contraseña cancelado por el usuario');
+                    return;
+                }
+                
+                console.log('✅ Confirmado: Cambiando contraseña propia');
+            }
+            
             // MODO EDICIÓN: Actualizar usuario existente
             console.log(`🔄 Actualizando usuario ID: ${usuarioEditandoId}`);
             
             const result = await actualizarUsuario(usuarioEditandoId, usuarioData);
             
             if (result.success || result.id) {
-                await mostrarExito('Usuario actualizado exitosamente');
-                cerrarFormulario();
-                await cargarUsuarios();
+                if (esMismoUsuario && estaCambiandoContraseña) {
+                    await mostrarExito('Contraseña actualizada. Cerrando sesión...', 'Cambio Exitoso');
+                    
+                    // Cerrar formulario
+                    cerrarFormulario();
+                    
+                    // Cerrar sesión inmediatamente
+                    setTimeout(() => {
+                        if (window.SIREVIF && window.SIREVIF.Sesion) {
+                            window.SIREVIF.Sesion.ejecutarCierreSesion();
+                        } else {
+                            localStorage.removeItem('sirevif_token');
+                            localStorage.removeItem('sirevif_usuario');
+                            window.location.href = '/Frontend/HTML/login.html';
+                        }
+                    }, 800);
+                    
+                    return; // Salir de la función
+                } else {
+                    await mostrarExito('Usuario actualizado exitosamente');
+                    cerrarFormulario();
+                    await cargarUsuarios();
+                }
             } else {
                 throw new Error(result.message || 'Error desconocido al actualizar');
             }
@@ -1079,45 +1224,122 @@ async function manejarEnvioFormulario(event) {
 async function cambiarEstadoUsuarioHandler(id, estadoActual) {
     const nuevoEstado = estadoActual === 'activo' ? 'inactivo' : 'activo';
     const accion = nuevoEstado === 'inactivo' ? 'inhabilitar' : 'activar';
+    const esMismoUsuario = esAccionSobreMismoUsuario(id);
     
-    const confirmado = await mostrarConfirmacion(
-        `¿Está seguro de que desea ${accion} este usuario?`,
-        'Confirmar acción'
-    );
+    console.log(`🔄 Cambiando estado usuario ID: ${id}`);
     
-    if (!confirmado) return;
+    // Configurar mensajes según si es acción sobre sí mismo
+    let confirmado = false;
+    
+    if (esMismoUsuario && nuevoEstado === 'inactivo') {
+        confirmado = await mostrarConfirmacionCritica(
+            '¿Está seguro de que desea inhabilitar su propia cuenta?',
+            'Inhabilitar Cuenta Propia',
+            '⚠️ Al realizar esta acción su sesión se cerrará automáticamente y no podrá volver a ingresar hasta que la cuenta sea habilitada nuevamente.'
+        );
+        
+        if (!confirmado) {
+            console.log('❌ Inhabilitación cancelada');
+            return;
+        }
+    } else {
+        confirmado = await mostrarConfirmacion(
+            `¿Está seguro de que desea ${accion} este usuario?`,
+            'Confirmar acción'
+        );
+        
+        if (!confirmado) return;
+    }
     
     try {
+        console.log(`📤 Cambiando estado a: ${nuevoEstado}`);
         const result = await cambiarEstadoUsuario(id, nuevoEstado);
         
-        if (result.success || result.id) {
-            await mostrarExito(`Usuario ${accion === 'inhabilitar' ? 'inhabilitado' : 'activado'} exitosamente`);
-            await cargarUsuarios();
+        if (result.success === true || result.id || result.data) {
+            if (esMismoUsuario && nuevoEstado === 'inactivo') {
+                console.log('🔒 Inhabilitación propia confirmada - cerrando sesión');
+                await mostrarExito('Cuenta inhabilitada. Cerrando sesión...');
+                
+                // Cerrar sesión inmediatamente
+                setTimeout(() => {
+                    if (window.SIREVIF && window.SIREVIF.Sesion) {
+                        window.SIREVIF.Sesion.ejecutarCierreSesion();
+                    } else {
+                        localStorage.removeItem('sirevif_token');
+                        localStorage.removeItem('sirevif_usuario');
+                        window.location.href = '/Frontend/HTML/login.html';
+                    }
+                }, 800);
+            } else {
+                await mostrarExito(`Usuario ${accion === 'inhabilitar' ? 'inhabilitado' : 'activado'} exitosamente`);
+                await cargarUsuarios();
+            }
+        } else {
+            throw new Error(result.message || 'Error al cambiar estado');
         }
     } catch (error) {
         console.error(`❌ Error al ${accion} usuario:`, error);
-        await mostrarError(`Error al ${accion} usuario: ${error.message}`);
+        await mostrarError(`Error: ${error.message}`);
     }
 }
 
 async function eliminarUsuarioHandler(id) {
-    const confirmado = await mostrarConfirmacion(
-        '¿Está seguro de eliminar este usuario? Esta acción no se puede deshacer.',
-        'Confirmar eliminación'
-    );
+    const esMismoUsuario = esAccionSobreMismoUsuario(id);
     
-    if (!confirmado) return;
+    console.log(`🗑️  Eliminando usuario ID: ${id}`);
+    
+    // Configurar mensajes según si es acción sobre sí mismo
+    let confirmado = false;
+    
+    if (esMismoUsuario) {
+        confirmado = await mostrarConfirmacionCritica(
+            '¿Está seguro de eliminar su propia cuenta permanentemente?',
+            'Eliminar Cuenta Propia',
+            '⚠️ Esta acción cerrará su sesión automáticamente y no podrá volver a ingresar con las credenciales actuales.'
+        );
+        
+        if (!confirmado) {
+            console.log('❌ Eliminación cancelada');
+            return;
+        }
+    } else {
+        confirmado = await mostrarConfirmacion(
+            '¿Está seguro de eliminar este usuario? Esta acción no se puede deshacer.',
+            'Confirmar eliminación'
+        );
+        
+        if (!confirmado) return;
+    }
     
     try {
+        console.log(`📤 Eliminando usuario ID: ${id}`);
         const result = await eliminarUsuario(id);
         
-        if (result.success || result.message) {
-            await mostrarExito('Usuario eliminado exitosamente');
-            await cargarUsuarios();
+        if (result.success === true || result.message) {
+            if (esMismoUsuario) {
+                console.log('🔒 Eliminación propia confirmada - cerrando sesión');
+                await mostrarExito('Cuenta eliminada. Cerrando sesión...');
+                
+                // Cerrar sesión inmediatamente
+                setTimeout(() => {
+                    if (window.SIREVIF && window.SIREVIF.Sesion) {
+                        window.SIREVIF.Sesion.ejecutarCierreSesion();
+                    } else {
+                        localStorage.removeItem('sirevif_token');
+                        localStorage.removeItem('sirevif_usuario');
+                        window.location.href = '/Frontend/HTML/login.html';
+                    }
+                }, 800);
+            } else {
+                await mostrarExito('Usuario eliminado exitosamente');
+                await cargarUsuarios();
+            }
+        } else {
+            throw new Error(result.message || 'Error al eliminar');
         }
     } catch (error) {
         console.error('❌ Error al eliminar usuario:', error);
-        await mostrarError('Error al eliminar usuario: ' + error.message);
+        await mostrarError('Error: ' + error.message);
     }
 }
 
@@ -1374,19 +1596,75 @@ function inicializarUsuarios() {
     return true;
 }
 
+/**
+ * Función de depuración para verificar el estado de sesión
+ */
+function verificarEstadoSesion() {
+    const token = localStorage.getItem('sirevif_token');
+    const usuarioStorage = localStorage.getItem('sirevif_usuario');
+    
+    console.log('🔍 Estado actual de sesión:');
+    console.log('  • Token presente:', token ? 'SÍ' : 'NO');
+    console.log('  • Usuario en localStorage:', usuarioStorage ? 'SÍ' : 'NO');
+    
+    if (usuarioStorage) {
+        try {
+            const usuario = JSON.parse(usuarioStorage);
+            console.log('  • ID usuario actual:', usuario.id);
+            console.log('  • Nombre:', usuario.nombre);
+            console.log('  • Rol ID:', usuario.rolId || usuario.rol_id);
+        } catch (e) {
+            console.log('  • Error al parsear usuario:', e.message);
+        }
+    }
+}
+
+/**
+ * Función para debuggear datos de usuario
+ */
+function debugUsuarioActual() {
+    const usuarioStorage = localStorage.getItem('sirevif_usuario');
+    const token = localStorage.getItem('sirevif_token');
+    
+    console.log('🔍 DEBUG - Datos de usuario actual:');
+    console.log('  • Token presente:', token ? `SÍ (${token.substring(0, 20)}...)` : 'NO');
+    console.log('  • Usuario en localStorage:', usuarioStorage ? 'SÍ' : 'NO');
+    
+    if (usuarioStorage) {
+        try {
+            const usuario = JSON.parse(usuarioStorage);
+            console.log('  • Datos completos:', usuario);
+            console.log('  • ID:', usuario.id);
+            console.log('  • Tipo de ID:', typeof usuario.id);
+            console.log('  • Nombre:', usuario.nombre);
+            console.log('  • Rol ID:', usuario.rolId || usuario.rol_id);
+        } catch (e) {
+            console.log('  • Error al parsear:', e.message);
+        }
+    }
+    
+    return usuarioStorage ? JSON.parse(usuarioStorage) : null;
+}
+
+// Agrega esta función al objeto global para poder llamarla desde consola
+window.debugUsuario = debugUsuarioActual;
+
 // ===== HACER FUNCIONES GLOBALES =====
 window.renderizarUsuarios = renderizarUsuarios;
 window.cargarUsuarios = cargarUsuarios;
 window.mostrarExito = mostrarExito;
 window.mostrarError = mostrarError;
 window.mostrarConfirmacion = mostrarConfirmacion;
+window.mostrarConfirmacionCritica = mostrarConfirmacionCritica;
 window.inicializarUsuarios = inicializarUsuarios;
 window.configurarFormularioEdicion = configurarFormularioEdicion;
 window.validarFormularioUsuarioCompleto = validarFormularioUsuarioCompleto;
 window.cerrarFormulario = cerrarFormulario;
 window.verificarPermisosAdministrador = verificarPermisosAdministrador;
+window.esAccionSobreMismoUsuario = esAccionSobreMismoUsuario;
+window.cerrarSesionDespuesAccionCritica = cerrarSesionDespuesAccionCritica;
 
-console.log('✅ usuarios.js cargado - Sistema de validación visual activado');
+console.log('✅ usuarios.js cargado - Sistema de seguridad mejorada activado');
 
 // Inicializar cuando el DOM esté listo
 if (document.readyState === 'loading') {

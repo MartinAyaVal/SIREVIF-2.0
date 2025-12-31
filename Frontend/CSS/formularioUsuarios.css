@@ -61,6 +61,8 @@
 .tablaF input[type="text"],
 .tablaF input[type="number"],
 .tablaF input[type="password"],
+.tablaF input[type="email"],
+.tablaF input[type="tel"],
 .tablaF select {
     width: 100%;
     padding: 6px 10px;

@@ -22,6 +22,7 @@ const serviciosConfig = {
 };
 
 // ===== MIDDLEWARE PARA VERIFICAR ROL DE ADMINISTRADOR =====
+// AHORA: Solo rolId === 1 (Administrador) tiene acceso
 const verificarRolAdministrador = (req, res, next) => {
     try {
         // Obtener información del usuario del token
@@ -37,10 +38,8 @@ const verificarRolAdministrador = (req, res, next) => {
         }
         
         console.log(`[Auth] 👑 Verificando rol: Usuario ID ${usuario.id}, Rol ID: ${usuario.rolId}`);
-        
-        // Verificar si el usuario es administrador (rolId === 1)
-        // Solo rol 1 (Administrador) puede acceder a gestión de usuarios
-        // Roles mayores a 1 (2, 3, etc.) NO pueden acceder
+
+        // Solo rolId === 1 es administrador
         if (usuario.rolId !== 1) {
             console.log(`[Auth] 🚫 Acceso denegado: Usuario ${usuario.documento} (Rol: ${usuario.rolId}) intentó acceder a gestión de usuarios`);
             

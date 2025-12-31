@@ -1,6 +1,7 @@
 /**
- * ARCHIVO: infoBarra.js (VERSIÓN MEJORADA CON CONTROL DE ROLES COMPLETO)
+ * ARCHIVO: infoBarra.js (VERSIÓN MEJORADA CON SEGURIDAD)
  * DESCRIPCIÓN: Carga información del usuario, controla accesos por rol y maneja logout
+ * NOTA: Incluye función pública ejecutarCierreSesion() para uso en otros módulos
  */
 
 // ===== CONFIGURACIÓN =====
@@ -8,7 +9,7 @@ const CONFIG = {
     TOKEN_KEY: 'sirevif_token',
     USER_KEY: 'sirevif_usuario',
     LOGIN_URL: '/Frontend/HTML/login.html',
-    ROL_ADMINISTRADOR: 1 // Solo rol 1 es administrador
+    ROL_ADMINISTRADOR: 1
 };
 
 // ===== VARIABLES GLOBALES =====
@@ -64,20 +65,20 @@ function controlarAccesosPorRol() {
         
         const esAdmin = rolId === CONFIG.ROL_ADMINISTRADOR;
         
-        console.log(`📋 Estado: ${esAdmin ? 'ADMINISTRADOR' : 'USUARIO NORMAL'} (Rol ID: ${rolId})`);
+        console.log(`📋 Estado: ${esAdmin ? 'ADMINISTRADOR' : 'USUARIO NORMAL (Rol ' + rolId + ')'}`);
         
         // Selectores para elementos relacionados con usuarios
         const selectoresUsuarios = [
-            'a[href*="usuarios.html"]',         // Enlace a usuarios.html
-            'a[title="Usuarios"]',              // Botón con title="Usuarios"
-            'a[href="#usuarios"]',              // Enlaces internos
-            '.menu-usuarios',                    // Clase menu-usuarios
-            '#menu-usuarios',                    // ID menu-usuarios
-            '#botonUsuarios',                    // ID específico para botón usuarios
-            '.usuarios-link',                    // Clase general para links de usuarios
-            '[data-role="admin-only"]',          // Elementos con data-role
-            '[data-admin-only="true"]',          // Elementos con data-admin-only
-            '.admin-only'                        // Clase admin-only
+            'a[href*="usuarios.html"]',
+            'a[title="Usuarios"]',
+            'a[href="#usuarios"]',
+            '.menu-usuarios',
+            '#menu-usuarios',
+            '#botonUsuarios',
+            '.usuarios-link',
+            '[data-role="admin-only"]',
+            '[data-admin-only="true"]',
+            '.admin-only'
         ];
         
         // Aplicar a todos los selectores encontrados
@@ -86,7 +87,7 @@ function controlarAccesosPorRol() {
             
             elementos.forEach(elemento => {
                 if (!esAdmin) {
-                    // Ocultar completamente para no-admins
+                    // Ocultar completamente para no-admins (rolId !== 7)
                     elemento.style.display = 'none';
                     elemento.style.visibility = 'hidden';
                     elemento.style.opacity = '0';
@@ -98,9 +99,9 @@ function controlarAccesosPorRol() {
                     elemento.setAttribute('data-hidden-by-role', 'true');
                     elemento.setAttribute('aria-hidden', 'true');
                     elemento.setAttribute('tabindex', '-1');
-                    console.log(`👁️‍🗨️ Ocultado: ${selector}`);
+                    console.log(`👁️‍🗨️ Ocultado: ${selector} (Rol: ${rolId} no es 7)`);
                 } else {
-                    // Si es admin, asegurarse que esté visible
+                    // Si es admin (rolId === 7), asegurarse que esté visible
                     elemento.style.display = '';
                     elemento.style.visibility = '';
                     elemento.style.opacity = '';
@@ -112,7 +113,7 @@ function controlarAccesosPorRol() {
                     elemento.removeAttribute('data-hidden-by-role');
                     elemento.setAttribute('aria-hidden', 'false');
                     elemento.removeAttribute('tabindex');
-                    console.log(`👁️‍🗨️ Visible para admin: ${selector}`);
+                    console.log(`👁️‍🗨️ Visible para admin (Rol 7): ${selector}`);
                 }
             });
         });
@@ -134,13 +135,14 @@ function controlarAccesoPaginaActual(rolId) {
     const path = window.location.pathname;
     const esPaginaUsuarios = path.includes('usuarios.html');
     
+    // Solo rol 7 puede acceder a usuarios.html
     if (esPaginaUsuarios && rolId !== CONFIG.ROL_ADMINISTRADOR) {
-        console.log('🚫 Usuario no admin intentando acceder a usuarios.html - Redirigiendo...');
+        console.log('🚫 Usuario no admin (Rol:', rolId, ') intentando acceder a usuarios.html - Redirigiendo...');
         
         // Mostrar mensaje de error
         Swal.fire({
             title: 'Acceso denegado',
-            text: 'No tienes permisos para acceder a esta sección. Solo los administradores pueden gestionar usuarios.',
+            text: 'No tienes permisos para acceder a esta sección. Solo los administradores (Rol 7) pueden gestionar usuarios.',
             icon: 'error',
             confirmButtonText: 'Volver al inicio',
             confirmButtonColor: '#4CAF50',
@@ -313,14 +315,15 @@ function ocultarModalLogout() {
 
 /**
  * Ejecuta el cierre de sesión (limpia datos y redirige)
+ * ⭐⭐ FUNCIÓN PÚBLICA - Puede ser llamada desde otros módulos ⭐⭐
  */
 function ejecutarCierreSesion() {
     console.log('🚪 Ejecutando cierre de sesión...');
     
-    // Ocultar modal
+    // Ocultar modal si está visible
     ocultarModalLogout();
     
-    // Mostrar mensaje de despedida (opcional)
+    // Mostrar mensaje de despedida
     mostrarMensajeDespedida();
     
     // Limpiar almacenamiento local después de breve delay
@@ -330,6 +333,7 @@ function ejecutarCierreSesion() {
         sessionStorage.clear();
         
         console.log('✅ Datos de sesión eliminados');
+        console.log('🔄 Redirigiendo a login...');
         
         // Redirigir a login
         window.location.href = CONFIG.LOGIN_URL;
@@ -447,7 +451,7 @@ if (document.readyState === 'loading') {
 window.SIREVIF = window.SIREVIF || {};
 window.SIREVIF.Sesion = {
     cerrarSesion: mostrarModalLogout, // Ahora muestra el modal
-    ejecutarCierreSesion: ejecutarCierreSesion, // Para forzar cierre
+    ejecutarCierreSesion: ejecutarCierreSesion, // ⭐⭐ FUNCIÓN PÚBLICA IMPORTANTE ⭐⭐
     obtenerUsuario: function() {
         const usuario = localStorage.getItem(CONFIG.USER_KEY);
         return usuario ? JSON.parse(usuario) : null;
@@ -460,7 +464,25 @@ window.SIREVIF.Sesion = {
     estaAutenticado: function() {
         return !!localStorage.getItem(CONFIG.TOKEN_KEY);
     },
-    controlarAccesosPorRol: controlarAccesosPorRol // Nueva función exportada
+    controlarAccesosPorRol: controlarAccesosPorRol,
+    // Funciones adicionales para seguridad
+    obtenerIdUsuario: function() {
+        const usuario = this.obtenerUsuario();
+        return usuario ? usuario.id : null;
+    },
+    obtenerNombreUsuario: function() {
+        const usuario = this.obtenerUsuario();
+        return usuario ? usuario.nombre : null;
+    },
+    verificarSesionActiva: function() {
+        const token = localStorage.getItem(CONFIG.TOKEN_KEY);
+        const usuario = localStorage.getItem(CONFIG.USER_KEY);
+        return !!(token && usuario);
+    }
 };
 
-console.log('✅ infoBarra.js cargado (con control de roles y modal de confirmación)');
+console.log('✅ infoBarra.js cargado (con control de roles y seguridad mejorada)');
+console.log('📋 Funciones públicas disponibles:');
+console.log('   • SIREVIF.Sesion.ejecutarCierreSesion() - Para cerrar sesión programáticamente');
+console.log('   • SIREVIF.Sesion.esAdministrador() - Verifica si el usuario es admin (rol 7)');
+console.log('   • SIREVIF.Sesion.obtenerIdUsuario() - Obtiene el ID del usuario actual');

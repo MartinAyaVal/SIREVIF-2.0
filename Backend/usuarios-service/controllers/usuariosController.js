@@ -27,11 +27,11 @@ exports.getusuario = async (req, res) => {
     }
 };
 
-// Crear usuario - HASH AQUÍ SOLAMENTE
+// Crear usuario - CON ASIGNACIÓN CORRECTA DE ROL_ID Y COMISARIA_ID
 exports.createusuario = async (req, res) => {
     try {
         console.log("=".repeat(60));
-        console.log("🆕 CREANDO USUARIO - HASH ÚNICO");
+        console.log("🆕 CREANDO USUARIO - ASIGNACIÓN DE ROLES CORRECTA");
         console.log("=".repeat(60));
         
         console.log("📥 REQ.BODY COMPLETO:", req.body);
@@ -45,9 +45,7 @@ exports.createusuario = async (req, res) => {
             // Obtener contraseña de cualquier campo posible
             contrasena,
             contraseña,
-            comisaria_rol, 
-            rolId,
-            comisariaId
+            comisaria_rol
         } = req.body;
 
         // Validar campos requeridos
@@ -70,26 +68,34 @@ exports.createusuario = async (req, res) => {
             });
         }
 
-        let comisariaIdFinal = comisariaId;
+        // ===== ASIGNACIÓN CORRECTA DE ROL_ID Y COMISARIA_ID =====
+        console.log("🎯 Asignando rol_id y comisaria_id según comisaria_rol:", comisaria_rol);
         
-        if (comisariaIdFinal === undefined || comisariaIdFinal === null) {
-            console.log("⚠️ comisariaId no recibido, calculando desde comisaria_rol...");
-            
-            const mapeoComisarias = {
-                'Administrador': 0,
-                'Comisaría Primera': 1,
-                'Comisaría Segunda': 2,
-                'Comisaría Tercera': 3,
-                'Comisaría Cuarta': 4,
-                'Comisaría Quinta': 5,
-                'Comisaría Sexta': 6
-            };
-            
-            comisariaIdFinal = mapeoComisarias[comisaria_rol] || 0;
-            console.log(`✅ comisariaId calculado: ${comisariaIdFinal} para "${comisaria_rol}"`);
+        // Mapeo de comisaria_rol a rol_id y comisaria_id
+        const mapeoRoles = {
+            'Administrador': { rolId: 1, comisariaId: null },
+            'Comisaría Primera': { rolId: 2, comisariaId: 1 },
+            'Comisaría Segunda': { rolId: 2, comisariaId: 2 },
+            'Comisaría Tercera': { rolId: 2, comisariaId: 3 },
+            'Comisaría Cuarta': { rolId: 2, comisariaId: 4 },
+            'Comisaría Quinta': { rolId: 2, comisariaId: 5 },
+            'Comisaría Sexta': { rolId: 2, comisariaId: 6 }
+        };
+        
+        const configRol = mapeoRoles[comisaria_rol];
+        
+        if (!configRol) {
+            console.log(`❌ comisaria_rol no reconocido: "${comisaria_rol}"`);
+            return res.status(400).json({ 
+                success: false,
+                message: `Comisaría/rol no válido: ${comisaria_rol}` 
+            });
         }
         
-        comisariaIdFinal = parseInt(comisariaIdFinal) || 0;
+        const rolIdFinal = configRol.rolId;
+        const comisariaIdFinal = configRol.comisariaId;
+        
+        console.log(`✅ Configuración asignada: rolId=${rolIdFinal}, comisariaId=${comisariaIdFinal} para "${comisaria_rol}"`);
 
         // ⭐⭐ HASH DE CONTRASEÑA - UNA SOLA VEZ ⭐⭐
         console.log("🔐 Generando hash de contraseña...");
@@ -101,7 +107,7 @@ exports.createusuario = async (req, res) => {
         const documentoString = documento.toString();
         console.log(`📝 Documento a guardar: ${documentoString}`);
 
-        // Crear usuario
+        // Crear usuario con valores CORRECTOS
         const usuario = await Usuario.create({
             nombre: nombre,
             documento: documentoString,
@@ -110,14 +116,15 @@ exports.createusuario = async (req, res) => {
             telefono: telefono,
             contraseña: hashedPassword,  // Hash ya generado
             comisaria_rol: comisaria_rol,
-            rolId: parseInt(rolId) || 1,
-            comisariaId: comisariaIdFinal
+            rolId: rolIdFinal,  // ← VALOR CORRECTO según comisaria_rol
+            comisariaId: comisariaIdFinal  // ← VALOR CORRECTO según comisaria_rol
         });
 
         const usuarioResponse = usuario.toJSON();
         delete usuarioResponse.contraseña;
 
         console.log(`✅ Usuario creado exitosamente: ${usuario.nombre}`);
+        console.log(`📊 Datos guardados: rolId=${usuario.rolId}, comisariaId=${usuario.comisariaId}`);
         console.log("=".repeat(60));
 
         res.status(201).json({
@@ -167,7 +174,7 @@ exports.getusuariosById = async (req, res) => {
     }
 }
 
-// Actualizar usuario por Id
+// Actualizar usuario por Id - CON VALORES CORRECTOS
 exports.updateusuario = async (req, res) => {
     try {
         const { id } = req.params;
@@ -196,28 +203,35 @@ exports.updateusuario = async (req, res) => {
             });
         }
 
-        // Procesar comisariaId
-        let comisariaIdFinal = req.body.comisariaId;
+        // ===== ASIGNACIÓN CORRECTA DE ROL_ID Y COMISARIA_ID =====
+        let comisaria_rol = req.body.comisaria_rol || usuario.comisaria_rol;
+        console.log(`🎯 Actualizando con comisaria_rol: "${comisaria_rol}"`);
         
-        if (comisariaIdFinal === undefined || comisariaIdFinal === null || comisariaIdFinal === '') {
-            const mapeoComisarias = {
-                'Administrador': 0,
-                'Comisaría 1': 1, 'Comisaría Primera': 1,
-                'Comisaría 2': 2, 'Comisaría Segunda': 2,
-                'Comisaría 3': 3, 'Comisaría Tercera': 3,
-                'Comisaría 4': 4, 'Comisaría Cuarta': 4,
-                'Comisaría 5': 5, 'Comisaría Quinta': 5,
-                'Comisaría 6': 6, 'Comisaría Sexta': 6
-            };
-            
-            if (req.body.comisaria_rol && mapeoComisarias[req.body.comisaria_rol] !== undefined) {
-                comisariaIdFinal = mapeoComisarias[req.body.comisaria_rol];
-            } else {
-                comisariaIdFinal = usuario.comisariaId;
-            }
+        // Mapeo de comisaria_rol a rol_id y comisaria_id
+        const mapeoRoles = {
+            'Administrador': { rolId: 1, comisariaId: null },
+            'Comisaría Primera': { rolId: 2, comisariaId: 1 },
+            'Comisaría Segunda': { rolId: 2, comisariaId: 2 },
+            'Comisaría Tercera': { rolId: 2, comisariaId: 3 },
+            'Comisaría Cuarta': { rolId: 2, comisariaId: 4 },
+            'Comisaría Quinta': { rolId: 2, comisariaId: 5 },
+            'Comisaría Sexta': { rolId: 2, comisariaId: 6 }
+        };
+        
+        const configRol = mapeoRoles[comisaria_rol];
+        
+        if (!configRol) {
+            console.log(`❌ comisaria_rol no reconocido: "${comisaria_rol}"`);
+            return res.status(400).json({ 
+                success: false,
+                message: `Comisaría/rol no válido: ${comisaria_rol}` 
+            });
         }
         
-        comisariaIdFinal = parseInt(comisariaIdFinal) || 0;
+        const rolIdFinal = configRol.rolId;
+        const comisariaIdFinal = configRol.comisariaId;
+        
+        console.log(`✅ Configuración asignada: rolId=${rolIdFinal}, comisariaId=${comisariaIdFinal}`);
 
         // Datos a actualizar
         const updateData = {
@@ -226,9 +240,9 @@ exports.updateusuario = async (req, res) => {
             cargo: req.body.cargo.trim(),
             correo: req.body.correo.trim(),
             telefono: req.body.telefono.trim(),
-            comisaria_rol: (req.body.comisaria_rol || usuario.comisaria_rol).trim(),
-            rolId: parseInt(req.body.rolId) || usuario.rolId || 1,
-            comisariaId: comisariaIdFinal
+            comisaria_rol: comisaria_rol.trim(),
+            rolId: rolIdFinal,  // ← VALOR CORRECTO
+            comisariaId: comisariaIdFinal  // ← VALOR CORRECTO
         };
 
         // Si hay nueva contraseña, hashearla
@@ -241,6 +255,7 @@ exports.updateusuario = async (req, res) => {
         await usuario.update(updateData);
         
         console.log(`✅ Usuario actualizado correctamente`);
+        console.log(`📊 Datos actualizados: rolId=${rolIdFinal}, comisariaId=${comisariaIdFinal}`);
         console.log("=".repeat(60));
 
         const usuarioResponse = usuario.toJSON();

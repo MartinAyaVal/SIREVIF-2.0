@@ -93,8 +93,8 @@ module.exports = (sequelize) => {
     },
     comisariaId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 0,
+      allowNull: true,
+      defaultValue: null,
       field: 'comisaria_id',
       validate: {
         isInt: {

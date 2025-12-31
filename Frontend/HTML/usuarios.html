@@ -102,7 +102,7 @@
                 <h2>Registrar nuevo Usuario</h2>
             </div>
             
-            <form id="formularioUsuarios">
+            <form id="formularioUsuarios" autocomplete="off">
                 <div class="seccionF">
                     <!-- Primera fila: Nombre, Documento, Cargo -->
                     <table class="tablaF">
@@ -113,16 +113,16 @@
                         </tr>
                         <tr>
                             <td>
-                                <input autocomplete="off" type="text" name="nombreUsuario" id="nombreUsuario">
+                                <input autocomplete="name" type="text" name="nombreUsuario" id="nombreUsuario">
                                 <p class="mensaje">- El <strong>Nombre completo</strong> es requerido</p>
                             </td>
                             <td>
-                                <input autocomplete="off" type="number" name="documentoUsuario" id="documentoUsuario">
+                                <input autocomplete="off" type="number" name="documentoUsuario" id="documentoUsuario" inputmode="numeric" pattern="[0-9]*">
                                 <p class="mensaje">- El <strong>Número de documento</strong> es requerido</p>
                                 <p class="mensaje">- El mínimo de caracteres es de 7</p>
                             </td>
                             <td>
-                                <input autocomplete="off" type="text" name="cargoUsuario" id="cargoUsuario">
+                                <input autocomplete="organization-title" type="text" name="cargoUsuario" id="cargoUsuario">
                                 <p class="mensaje">- El <strong>Cargo</strong> es requerido</p>
                             </td>
                         </tr>
@@ -137,17 +137,17 @@
                         </tr>
                         <tr>
                             <td>
-                                <input class="correo" autocomplete="off" type="text" name="correoUsuario" id="correoUsuario">
+                                <input class="correo" autocomplete="email" type="email" name="correoUsuario" id="correoUsuario">
                                 <p class="mensaje">- El <strong>Correo</strong> es requerido</p>
                                 <p class="mensaje">- Ingrese un correo válido</p>
                             </td>
                             <td>
-                                <input autocomplete="off" type="number" name="telefonoUsuario" id="telefonoUsuario">
+                                <input autocomplete="tel-local" type="tel" name="telefonoUsuario" id="telefonoUsuario" inputmode="numeric" pattern="[0-9]*">
                                 <p class="mensaje">- El <strong>Teléfono</strong> es requerido</p>
                                 <p class="mensaje">- El mínimo de caracteres es de 10</p>
                             </td>
                             <td>
-                                <select id="comisariaUsuario" name="comisariaUsuario">
+                                <select id="comisariaUsuario" name="comisariaUsuario" autocomplete="off">
                                     <option value="">- - Seleccione - -</option>
                                     <option value="Comisaría Primera">Comisaría Primera</option>
                                     <option value="Comisaría Segunda">Comisaría Segunda</option>
@@ -174,7 +174,7 @@
                             <td>
                                 <div style="display: flex; align-items: center; gap: 10px;">
                                     <div style="position: relative; flex: 1;">
-                                        <input autocomplete="off" type="password" id="contraseñaUsuario" 
+                                        <input autocomplete="new-password" type="password" id="contraseñaUsuario" 
                                             style="width: 100%; box-sizing: border-box; padding-right: 60px;">
                                         <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: flex; gap: 5px;">
                                             <img src="/Frontend/images/ojo.png" class="ver" id="mostrar" style="display: inline; cursor: pointer;" alt="Mostrar">
