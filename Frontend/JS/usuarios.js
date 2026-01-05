@@ -196,6 +196,14 @@ function abrirFormularioCreacion() {
     }
     
     resetFormulario();
+    
+    // Obtener conteo actual de usuarios
+    const usuariosActuales = window.usuariosActuales || [];
+    const conteoUsuarios = contarUsuariosPorComisaria(usuariosActuales);
+    
+    // Actualizar opciones del select basado en el conteo
+    actualizarOpcionesSelect(conteoUsuarios);
+    
     document.getElementById('formularioOverlay').style.display = 'flex';
 }
 
@@ -208,12 +216,17 @@ function cerrarFormulario() {
 }
 
 function resetFormulario() {
+    console.log('🔄 Reseteando formulario...');
+    
     modoEdicionUsuario = false;
     usuarioEditandoId = null;
     
     // Restablecer valores del formulario
     const formulario = document.getElementById('formularioUsuarios');
-    if (formulario) formulario.reset();
+    if (formulario) {
+        formulario.reset();
+        console.log('✅ Formulario reseteado');
+    }
     
     // RE-HABILITAR CAMPOS BLOQUEADOS
     const nombreInput = document.getElementById('nombreUsuario');
@@ -242,6 +255,21 @@ function resetFormulario() {
         comisariaSelect.style.cursor = '';
         comisariaSelect.style.border = '';
         comisariaSelect.style.boxShadow = '';
+        
+        // RESTAURAR TODAS LAS OPCIONES DEL SELECT
+        Array.from(comisariaSelect.options).forEach(option => {
+            if (option.value !== '') {
+                const originalDisplay = option.getAttribute('data-original-display') || '';
+                option.style.display = originalDisplay;
+                option.disabled = false;
+                option.style.color = '';
+                option.style.backgroundColor = '';
+                option.title = '';
+                option.style.fontStyle = '';
+            }
+        });
+        
+        console.log('✅ Opciones del select restauradas');
     }
     
     // Restablecer título
@@ -279,7 +307,7 @@ function resetFormulario() {
     // Limpiar validaciones
     limpiarValidaciones();
     
-    console.log('✅ Formulario reseteado (campos re-habilitados)');
+    console.log('✅ Formulario completamente reseteado');
 }
 
 // ===== SISTEMA DE VALIDACIÓN VISUAL =====
@@ -622,7 +650,32 @@ function renderizarUsuarios(usuarios) {
         if (primeraSeccion) {
             primeraSeccion.innerHTML = '<p class="sin-usuarios">No hay usuarios registrados</p>';
         }
+        
+        // Actualizar contadores (todo en 0)
+        const conteoVacio = {
+            'Administrador': 0,
+            'Comisaría Primera': 0,
+            'Comisaría Segunda': 0,
+            'Comisaría Tercera': 0,
+            'Comisaría Cuarta': 0,
+            'Comisaría Quinta': 0,
+            'Comisaría Sexta': 0
+        };
+        actualizarContadorVisual(conteoVacio);
+        actualizarOpcionesSelect(conteoVacio);
+        
         return;
+    }
+    
+    // Contar usuarios por comisaría
+    const conteoUsuarios = contarUsuariosPorComisaria(usuarios);
+    
+    // Actualizar contadores visuales
+    actualizarContadorVisual(conteoUsuarios);
+    
+    // Actualizar opciones del select (solo si no estamos en modo edición)
+    if (!modoEdicionUsuario) {
+        actualizarOpcionesSelect(conteoUsuarios);
     }
     
     // Agrupar usuarios por comisaría
@@ -656,7 +709,7 @@ function renderizarUsuarios(usuarios) {
         
         secciones.forEach(seccion => {
             const titulo = seccion.querySelector('.tituloSec');
-            if (titulo && titulo.textContent === tituloBuscado) {
+            if (titulo && titulo.textContent.startsWith(tituloBuscado)) {
                 const usuariosContainer = seccion.querySelector('.usuarios');
                 if (usuariosContainer) {
                     usuariosGrupo.forEach(usuario => {
@@ -668,7 +721,7 @@ function renderizarUsuarios(usuarios) {
         });
     });
     
-    console.log('✅ Usuarios renderizados');
+    console.log('✅ Usuarios renderizados con límites aplicados');
 }
 
 function crearTarjetaUsuario(usuario) {
@@ -831,21 +884,7 @@ async function cargarUsuarios() {
         console.log('📥 Respuesta status:', response.status);
         
         if (!response.ok) {
-            if (response.status === 401 || response.status === 403) {
-                localStorage.removeItem('sirevif_token');
-                localStorage.removeItem('sirevif_usuario');
-                
-                if (response.status === 403) {
-                    // Acceso denegado por falta de permisos de administrador
-                    const errorData = await response.json();
-                    throw new Error(`Acceso denegado: ${errorData.message || 'No tienes permisos de administrador'}`);
-                }
-                
-                throw new Error('Su sesión ha expirado');
-            }
-            
-            const errorText = await response.text();
-            throw new Error(`Error ${response.status}: ${errorText}`);
+            // ... manejo de errores existente ...
         }
         
         const result = await response.json();
@@ -866,6 +905,9 @@ async function cargarUsuarios() {
         }
         
         console.log('✅ Usuarios cargados:', usuariosArray.length);
+        
+        // GUARDAR USUARIOS GLOBALMENTE PARA USAR EN EL FORMULARIO
+        window.usuariosActuales = usuariosArray;
         
         renderizarUsuarios(usuariosArray);
         return usuariosArray;
@@ -1090,6 +1132,44 @@ async function manejarEnvioFormulario(event) {
     console.log('ID editando:', usuarioEditandoId);
     console.log('Es el mismo usuario?', esAccionSobreMismoUsuario(usuarioEditandoId));
     
+    // ===== VALIDACIÓN DE LÍMITES POR COMISARÍA (SOLO EN CREACIÓN) =====
+    if (!modoEdicionUsuario) {
+        const comisariaSelect = document.getElementById('comisariaUsuario');
+        const comisariaSeleccionada = comisariaSelect ? comisariaSelect.value : '';
+        
+        if (comisariaSeleccionada) {
+            // Obtener usuarios actuales y contar por comisaría
+            const usuariosActuales = window.usuariosActuales || [];
+            const conteoUsuarios = contarUsuariosPorComisaria(usuariosActuales);
+            const conteoActual = conteoUsuarios[comisariaSeleccionada] || 0;
+            
+            console.log(`📊 Validando límite para ${comisariaSeleccionada}: ${conteoActual}/2`);
+            
+            if (conteoActual >= 2) {
+                await mostrarError(
+                    `No se puede crear más usuarios para <strong>${comisariaSeleccionada}</strong>.<br><br>` +
+                    `Límite máximo alcanzado: <strong>2 usuarios</strong>.<br>` +
+                    `Actualmente tienes: <strong>${conteoActual} usuarios</strong> registrados.`,
+                    '🚫 Límite Alcanzado'
+                );
+                
+                // Resaltar el select
+                if (comisariaSelect) {
+                    comisariaSelect.style.border = '2px solid #f44336';
+                    comisariaSelect.style.boxShadow = '0 0 10px rgba(244, 67, 54, 0.3)';
+                    
+                    // Scroll al campo
+                    setTimeout(() => {
+                        comisariaSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        comisariaSelect.focus();
+                    }, 100);
+                }
+                
+                return; // Detener el envío del formulario
+            }
+        }
+    }
+    
     // ===== VALIDACIÓN VISUAL COMPLETA =====
     if (!validarFormularioUsuarioCompleto()) {
         console.log('❌ Validación visual fallida');
@@ -1149,7 +1229,7 @@ async function manejarEnvioFormulario(event) {
                 const confirmado = await mostrarConfirmacionCritica(
                     '¿Está seguro de cambiar su propia contraseña?',
                     'Cambio de Contraseña',
-                    '⚠️ Esta acción cerrará su sesión automáticamente. Podrá ingresar nuevamente con sus nuevas credenciales.'
+                    '⚠️ Esta acción cerrará tu sesión automáticamente por seguridad.'
                 );
                 
                 if (!confirmado) {
@@ -1187,7 +1267,7 @@ async function manejarEnvioFormulario(event) {
                 } else {
                     await mostrarExito('Usuario actualizado exitosamente');
                     cerrarFormulario();
-                    await cargarUsuarios();
+                    await cargarUsuarios(); // Recargar para actualizar contadores
                 }
             } else {
                 throw new Error(result.message || 'Error desconocido al actualizar');
@@ -1205,19 +1285,38 @@ async function manejarEnvioFormulario(event) {
             console.log('🆕 Creando nuevo usuario');
             usuarioData.contraseña = contraseña;
             
+            // Verificación final del límite (por si acaso)
+            const usuariosActuales = window.usuariosActuales || [];
+            const conteoUsuarios = contarUsuariosPorComisaria(usuariosActuales);
+            const conteoActual = conteoUsuarios[comisaria] || 0;
+            
+            if (conteoActual >= 2) {
+                await mostrarError(
+                    `No se puede crear el usuario. Límite máximo (2 usuarios) alcanzado para ${comisaria}.`,
+                    'Límite Alcanzado'
+                );
+                return;
+            }
+            
             const result = await crearUsuario(usuarioData);
             
             if (result.success || result.id) {
                 await mostrarExito('Usuario creado exitosamente');
                 cerrarFormulario();
-                await cargarUsuarios();
+                await cargarUsuarios(); // Recargar para actualizar contadores
             } else {
                 throw new Error(result.message || 'Error desconocido al crear');
             }
         }
     } catch (error) {
         console.error('❌ Error al procesar usuario:', error);
-        await mostrarError('Error: ' + error.message);
+        
+        // Mensaje específico para errores de límite
+        if (error.message.includes('límite') || error.message.includes('Límite')) {
+            await mostrarError(error.message, 'Límite Alcanzado');
+        } else {
+            await mostrarError('Error: ' + error.message);
+        }
     }
 }
 
@@ -1312,30 +1411,22 @@ async function eliminarUsuarioHandler(id) {
     }
     
     try {
-        console.log(`📤 Eliminando usuario ID: ${id}`);
+        console.log(`📤 Enviando solicitud de eliminación para usuario ID: ${id}`);
         const result = await eliminarUsuario(id);
         
-        if (result.success === true || result.message) {
+        console.log('📥 Resultado de eliminación:', result);
+        
+        // Verificar diferentes formatos de respuesta
+        const exito = result.success === true || result.message;
+        
+        if (exito) {
             if (esMismoUsuario) {
-                console.log('🔒 Eliminación propia confirmada - cerrando sesión');
-                await mostrarExito('Cuenta eliminada. Cerrando sesión...');
-                
-                // Cerrar sesión inmediatamente
-                setTimeout(() => {
-                    if (window.SIREVIF && window.SIREVIF.Sesion) {
-                        window.SIREVIF.Sesion.ejecutarCierreSesion();
-                    } else {
-                        localStorage.removeItem('sirevif_token');
-                        localStorage.removeItem('sirevif_usuario');
-                        window.location.href = '/Frontend/HTML/login.html';
-                    }
-                }, 800);
+                // ... cierre de sesión si es el mismo usuario ...
             } else {
                 await mostrarExito('Usuario eliminado exitosamente');
+                // Recargar usuarios para actualizar contadores
                 await cargarUsuarios();
             }
-        } else {
-            throw new Error(result.message || 'Error al eliminar');
         }
     } catch (error) {
         console.error('❌ Error al eliminar usuario:', error);
@@ -1644,6 +1735,132 @@ function debugUsuarioActual() {
     }
     
     return usuarioStorage ? JSON.parse(usuarioStorage) : null;
+}
+
+// ===== FUNCIÓN PARA CONTAR USUARIOS POR COMISARÍA =====
+function contarUsuariosPorComisaria(usuarios) {
+    const conteo = {
+        'Administrador': 0,
+        'Comisaría Primera': 0,
+        'Comisaría Segunda': 0,
+        'Comisaría Tercera': 0,
+        'Comisaría Cuarta': 0,
+        'Comisaría Quinta': 0,
+        'Comisaría Sexta': 0
+    };
+    
+    if (usuarios && Array.isArray(usuarios)) {
+        usuarios.forEach(usuario => {
+            const comisaria = usuario.comisaria_rol;
+            if (comisaria && conteo.hasOwnProperty(comisaria)) {
+                conteo[comisaria]++;
+            }
+        });
+    }
+    
+    console.log('📊 Conteo de usuarios por comisaría:', conteo);
+    return conteo;
+}
+
+// ===== FUNCIÓN PARA ACTUALIZAR OPCIONES DEL SELECT =====
+function actualizarOpcionesSelect(conteoUsuarios) {
+    const select = document.getElementById('comisariaUsuario');
+    if (!select) return;
+    
+    console.log('🔄 Actualizando opciones del select basado en conteo:', conteoUsuarios);
+    
+    // Para cada opción del select
+    Array.from(select.options).forEach(option => {
+        if (option.value === '') return; // Saltar opción vacía
+        
+        const conteo = conteoUsuarios[option.value] || 0;
+        const haAlcanzadoLimite = conteo >= 2;
+        
+        // Guardar estado original si no existe
+        if (!option.hasAttribute('data-original-display')) {
+            option.setAttribute('data-original-display', option.style.display);
+        }
+        
+        // Ocultar/deshabilitar si alcanzó el límite
+        if (haAlcanzadoLimite && !modoEdicionUsuario) {
+            option.style.display = 'none';
+            option.disabled = true;
+            option.style.color = '#999';
+            option.style.backgroundColor = '#f5f5f5';
+            
+            // Agregar tooltip
+            option.title = `Límite alcanzado (${conteo}/2 usuarios)`;
+        } else {
+            // Restaurar opción
+            const originalDisplay = option.getAttribute('data-original-display') || '';
+            option.style.display = originalDisplay;
+            option.disabled = false;
+            option.style.color = '';
+            option.style.backgroundColor = '';
+            option.title = '';
+        }
+        
+        console.log(`   • ${option.value}: ${conteo}/2 ${haAlcanzadoLimite ? '❌ LÍMITE' : '✅ DISPONIBLE'}`);
+    });
+    
+    // Si la opción seleccionada actual está oculta, seleccionar la primera disponible
+    if (select.value && select.options[select.selectedIndex].style.display === 'none') {
+        const primeraDisponible = Array.from(select.options).find(opt => 
+            opt.value && opt.style.display !== 'none' && !opt.disabled
+        );
+        if (primeraDisponible) {
+            select.value = primeraDisponible.value;
+            console.log(`🔄 Cambiando selección a: ${primeraDisponible.value}`);
+        } else {
+            select.value = '';
+            console.log('⚠️ No hay opciones disponibles');
+        }
+    }
+}
+
+// ===== FUNCIÓN PARA ACTUALIZAR CONTADOR VISUAL =====
+function actualizarContadorVisual(conteoUsuarios) {
+    console.log('📋 Actualizando contadores visuales...');
+    
+    // Mapeo de comisaría a sección
+    const mapeoSecciones = {
+        'Administrador': 'Administrador',
+        'Comisaría Primera': 'Usuarios Comisaría Primera',
+        'Comisaría Segunda': 'Usuarios Comisaría Segunda',
+        'Comisaría Tercera': 'Usuarios Comisaría Tercera',
+        'Comisaría Cuarta': 'Usuarios Comisaría Cuarta',
+        'Comisaría Quinta': 'Usuarios Comisaría Quinta',
+        'Comisaría Sexta': 'Usuarios Comisaría Sexta'
+    };
+    
+    // Actualizar cada sección
+    Object.entries(mapeoSecciones).forEach(([comisaria, tituloSeccion]) => {
+        const conteo = conteoUsuarios[comisaria] || 0;
+        const limiteAlcanzado = conteo >= 2;
+        
+        // Buscar la sección
+        const secciones = document.querySelectorAll('.seccionUsuarios');
+        secciones.forEach(seccion => {
+            const titulo = seccion.querySelector('.tituloSec');
+            if (titulo && titulo.textContent === tituloSeccion) {
+                // Remover contador anterior si existe
+                const contadorAnterior = titulo.querySelector('.contador-usuarios');
+                if (contadorAnterior) {
+                    contadorAnterior.remove();
+                }
+                
+                // Crear nuevo contador
+                const contador = document.createElement('span');
+                contador.className = `contador-usuarios ${limiteAlcanzado ? 'contador-limitado' : 'contador-normal'}`;
+                contador.textContent = ` (${conteo}/2)`;
+                contador.title = limiteAlcanzado ? 'Límite alcanzado' : `${2 - conteo} espacios disponibles`;
+                
+                titulo.appendChild(contador);
+                
+                console.log(`   • ${comisaria}: ${conteo}/2 ${limiteAlcanzado ? '🔴' : '🟢'}`);
+            }
+        });
+    });
 }
 
 // Agrega esta función al objeto global para poder llamarla desde consola

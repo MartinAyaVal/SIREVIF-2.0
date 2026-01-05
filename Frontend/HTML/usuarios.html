@@ -113,7 +113,7 @@
                         </tr>
                         <tr>
                             <td>
-                                <input autocomplete="name" type="text" name="nombreUsuario" id="nombreUsuario">
+                                <input autocomplete="off" type="text" name="nombreUsuario" id="nombreUsuario">
                                 <p class="mensaje">- El <strong>Nombre completo</strong> es requerido</p>
                             </td>
                             <td>
@@ -122,7 +122,7 @@
                                 <p class="mensaje">- El mínimo de caracteres es de 7</p>
                             </td>
                             <td>
-                                <input autocomplete="organization-title" type="text" name="cargoUsuario" id="cargoUsuario">
+                                <input autocomplete="off" type="text" name="cargoUsuario" id="cargoUsuario">
                                 <p class="mensaje">- El <strong>Cargo</strong> es requerido</p>
                             </td>
                         </tr>
@@ -137,12 +137,12 @@
                         </tr>
                         <tr>
                             <td>
-                                <input class="correo" autocomplete="email" type="email" name="correoUsuario" id="correoUsuario">
+                                <input class="correo" autocomplete="off" type="email" name="correoUsuario" id="correoUsuario">
                                 <p class="mensaje">- El <strong>Correo</strong> es requerido</p>
                                 <p class="mensaje">- Ingrese un correo válido</p>
                             </td>
                             <td>
-                                <input autocomplete="tel-local" type="tel" name="telefonoUsuario" id="telefonoUsuario" inputmode="numeric" pattern="[0-9]*">
+                                <input autocomplete="off" type="tel" name="telefonoUsuario" id="telefonoUsuario" inputmode="numeric" pattern="[0-9]*">
                                 <p class="mensaje">- El <strong>Teléfono</strong> es requerido</p>
                                 <p class="mensaje">- El mínimo de caracteres es de 10</p>
                             </td>
@@ -211,7 +211,7 @@
     <!-- Archivo combinado de usuarios -->
     <script src="/Frontend/JS/usuarios.js"></script>
     
-    <!-- Script de inicialización -->
+    <!-- Script de inicialización MODIFICADO -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         console.log('🚀 DOM cargado - Inicializando página de usuarios...');
@@ -221,9 +221,32 @@
         const usuario = localStorage.getItem('sirevif_usuario');
         
         if (!token || !usuario) {
-            console.error('❌ No hay sesión activa');
-            alert('No hay sesión activa. Redirigiendo al login...');
-            window.location.href = '/Frontend/HTML/login.html';
+            console.log('🔒 No hay sesión activa - Mostrando ventana emergente...');
+            
+            // Usar SweetAlert2 para mostrar ventana emergente central
+            Swal.fire({
+                title: 'Sesión no iniciada',
+                text: 'No se ha detectado una sesión activa. Serás redirigido a la página de inicio de sesión.',
+                icon: 'warning',
+                confirmButtonText: 'Ir al login',
+                confirmButtonColor: '#4CAF50',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showCloseButton: false,
+                backdrop: true,
+                willOpen: () => {
+                    console.log('📋 Mostrando ventana de sesión expirada');
+                },
+                willClose: () => {
+                    console.log('🔄 Redirigiendo al login...');
+                    window.location.href = '/Frontend/HTML/login.html';
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/Frontend/HTML/login.html';
+                }
+            });
+            
             return;
         }
         

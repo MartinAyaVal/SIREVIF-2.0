@@ -174,7 +174,7 @@ exports.getusuariosById = async (req, res) => {
     }
 }
 
-// Actualizar usuario por Id - CON VALORES CORRECTOS
+// Actualizar usuario por Id - ACEPTA ACTUALIZACIONES PARCIALES
 exports.updateusuario = async (req, res) => {
     try {
         const { id } = req.params;
@@ -183,7 +183,7 @@ exports.updateusuario = async (req, res) => {
         console.log(`🛠️  ACTUALIZANDO USUARIO ID: ${id}`);
         console.log("=".repeat(60));
         
-        console.log("📥 REQ.BODY:", req.body);
+        console.log("📥 REQ.BODY (parcial):", req.body);
         
         const usuario = await Usuario.findByPk(id);
         if(!usuario) {
@@ -196,54 +196,37 @@ exports.updateusuario = async (req, res) => {
         // Obtener contraseña de cualquier campo
         const password = req.body.contrasena || req.body.contraseña;
 
-        if (!req.body.nombre || !req.body.documento || !req.body.cargo || !req.body.correo || !req.body.telefono) {
-            return res.status(400).json({ 
-                success: false,
-                message: 'Faltan campos requeridos' 
-            });
+        // ===== ACEPTAR ACTUALIZACIONES PARCIALES =====
+        // Solo actualizar campos que vienen en el request
+        
+        const updateData = {};
+        
+        // Campos que pueden actualizarse
+        if (req.body.nombre !== undefined) updateData.nombre = req.body.nombre.trim();
+        if (req.body.documento !== undefined) updateData.documento = req.body.documento.toString();
+        if (req.body.cargo !== undefined) updateData.cargo = req.body.cargo.trim();
+        if (req.body.correo !== undefined) updateData.correo = req.body.correo.trim();
+        if (req.body.telefono !== undefined) updateData.telefono = req.body.telefono.trim();
+        if (req.body.comisaria_rol !== undefined) {
+            updateData.comisaria_rol = req.body.comisaria_rol.trim();
+            
+            // Asignar rol_id y comisaria_id según comisaria_rol
+            const mapeoRoles = {
+                'Administrador': { rolId: 1, comisariaId: null },
+                'Comisaría Primera': { rolId: 2, comisariaId: 1 },
+                'Comisaría Segunda': { rolId: 2, comisariaId: 2 },
+                'Comisaría Tercera': { rolId: 2, comisariaId: 3 },
+                'Comisaría Cuarta': { rolId: 2, comisariaId: 4 },
+                'Comisaría Quinta': { rolId: 2, comisariaId: 5 },
+                'Comisaría Sexta': { rolId: 2, comisariaId: 6 }
+            };
+            
+            const configRol = mapeoRoles[req.body.comisaria_rol];
+            if (configRol) {
+                updateData.rolId = configRol.rolId;
+                updateData.comisariaId = configRol.comisariaId;
+            }
         }
-
-        // ===== ASIGNACIÓN CORRECTA DE ROL_ID Y COMISARIA_ID =====
-        let comisaria_rol = req.body.comisaria_rol || usuario.comisaria_rol;
-        console.log(`🎯 Actualizando con comisaria_rol: "${comisaria_rol}"`);
-        
-        // Mapeo de comisaria_rol a rol_id y comisaria_id
-        const mapeoRoles = {
-            'Administrador': { rolId: 1, comisariaId: null },
-            'Comisaría Primera': { rolId: 2, comisariaId: 1 },
-            'Comisaría Segunda': { rolId: 2, comisariaId: 2 },
-            'Comisaría Tercera': { rolId: 2, comisariaId: 3 },
-            'Comisaría Cuarta': { rolId: 2, comisariaId: 4 },
-            'Comisaría Quinta': { rolId: 2, comisariaId: 5 },
-            'Comisaría Sexta': { rolId: 2, comisariaId: 6 }
-        };
-        
-        const configRol = mapeoRoles[comisaria_rol];
-        
-        if (!configRol) {
-            console.log(`❌ comisaria_rol no reconocido: "${comisaria_rol}"`);
-            return res.status(400).json({ 
-                success: false,
-                message: `Comisaría/rol no válido: ${comisaria_rol}` 
-            });
-        }
-        
-        const rolIdFinal = configRol.rolId;
-        const comisariaIdFinal = configRol.comisariaId;
-        
-        console.log(`✅ Configuración asignada: rolId=${rolIdFinal}, comisariaId=${comisariaIdFinal}`);
-
-        // Datos a actualizar
-        const updateData = {
-            nombre: req.body.nombre.trim(),
-            documento: req.body.documento.toString(),
-            cargo: req.body.cargo.trim(),
-            correo: req.body.correo.trim(),
-            telefono: req.body.telefono.trim(),
-            comisaria_rol: comisaria_rol.trim(),
-            rolId: rolIdFinal,  // ← VALOR CORRECTO
-            comisariaId: comisariaIdFinal  // ← VALOR CORRECTO
-        };
 
         // Si hay nueva contraseña, hashearla
         if (password && password.trim() !== '') {
@@ -252,10 +235,19 @@ exports.updateusuario = async (req, res) => {
             updateData.contraseña = await bcrypt.hash(password.trim(), saltRounds);
         }
 
+        // Verificar que haya algo que actualizar
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'No se proporcionaron datos para actualizar'
+            });
+        }
+
+        console.log("🔄 Campos a actualizar:", updateData);
+        
         await usuario.update(updateData);
         
         console.log(`✅ Usuario actualizado correctamente`);
-        console.log(`📊 Datos actualizados: rolId=${rolIdFinal}, comisariaId=${comisariaIdFinal}`);
         console.log("=".repeat(60));
 
         const usuarioResponse = usuario.toJSON();
@@ -270,14 +262,21 @@ exports.updateusuario = async (req, res) => {
     } catch (error) {
         console.error('❌ ERROR en updateusuario:', error.message);
         
+        // Mejor mensaje de error
+        let mensajeError = 'Error al actualizar usuario';
+        if (error.name === 'SequelizeValidationError') {
+            mensajeError = 'Error de validación: ' + error.errors.map(err => err.message).join(', ');
+        } else if (error.name === 'SequelizeUniqueConstraintError') {
+            mensajeError = 'El correo o documento ya están registrados';
+        }
+        
         res.status(500).json({ 
             success: false,
-            message: 'Error al actualizar usuario', 
+            message: mensajeError, 
             error: error.message
         });
     }
 };
-
 // Eliminar usuario por Id
 exports.deleteusuario = async (req, res) => {
     try{

@@ -20,29 +20,88 @@ function hideLoader() {
     }
 }
 
-// ===== FUNCIONES DE MENSAJES =====
-function showSuccess(message) {
-    const elem = document.getElementById('successMessage');
-    const errorElem = document.getElementById('errorMessage');
-    if (elem) {
-        elem.textContent = message;
-        elem.style.display = 'block';
-        if (errorElem) errorElem.style.display = 'none';
-        
-        setTimeout(() => {
-            elem.style.display = 'none';
-        }, 5000);
-    }
+// ===== FUNCIONES DE NOTIFICACIONES SWEETALERT =====
+async function mostrarExito(mensaje, titulo = '¡Éxito!') {
+    return Swal.fire({
+        title: titulo,
+        text: mensaje,
+        icon: 'success',
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: '#4CAF50',
+        timer: 3000,
+        timerProgressBar: true,
+        showConfirmButton: true
+    });
 }
 
-function showError(message) {
-    const elem = document.getElementById('errorMessage');
-    const successElem = document.getElementById('successMessage');
-    if (elem) {
-        elem.textContent = message;
-        elem.style.display = 'block';
-        if (successElem) successElem.style.display = 'none';
-    }
+async function mostrarError(mensaje, titulo = 'Error') {
+    return Swal.fire({
+        title: titulo,
+        text: mensaje,
+        icon: 'error',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#f44336',
+        showConfirmButton: true
+    });
+}
+
+async function mostrarConfirmacion(pregunta, titulo = 'Confirmación', textoConfirmar = 'Sí', textoCancelar = 'No') {
+    const result = await Swal.fire({
+        title: titulo,
+        text: pregunta,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: textoConfirmar,
+        cancelButtonText: textoCancelar,
+        cancelButtonColor: '#d33',
+        confirmButtonColor: '#009a1dff',
+        reverseButtons: true,
+        focusCancel: true
+    });
+    return result.isConfirmed;
+}
+
+async function mostrarConfirmacionCritica(pregunta, titulo = '⚠️ Cambio de Contraseña', advertencia = '') {
+    const result = await Swal.fire({
+        title: titulo,
+        html: `
+            <div style="text-align: center;">
+                <p>${pregunta}</p>
+                ${advertencia ? `<p style="color: #d32f2f; font-weight: bold; margin-top: 10px;">${advertencia}</p>` : ''}
+            </div>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, continuar',
+        cancelButtonText: 'Cancelar',
+        cancelButtonColor: '#d33',
+        confirmButtonColor: '#ff9800',
+        reverseButtons: true,
+        focusCancel: true,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showCloseButton: false,
+        width: 500
+    });
+    return result.isConfirmed;
+}
+
+// ===== FUNCIÓN DE CERRAR SESIÓN =====
+function ejecutarCierreSesion(mensaje = 'Sesión cerrada por seguridad') {
+    console.log('🔒 Ejecutando cierre de sesión...');
+    
+    // Asegurarse de ocultar cualquier loader visible
+    hideLoader();
+    
+    // Limpiar almacenamiento local
+    localStorage.removeItem('sirevif_token');
+    localStorage.removeItem('sirevif_usuario');
+    sessionStorage.clear();
+    
+    // Redirigir al login
+    setTimeout(() => {
+        window.location.href = '/Frontend/HTML/login.html';
+    }, 500);
 }
 
 // ===== CÓDIGO DE TOGGLE DE CONTRASEÑA MEJORADO =====
@@ -99,22 +158,36 @@ async function cargarInformacionUsuario() {
         
         if (!token || !usuarioStorage) {
             console.error('❌ ERROR: No hay sesión activa en localStorage');
-            throw new Error('No hay sesión activa. Por favor inicia sesión nuevamente.');
+            
+            // Mostrar ventana emergente en lugar de alert
+            await Swal.fire({
+                title: 'Sesión no iniciada',
+                text: 'No se ha detectado una sesión activa. Serás redirigido a la página de inicio de sesión.',
+                icon: 'warning',
+                confirmButtonText: 'Ir al login',
+                confirmButtonColor: '#4CAF50',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showCloseButton: false,
+                backdrop: true
+            }).then(() => {
+                window.location.href = '/Frontend/HTML/login.html';
+            });
+            
+            return;
         }
         
         usuarioData = JSON.parse(usuarioStorage);
         
-        // Verificación rápida del cargo
-        console.log('🔍 Cargo en usuarioData:', usuarioData.cargo);
         console.log('🔍 Usuario completo:', usuarioData);
         
-        // Cargar datos en el formulario - SIMPLIFICADO
+        // Cargar datos en el formulario
         const campos = {
             'nombreUsuario': usuarioData.nombre || '',
             'documentoUsuario': usuarioData.documento || '',
             'correoUsuario': usuarioData.correo || '',
             'telefonoUsuario': usuarioData.telefono || '',
-            'cargoUsuario': usuarioData.cargo || '', // Directo del backend
+            'cargoUsuario': usuarioData.cargo || '',
             'comisariaUsuario': usuarioData.comisaria_rol || '',
             'contraseñaUsuario': '••••••••'
         };
@@ -125,6 +198,7 @@ async function cargarInformacionUsuario() {
             if (elemento) {
                 elemento.value = valor;
                 elemento.readOnly = true;
+                elemento.classList.add('read-only');
                 console.log(`✅ Campo ${id}: "${valor}"`);
             } else {
                 console.error(`❌ No se encontró el elemento con ID: ${id}`);
@@ -165,7 +239,7 @@ async function cargarInformacionUsuario() {
         
     } catch (error) {
         console.error('❌ Error al cargar usuario:', error);
-        showError('Error al cargar información del usuario: ' + error.message);
+        await mostrarError('Error al cargar información del usuario: ' + error.message);
         hideLoader();
         
         setTimeout(() => {
@@ -181,7 +255,7 @@ function activarModoEdicion() {
     // Mostrar toggle de contraseña
     togglePasswordVisibility(true);
     
-    // Habilitar campos editables
+    // Habilitar campos editables (NO obligatorios individualmente)
     const camposEditables = [
         'correoUsuario',
         'telefonoUsuario', 
@@ -199,7 +273,7 @@ function activarModoEdicion() {
             // Para la contraseña, limpiar el campo al editar
             if (fieldId === 'contraseñaUsuario') {
                 field.value = '';
-                field.placeholder = 'Nueva contraseña (dejar vacío para no cambiar)';
+                field.placeholder = 'Dejar vacío para mantener la contraseña actual';
                 field.type = 'password';
                 
                 // Resetear iconos del toggle
@@ -281,18 +355,50 @@ function desactivarModoEdicion() {
     if (editarBtn) editarBtn.style.display = 'inline-block';
     if (cancelarBtn) cancelarBtn.style.display = 'none';
     if (guardarBtn) guardarBtn.style.display = 'none';
-    
-    // Limpiar mensajes
-    const successMsg = document.getElementById('successMessage');
-    const errorMsg = document.getElementById('errorMessage');
-    
-    if (successMsg) successMsg.style.display = 'none';
-    if (errorMsg) errorMsg.style.display = 'none';
 }
 
+// ===== VALIDACIONES POR SEPARADO =====
+function validarCorreo(correo) {
+    if (!correo) return { valido: true, mensaje: '' }; // No es obligatorio si no se cambia
+    
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!regex.test(correo)) {
+        return { 
+            valido: false, 
+            mensaje: 'Formato de correo inválido. Use: usuario@dominio.com' 
+        };
+    }
+    return { valido: true, mensaje: '' };
+}
+
+function validarTelefono(telefono) {
+    if (!telefono) return { valido: true, mensaje: '' }; // No es obligatorio si no se cambia
+    
+    // Solo números, mínimo 7, máximo 15 dígitos (más flexible)
+    const regex = /^[0-9]{7,15}$/;
+    if (!regex.test(telefono)) {
+        return { 
+            valido: false, 
+            mensaje: 'Teléfono debe tener entre 7 y 15 dígitos numéricos' 
+        };
+    }
+    return { valido: true, mensaje: '' };
+}
+
+function validarCargo(cargo) {
+    // El cargo puede ser cualquier texto o estar vacío, hasta 100 caracteres
+    if (cargo && cargo.trim().length > 100) {
+        return { 
+            valido: false, 
+            mensaje: 'El cargo no puede exceder los 100 caracteres' 
+        };
+    }
+    return { valido: true, mensaje: '' };
+}
+
+// ===== FUNCIÓN PRINCIPAL PARA GUARDAR CAMBIOS =====
 async function guardarCambios() {
     console.log('💾 Guardando cambios...');
-    showLoader('Guardando cambios...');
     
     try {
         const token = localStorage.getItem('sirevif_token');
@@ -308,109 +414,240 @@ async function guardarCambios() {
             throw new Error('No se encontraron todos los campos del formulario');
         }
         
-        const datosActualizados = {
-            correo: correoField.value.trim(),
-            telefono: telefonoField.value.trim(),
-            cargo: cargoField.value.trim(),
-            contraseña: passwordField.value.trim()
+        const nuevoCorreo = correoField.value.trim();
+        const nuevoTelefono = telefonoField.value.trim();
+        const nuevoCargo = cargoField.value.trim();
+        const nuevaContraseña = passwordField.value.trim();
+        
+        console.log('📤 Datos capturados:', {
+            correo: nuevoCorreo,
+            telefono: nuevoTelefono,
+            cargo: nuevoCargo,
+            tieneContraseña: nuevaContraseña ? 'SÍ' : 'NO'
+        });
+        
+        console.log('📊 Datos originales:', datosOriginales);
+        
+        // ===== VALIDACIONES INDIVIDUALES =====
+        const validaciones = [];
+        
+        // Validar campos que se están cambiando
+        if (nuevoCorreo !== datosOriginales.correo) {
+            const validacionCorreo = validarCorreo(nuevoCorreo);
+            if (!validacionCorreo.valido) {
+                validaciones.push(validacionCorreo.mensaje);
+                correoField.classList.add('error-input');
+            }
+        }
+        
+        if (nuevoTelefono !== datosOriginales.telefono) {
+            const validacionTelefono = validarTelefono(nuevoTelefono);
+            if (!validacionTelefono.valido) {
+                validaciones.push(validacionTelefono.mensaje);
+                telefonoField.classList.add('error-input');
+            }
+        }
+        
+        // El cargo siempre se valida (puede estar vacío)
+        const validacionCargo = validarCargo(nuevoCargo);
+        if (!validacionCargo.valido) {
+            validaciones.push(validacionCargo.mensaje);
+            cargoField.classList.add('error-input');
+        }
+        
+        // Si hay errores de validación, mostrarlos
+        if (validaciones.length > 0) {
+            // Remover clases de error después de 3 segundos
+            setTimeout(() => {
+                correoField.classList.remove('error-input');
+                telefonoField.classList.remove('error-input');
+                cargoField.classList.remove('error-input');
+            }, 3000);
+            
+            throw new Error(validaciones.join('\n'));
+        }
+        
+        // ===== CONFIRMACIÓN CRÍTICA PARA CAMBIO DE CONTRASEÑA =====
+        let cambioContraseñaConfirmado = true;
+        
+        if (nuevaContraseña && nuevaContraseña !== '••••••••') {
+            console.log('⚠️ USUARIO CAMBIANDO SU PROPIA CONTRASEÑA');
+            
+            // NO mostrar loader antes de la confirmación
+            cambioContraseñaConfirmado = await mostrarConfirmacionCritica(
+                '¿Está seguro de cambiar su contraseña?',
+                'Cambio de Contraseña',
+                'Esta acción cerrará tu sesión automáticamente por seguridad.'
+            );
+            
+            if (!cambioContraseñaConfirmado) {
+                console.log('❌ Cambio de contraseña cancelado por el usuario');
+                return;
+            }
+            
+            console.log('✅ Confirmado: Cambiando contraseña propia');
+        }
+        
+        // ===== PREPARAR DATOS PARA ENVIAR =====
+        // IMPORTANTE: El backend necesita TODOS los campos requeridos
+        // Enviar todos los campos con sus valores actuales
+        const datosParaEnviar = {
+            nombre: datosOriginales.nombre,
+            documento: usuarioData.documento || datosOriginales.documento,
+            cargo: nuevoCargo, // El valor actual del formulario
+            correo: nuevoCorreo, // El valor actual del formulario
+            telefono: nuevoTelefono, // El valor actual del formulario
+            comisaria_rol: datosOriginales.comisaria_rol
         };
         
-        console.log('📤 Datos a actualizar:', datosActualizados);
-        
-        // Validaciones
-        if (!datosActualizados.correo || !datosActualizados.telefono) {
-            throw new Error('Correo y teléfono son obligatorios');
+        // Solo incluir contraseña si se proporcionó una nueva
+        if (nuevaContraseña && nuevaContraseña !== '••••••••') {
+            datosParaEnviar.contraseña = nuevaContraseña;
         }
         
-        if (!datosActualizados.correo.includes('@')) {
-            throw new Error('Correo electrónico inválido');
+        console.log('📤 Datos completos para enviar al backend:', datosParaEnviar);
+        
+        // Verificar que todos los campos requeridos estén presentes
+        const camposRequeridos = ['nombre', 'documento', 'cargo', 'correo', 'telefono', 'comisaria_rol'];
+        const camposFaltantes = camposRequeridos.filter(campo => !datosParaEnviar[campo] && datosParaEnviar[campo] !== '');
+        
+        if (camposFaltantes.length > 0) {
+            throw new Error(`Faltan campos requeridos: ${camposFaltantes.join(', ')}`);
         }
         
-        if (datosActualizados.telefono.length !== 10 || isNaN(datosActualizados.telefono)) {
-            throw new Error('Teléfono debe tener exactamente 10 dígitos');
-        }
-        
-        // El cargo puede estar vacío
-        if (datosActualizados.cargo && datosActualizados.cargo.trim() === '') {
-            datosActualizados.cargo = '';
-        }
-        
-        // Si la contraseña está vacía o es el placeholder, no enviarla
-        if (!datosActualizados.contraseña || datosActualizados.contraseña === '••••••••') {
-            delete datosActualizados.contraseña;
-        } else if (datosActualizados.contraseña.length < 6) {
-            throw new Error('La contraseña debe tener al menos 6 caracteres');
-        }
-        
-        // Enviar al backend (actualizar usuario)
+        // ===== ENVIAR AL BACKEND =====
         if (!usuarioData || !usuarioData.id) {
             throw new Error('No se encontró ID del usuario');
         }
         
+        // SOLO AHORA mostrar loader (después de confirmaciones)
+        showLoader('Guardando cambios...');
+        
         console.log(`📤 Enviando PUT a: http://localhost:8080/usuarios/${usuarioData.id}`);
+        
         const response = await fetch(`http://localhost:8080/usuarios/${usuarioData.id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify(datosActualizados)
+            body: JSON.stringify(datosParaEnviar)
         });
         
         console.log('📥 Respuesta del servidor - Status:', response.status);
-        const data = await response.json();
-        console.log('📥 Respuesta del servidor - Data:', data);
         
-        if (!response.ok) {
-            throw new Error(data.message || `Error ${response.status} al actualizar usuario`);
+        // Leer respuesta como texto primero
+        const responseText = await response.text();
+        console.log('📥 Respuesta del servidor - Text:', responseText);
+        
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            console.error('❌ Error parseando respuesta:', e);
+            data = { message: 'Respuesta inválida del servidor' };
         }
         
-        // Actualizar localStorage con nuevos datos
-        usuarioData.correo = datosActualizados.correo;
-        usuarioData.telefono = datosActualizados.telefono;
-        usuarioData.cargo = datosActualizados.cargo || '';
+        if (!response.ok) {
+            hideLoader(); // Ocultar loader si hay error
+            
+            let errorMsg = data.message || `Error ${response.status} al actualizar usuario`;
+            
+            // Mensajes más específicos según el error
+            if (response.status === 400) {
+                errorMsg = 'Error en los datos: ' + (data.message || 'Verifica que todos los campos estén completos');
+                
+                // Depuración adicional
+                console.error('❌ Error 400 - Detalles:', {
+                    datosEnviados: datosParaEnviar,
+                    respuesta: data,
+                    camposFaltantes: camposFaltantes
+                });
+                
+            } else if (response.status === 401) {
+                errorMsg = 'Sesión expirada. Por favor, inicia sesión nuevamente.';
+                // Redirigir al login
+                setTimeout(() => {
+                    window.location.href = '/Frontend/HTML/login.html';
+                }, 3000);
+            } else if (response.status === 404) {
+                errorMsg = 'Usuario no encontrado en el sistema';
+            }
+            
+            throw new Error(errorMsg);
+        }
         
-        // Si el backend devuelve datos actualizados, usarlos
-        if (data && data.id) {
-            usuarioData = data;
+        console.log('📥 Respuesta del servidor - Data:', data);
+        
+        // ===== ACTUALIZAR LOCALSTORAGE Y UI =====
+        // Actualizar localStorage con nuevos datos del backend
+        if (data && (data.id || data.success)) {
+            // Si el backend devuelve datos completos, usarlos
+            const usuarioActualizado = data.data || data;
+            usuarioData = {
+                ...usuarioData,
+                ...usuarioActualizado
+            };
             console.log('✅ Usuario actualizado con datos del backend:', usuarioData);
+        } else {
+            // Si no, actualizar los campos localmente
+            usuarioData.correo = nuevoCorreo;
+            usuarioData.telefono = nuevoTelefono;
+            usuarioData.cargo = nuevoCargo;
         }
         
         localStorage.setItem('sirevif_usuario', JSON.stringify(usuarioData));
         
-        // Actualizar header
+        // Actualizar header si cambió el cargo
         const nombreHeader = document.getElementById('nombreUsuarioHeader');
         if (nombreHeader) {
             let textoHeader = usuarioData.nombre || 'Usuario';
-            if (usuarioData.cargo && usuarioData.cargo.trim() !== '') {
+            if (nuevoCargo && nuevoCargo.trim() !== '') {
+                textoHeader += ` - ${nuevoCargo}`;
+            } else if (usuarioData.cargo && usuarioData.cargo.trim() !== '') {
                 textoHeader += ` - ${usuarioData.cargo}`;
             }
             nombreHeader.textContent = textoHeader;
         }
         
-        // Desactivar modo edición
-        desactivarModoEdicion();
+        // ===== MANEJO DE CAMBIO DE CONTRASEÑA =====
+        if (nuevaContraseña && nuevaContraseña !== '••••••••' && cambioContraseñaConfirmado) {
+            hideLoader();
+            await mostrarExito('Contraseña actualizada. Cerrando sesión...', 'Cambio Exitoso');
+            
+            // Cerrar sesión después de breve delay
+            setTimeout(() => {
+                ejecutarCierreSesion('Tu contraseña ha sido cambiada. Por seguridad, debes iniciar sesión nuevamente.');
+            }, 0);
+            
+            return; // Salir de la función - no continuar con desactivarModoEdicion
+        }
         
+        // ===== ÉXITO SIN CAMBIO DE CONTRASEÑA =====
         // Actualizar datos originales
         datosOriginales = {
-            correo: datosActualizados.correo,
-            telefono: datosActualizados.telefono,
-            cargo: datosActualizados.cargo || '',
+            nombre: usuarioData.nombre,
+            correo: usuarioData.correo,
+            telefono: usuarioData.telefono,
+            cargo: usuarioData.cargo || '',
             comisaria_rol: usuarioData.comisaria_rol,
-            nombre: usuarioData.nombre
         };
         
         hideLoader();
-        showSuccess('✅ Información actualizada correctamente');
+        await mostrarExito('✅ Información actualizada correctamente');
+        
+        // Desactivar modo edición después de mostrar éxito
+        desactivarModoEdicion();
+        
         console.log('✅ Cambios guardados exitosamente');
         
     } catch (error) {
-        console.error('❌ Error al guardar:', error);
+        // Asegurarse de ocultar el loader si hay error
         hideLoader();
-        showError(error.message || 'Error al guardar cambios');
+        console.error('❌ Error al guardar:', error);
+        await mostrarError(error.message || 'Error al guardar cambios');
     }
 }
-
 // ===== FUNCIÓN PARA RECARGAR DATOS DESDE BACKEND =====
 async function forzarRecargaDesdeBackend() {
     console.log('🔄 Forzando recarga de datos desde backend...');
@@ -429,7 +666,7 @@ async function forzarRecargaDesdeBackend() {
         
         if (!userId) {
             console.error('❌ No se encontró ID de usuario');
-            showError('No se pudo identificar al usuario');
+            await mostrarError('No se pudo identificar al usuario');
             return;
         }
         
@@ -456,19 +693,24 @@ async function forzarRecargaDesdeBackend() {
         // Recargar la información
         await cargarInformacionUsuario();
         
-        showSuccess('✅ Información actualizada desde el servidor');
+        await mostrarExito('✅ Información actualizada desde el servidor');
         
     } catch (error) {
         console.error('❌ Error al forzar recarga:', error);
-        showError('No se pudo actualizar la información: ' + error.message);
+        await mostrarError('No se pudo actualizar la información: ' + error.message);
     } finally {
         hideLoader();
     }
 }
 
 // ===== FUNCIÓN DE LOGOUT =====
-function logout() {
-    if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+async function logout() {
+    const confirmado = await mostrarConfirmacion(
+        '¿Estás seguro de que quieres cerrar sesión?',
+        'Cerrar Sesión'
+    );
+    
+    if (confirmado) {
         localStorage.removeItem('sirevif_token');
         localStorage.removeItem('sirevif_usuario');
         window.location.href = '/Frontend/HTML/login.html';
@@ -530,5 +772,29 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             logout();
         });
+    }
+    
+    // También actualizar el modal de cerrar sesión si existe
+    const modalCerrarSesion = document.getElementById('divCerrarSesion');
+    if (modalCerrarSesion) {
+        // Ocultar modal al inicio
+        modalCerrarSesion.style.display = 'none';
+        
+        const cerrarSesionBtn = document.getElementById('cerrarSesion');
+        const cancelarCerrarBtn = document.getElementById('cancelarCerrarSesion');
+        
+        if (cerrarSesionBtn) {
+            cerrarSesionBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                logout();
+            });
+        }
+        
+        if (cancelarCerrarBtn) {
+            cancelarCerrarBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                modalCerrarSesion.style.display = 'none';
+            });
+        }
     }
 });
